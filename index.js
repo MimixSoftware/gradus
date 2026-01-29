@@ -28,6 +28,11 @@ app.get('/db-test', async (req, res) => {
   }
 });
 
+app.get(/.*/, (req, res) => {
+    res.status(404);
+    res.render('error', { title: 'Error', statusCode: '404', message: `The route ${req.originalUrl} does not exist! Please check the URL and try again.` });
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}.`);
 });
