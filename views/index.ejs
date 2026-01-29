@@ -1,1 +1,31 @@
-<h1>Test</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Gradus</title>
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+    <%- include('partials/header') %>
+
+    <main class="hero">
+        <h1>Welcome to Gradus</h1>
+
+        <p>
+            Gradus is a student-focused task and time-management system that helps
+            plan, prioritise, and schedule academic work step by step.
+        </p>
+
+        <a href="/register" class="btn btn-primary btn-large">
+            Register now
+        </a>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
