@@ -103,6 +103,15 @@ body {
     text-align: center;
 }
 
+.hero-logo {
+    width: 280px;
+    height: auto;
+    margin-bottom: 1.8rem;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
 .hero h1 {
     font-size: 2.6rem;
     margin-bottom: 1.2rem;
