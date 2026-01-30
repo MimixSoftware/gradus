@@ -17,9 +17,11 @@
 
             <p><%= message %></p>
 
-            <a href="/" class="btn btn-primary btn-large">
-                Go back home
-            </a>
+            <% if (showHomeButton) { %>
+                <a href="/" class="btn btn-primary btn-large">
+                    Go back home
+                </a>
+            <% } %>
         </section>
     </main>
 
