@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const db = require("../../db");
 const AppError = require('../../utils/AppError');
 
-const SALT_ROUNDS = process.env.BCRYPT_SALT_ROUNDS;
+const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS);
 
 async function register({ email, forename, surname, password }) {
   const [existing] = await db.query("SELECT id FROM users WHERE email = ? LIMIT 1", [email]);
