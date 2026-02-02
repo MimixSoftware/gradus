@@ -4,17 +4,20 @@ const path = require("path");
 const LOG_DIR = path.join(process.cwd(), "logs");
 
 const LEVELS = { DEBUG: 10, INFO: 20, WARN: 30, ERROR: 40 };
-const CURRENT_LEVEL = process.env.LOG_LEVEL?.toUpperCase() || "INFO";
-const CURRENT_LEVEL_NUM = LEVELS[CURRENT_LEVEL] ?? LEVELS.INFO;
+const CURRENT_LEVEL = process.env.LOG_LEVEL;
+const CURRENT_LEVEL_NUM = LEVELS[CURRENT_LEVEL];
 
 let writeQueue = Promise.resolve();
 
 function shouldLog(level) {
-    const n = LEVELS[level] ?? LEVELS.INFO;
-    return n >= CURRENT_LEVEL_NUM;
+    if (!(level in LEVELS)) {
+        console.error(`LOGGER ERROR: Invalid log level: "${level}"`);
+        return false;
+    }
+    return LEVELS[level] >= CURRENT_LEVEL_NUM;
 }
 
-function ensureLogsDir() {
+function ensureLogsDirectory() {
     if (!fs.existsSync(LOG_DIR)) {
         fs.mkdirSync(LOG_DIR, { recursive: true });
     }
@@ -28,12 +31,12 @@ function getLogPath(date = new Date()) {
 
 function enqueueWrite(fn) {
     writeQueue = writeQueue.then(fn).catch((err) => {
-        console.error("Log write failed:", err.message);
+        console.error("LOGGER ERROR:", err.message);
     });
 }
 
 async function appendEntry(entry) {
-    ensureLogsDir();
+    ensureLogsDirectory();
     const logPath = getLogPath(new Date(entry.timestamp));
 
     let data = [];
@@ -50,7 +53,6 @@ async function appendEntry(entry) {
 }
 
 function log(level, message, context = {}) {
-    level = (level || "INFO").toUpperCase();
     if (!shouldLog(level)) return;
 
     const entry = {

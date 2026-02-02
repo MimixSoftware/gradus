@@ -1,5 +1,8 @@
 require('dotenv').config();
 
+const { validateEnv } = require("./utils/envValidator");
+validateEnv();
+
 const express = require('express');
 const path = require('path');
 
@@ -8,9 +11,8 @@ const maintenanceMode = require('./middleware/maintenanceMode');
 const requestLogger = require("./middleware/requestLogger");
 const errorHandler = require("./middleware/errorHandler");
 const asyncHandler = require('./utils/asyncHandler');
-const AppError = require('./utils/AppError');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 const app = express();
 
