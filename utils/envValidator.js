@@ -60,6 +60,9 @@ function validateEnv() {
     assertPort("DB_PORT", dbPort);
     process.env.DB_PORT = dbPort;
 
+    const bcryptSaltRounds = required("BCRYPT_SALT_ROUNDS");
+    assertInt("BCRYPT_SALT_ROUNDS", bcryptSaltRounds)
+    
     required("SESSION_SECRET");
 }
 
