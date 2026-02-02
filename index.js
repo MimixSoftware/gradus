@@ -10,7 +10,7 @@ const db = require('./db');
 const maintenanceMode = require('./middleware/maintenanceMode');
 const requestLogger = require("./middleware/requestLogger");
 const errorHandler = require("./middleware/errorHandler");
-const asyncHandler = require('./utils/asyncHandler');
+const createSessionMiddleware = require("./middleware/session");
 
 const PORT = process.env.PORT;
 
@@ -23,6 +23,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use(createSessionMiddleware(db));
+
 app.use(requestLogger);
 app.use(maintenanceMode);
 
@@ -30,10 +32,8 @@ app.get('/', (req, res) => {
   res.render('index', { title: 'Home' });
 });
 
-app.get('/db-test', asyncHandler(async (req, res, next) => {
-  const [rows] = await db.query('SELECT 1 AS ok');
-  res.json({ connected: true, result: rows[0] });
-}));
+const authRoutes = require("./modules/auth/auth.routes");
+app.use("/auth", authRoutes);
 
 app.get(/.*/, (req, res) => {
     res.status(404);

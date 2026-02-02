@@ -59,6 +59,8 @@ function validateEnv() {
     const dbPort = optional("DB_PORT", "3306");
     assertPort("DB_PORT", dbPort);
     process.env.DB_PORT = dbPort;
+
+    required("SESSION_SECRET");
 }
 
 module.exports = { validateEnv };
