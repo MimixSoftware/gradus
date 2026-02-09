@@ -1,263 +1,263 @@
 :root {
-    --colour-white: #ffffff;
-    --colour-black: #000000;
+	--colour-white: #ffffff;
+	--colour-black: #000000;
 
-    --colour-text-primary: #111111;
-    --colour-text-muted: #444444;
-    --colour-text-light: #666666;
+	--colour-text-primary: #111111;
+	--colour-text-muted: #444444;
+	--colour-text-light: #666666;
 
-    --colour-border: #eeeeee;
-    --colour-grey-light: #f7f7f7;
+	--colour-border: #eeeeee;
+	--colour-grey-light: #f7f7f7;
 
-    --colour-primary: #000000;
-    --colour-primary-hover: #222222;
+	--colour-primary: #000000;
+	--colour-primary-hover: #222222;
 }
 
 
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
 }
 
 body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: var(--colour-white);
-    color: var(--colour-text-primary);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	background-color: var(--colour-white);
+	color: var(--colour-text-primary);
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
 }
 
 .site-header {
-    border-bottom: 1px solid var(--colour-border);
+	border-bottom: 1px solid var(--colour-border);
 }
 
 .header-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 1.5rem 2rem;
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 1.5rem 2rem;
 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .logo a {
-    text-decoration: none;
-    color: var(--colour-text-primary);
-    font-weight: 600;
-    font-size: 1.1rem;
+	text-decoration: none;
+	color: var(--colour-text-primary);
+	font-weight: 600;
+	font-size: 1.1rem;
 }
 
 .logo a:hover {
-    opacity: 0.8;
+	opacity: 0.8;
 }
 
 .nav {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
+	display: flex;
+	align-items: center;
+	gap: 1.25rem;
 }
 
 .nav-link {
-    text-decoration: none;
-    color: var(--colour-text-primary);
-    font-size: 0.95rem;
+	text-decoration: none;
+	color: var(--colour-text-primary);
+	font-size: 0.95rem;
 }
 
 .btn {
-    text-decoration: none;
-    padding: 0.6rem 1.1rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    display: inline-block;
+	text-decoration: none;
+	padding: 0.6rem 1.1rem;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	display: inline-block;
 }
 
 .btn-primary {
-    background-color: var(--colour-primary);
-    color: var(--colour-white);
+	background-color: var(--colour-primary);
+	color: var(--colour-white);
 }
 
 .btn-primary:hover {
-    background-color: var(--colour-primary-hover);
+	background-color: var(--colour-primary-hover);
 }
 
 .btn-large {
-    padding: 0.8rem 1.6rem;
-    font-size: 1rem;
+	padding: 0.8rem 1.6rem;
+	font-size: 1rem;
 }
 
 .page {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .hero {
-    flex: 1;
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 6rem 2rem;
-    text-align: center;
+	flex: 1;
+	max-width: 700px;
+	margin: 0 auto;
+	padding: 6rem 2rem;
+	text-align: center;
 }
 
 .hero-logo {
-    width: 280px;
-    height: auto;
-    margin-bottom: 1.8rem;
-    pointer-events: none;
-    -webkit-user-drag: none;
-    user-select: none;
+	width: 280px;
+	height: auto;
+	margin-bottom: 1.8rem;
+	pointer-events: none;
+	-webkit-user-drag: none;
+	user-select: none;
 }
 
 .hero h1 {
-    font-size: 2.6rem;
-    margin-bottom: 1.2rem;
+	font-size: 2.6rem;
+	margin-bottom: 1.2rem;
 }
 
 .hero p {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: var(--colour-text-muted);
-    margin-bottom: 2.2rem;
+	font-size: 1.05rem;
+	line-height: 1.6;
+	color: var(--colour-text-muted);
+	margin-bottom: 2.2rem;
 }
 
 .site-footer {
-    border-top: 1px solid var(--colour-border);
-    text-align: center;
-    padding: 2rem;
-    font-size: 0.9rem;
-    color: var(--colour-text-light);
+	border-top: 1px solid var(--colour-border);
+	text-align: center;
+	padding: 2rem;
+	font-size: 0.9rem;
+	color: var(--colour-text-light);
 }
 
 .auth {
-    flex: 1;
-    width: 100%;
-    padding: 4rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	flex: 1;
+	width: 100%;
+	padding: 4rem 2rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .auth-card {
-    width: 100%;
-    max-width: 520px;
-    border: 1px solid var(--colour-border);
-    background: var(--colour-white);
-    border-radius: 10px;
-    padding: 2.5rem;
-    text-align: center;
+	width: 100%;
+	max-width: 520px;
+	border: 1px solid var(--colour-border);
+	background: var(--colour-white);
+	border-radius: 10px;
+	padding: 2.5rem;
+	text-align: center;
 }
 
 .auth-logo {
-    width: 180px;
-    height: auto;
-    margin-bottom: 1.25rem;
-    pointer-events: none;
-    -webkit-user-drag: none;
-    user-select: none;
+	width: 180px;
+	height: auto;
+	margin-bottom: 1.25rem;
+	pointer-events: none;
+	-webkit-user-drag: none;
+	user-select: none;
 }
 
 .auth h1 {
-    font-size: 2rem;
-    margin-bottom: 0.7rem;
+	font-size: 2rem;
+	margin-bottom: 0.7rem;
 }
 
 .auth-subtitle {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: var(--colour-text-muted);
-    margin-bottom: 1.8rem;
+	font-size: 1rem;
+	line-height: 1.6;
+	color: var(--colour-text-muted);
+	margin-bottom: 1.8rem;
 }
 
 .form {
-    text-align: left;
+	text-align: left;
 }
 
 .form-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    margin-bottom: 1.2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+	margin-bottom: 1.2rem;
 }
 
 .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
 }
 
 label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--colour-text-primary);
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--colour-text-primary);
 }
 
 input {
-    width: 100%;
-    padding: 0.75rem 0.9rem;
-    border-radius: 8px;
-    border: 1px solid var(--colour-border);
-    background: var(--colour-white);
-    color: var(--colour-text-primary);
-    outline: none;
+	width: 100%;
+	padding: 0.75rem 0.9rem;
+	border-radius: 8px;
+	border: 1px solid var(--colour-border);
+	background: var(--colour-white);
+	color: var(--colour-text-primary);
+	outline: none;
 }
 
 input:focus {
-    border-color: #cccccc;
+	border-color: #cccccc;
 }
 
 .field-hint {
-    font-size: 0.85rem;
-    color: var(--colour-text-light);
-    margin-top: 0.25rem;
+	font-size: 0.85rem;
+	color: var(--colour-text-light);
+	margin-top: 0.25rem;
 }
 
 .form-submit {
-    width: 100%;
-    border: 0;
-    cursor: pointer;
-    margin-top: 0.3rem;
+	width: 100%;
+	border: 0;
+	cursor: pointer;
+	margin-top: 0.3rem;
 }
 
 .auth-alt {
-    margin-top: 1.2rem;
-    text-align: center;
-    color: var(--colour-text-muted);
-    font-size: 0.95rem;
+	margin-top: 1.2rem;
+	text-align: center;
+	color: var(--colour-text-muted);
+	font-size: 0.95rem;
 }
 
 .auth-alt a {
-    color: var(--colour-text-primary);
-    font-weight: 600;
-    text-decoration: none;
+	color: var(--colour-text-primary);
+	font-weight: 600;
+	text-decoration: none;
 }
 
 .auth-alt a:hover {
-    opacity: 0.8;
+	opacity: 0.8;
 }
 
 .alert {
-    border: 1px solid var(--colour-border);
-    background: var(--colour-grey-light);
-    border-radius: 8px;
-    padding: 0.9rem 1rem;
-    margin-bottom: 1.2rem;
-    text-align: left;
+	border: 1px solid var(--colour-border);
+	background: var(--colour-grey-light);
+	border-radius: 8px;
+	padding: 0.9rem 1rem;
+	margin-bottom: 1.2rem;
+	text-align: left;
 }
 
 .alert-error {
-    border-color: #e7c3c3;
-    background: #fff6f6;
+	border-color: #e7c3c3;
+	background: #fff6f6;
 }
 
 @media (max-width: 600px) {
-    .auth-card {
-        padding: 2rem 1.5rem;
-    }
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
+	.auth-card {
+		padding: 2rem 1.5rem;
+	}
+	.form-grid {
+		grid-template-columns: 1fr;
+	}
 }

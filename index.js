@@ -37,5 +37,5 @@ app.use(pageRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}.`);
+	console.log(`Server running on port ${PORT}.`);
 });

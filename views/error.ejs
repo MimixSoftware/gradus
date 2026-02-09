@@ -1,32 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Gradus</title>
-    <link rel="icon" href="/images/favicon.ico">
-    <link rel="stylesheet" href="/css/style.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %> - Gradus</title>
+	<link rel="icon" href="/images/favicon.ico">
+	<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
-    <%- include('partials/header') %>
+	<%- include('partials/header') %>
 
-    <main class="page">
-        <section class="hero">
-            <h1><%= statusCode %></h1>
+	<main class="page">
+		<section class="hero">
+			<h1><%= statusCode %></h1>
 
-            <p><%= message %></p>
+			<p><%= message %></p>
 
-            <% if (showHomeButton) { %>
-                <a href="/" class="btn btn-primary btn-large">
-                    Go back home
-                </a>
-            <% } %>
-        </section>
-    </main>
+			<% if (showHomeButton) { %>
+				<a href="/" class="btn btn-primary btn-large">
+					Go back home
+				</a>
+			<% } %>
+		</section>
+	</main>
 
-    <%- include('partials/footer') %>
+	<%- include('partials/footer') %>
 
-    <script src="/js/main.js"></script>
+	<script src="/js/main.js"></script>
 </body>
 </html>
