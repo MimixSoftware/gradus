@@ -5,8 +5,15 @@
 		</div>
 
 		<nav class="nav">
-			<a href="/login" class="nav-link">Login</a>
-			<a href="/register" class="btn btn-primary">Register</a>
+			<% if (user) { %>
+				<a href="/statistics" class="nav-link">Statistics</a>
+				<a href="/schedule" class="nav-link">My Schedule</a>
+				<a href="/options" class="nav-link">Options</a>
+				<a href="#" id="logout-link" class="btn btn-primary">Logout</a>
+			<% } else { %>
+				<a href="/login" class="nav-link">Login</a>
+				<a href="/register" class="btn btn-primary">Register</a>
+			<% } %>
 		</nav>
 	</div>
 </header>

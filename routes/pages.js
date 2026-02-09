@@ -1,19 +1,26 @@
 const express = require("express");
 const router = express.Router();
 
+const { requireAuth, redirectIfAuth } = require("../middleware/authGuards");
+
 // Landing page
-router.get('/', (req, res) => {
+router.get('/', redirectIfAuth, (req, res) => {
 	res.render('index', { title: 'Home' });
 });
 
 // Login page
-router.get('/login', (req, res) => {
+router.get('/login', redirectIfAuth, (req, res) => {
 	res.render('login', { title: 'Login' });
 });
 
 // Registration page
-router.get('/register', (req, res) => {
+router.get('/register', redirectIfAuth, (req, res) => {
 	res.render('register', { title: 'Register' });
+});
+
+// Dashboard page
+router.get('/dashboard', requireAuth, (req, res) => {
+	res.render('dashboard', { title: 'Dashboard' });
 });
 
 // 404 page

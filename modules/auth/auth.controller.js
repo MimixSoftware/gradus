@@ -6,12 +6,14 @@ async function register(req, res, next) {
 
 	const user = await authService.register(validated);
 
-	req.session.userId = user.id;
+	req.session.user = {
+		id: user.id,
+		email: user.email,
+		forename: user.forename,
+		surname: user.surname
+	};
 
-	return res.status(201).json({
-		message: "Registered successfully.",
-		user,
-	});
+	return res.status(201).json({ message: "Registered successfully." });
 }
 
 async function login(req, res, next) {
@@ -22,12 +24,14 @@ async function login(req, res, next) {
 	req.session.regenerate((regenErr) => {
 		if (regenErr) return next(regenErr);
 
-		req.session.userId = user.id;
+		req.session.user = {
+			id: user.id,
+			email: user.email,
+			forename: user.forename,
+			surname: user.surname
+		};
 
-		return res.status(200).json({
-			message: "Logged in.",
-			user,
-		});
+		return res.status(200).json({ message: "Logged in successfully." });
 	});
 }
 
@@ -36,17 +40,8 @@ function logout(req, res, next) {
 	if (err) return next(err);
 
 		res.clearCookie("gradus.sid");
-		return res.status(200).json({ message: "Logged out." });
+		return res.status(200).json({ message: "Logged out successfully." });
 	});
 }
 
-async function me(req, res, next) {
-	if (!req.session.userId) {
-		return res.status(401).json({ message: "Not authenticated." });
-	}
-
-	const user = await authService.getUserById(req.session.userId);
-	return res.status(200).json({ user });
-}
-
-module.exports = { register, login, logout, me };
+module.exports = { register, login, logout };

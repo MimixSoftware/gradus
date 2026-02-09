@@ -31,6 +31,17 @@ function setAuthError(el, message) {
 	}
 }
 
+document.getElementById("logout-link")?.addEventListener("click", async (e) => {
+	e.preventDefault();
+
+	try {
+		await postJson("/api/auth/logout");
+		window.location.href = "/";
+	} catch (err) {
+		console.error(err);
+	}
+});
+
 document.addEventListener("DOMContentLoaded", () => {
 	// Login form
 	const loginForm = document.getElementById("login-form");
