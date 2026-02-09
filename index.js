@@ -28,17 +28,11 @@ app.use(createSessionMiddleware(db));
 app.use(requestLogger);
 app.use(maintenanceMode);
 
-app.get('/', (req, res) => {
-  res.render('index', { title: 'Home' });
-});
-
 const authRoutes = require("./modules/auth/auth.routes");
-app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 
-app.get(/.*/, (req, res) => {
-    res.status(404);
-    res.render('error', { title: 'Error', statusCode: '404', message: `The route ${req.originalUrl} does not exist! Please check the URL and try again.`, showHomeButton: true});
-});
+const pageRoutes = require("./routes/pages");
+app.use(pageRoutes);
 
 app.use(errorHandler);
 

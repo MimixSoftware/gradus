@@ -131,3 +131,133 @@ body {
     font-size: 0.9rem;
     color: var(--colour-text-light);
 }
+
+.auth {
+    flex: 1;
+    width: 100%;
+    padding: 4rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 520px;
+    border: 1px solid var(--colour-border);
+    background: var(--colour-white);
+    border-radius: 10px;
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.auth-logo {
+    width: 180px;
+    height: auto;
+    margin-bottom: 1.25rem;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+.auth h1 {
+    font-size: 2rem;
+    margin-bottom: 0.7rem;
+}
+
+.auth-subtitle {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--colour-text-muted);
+    margin-bottom: 1.8rem;
+}
+
+.form {
+    text-align: left;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-bottom: 1.2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--colour-text-primary);
+}
+
+input {
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid var(--colour-border);
+    background: var(--colour-white);
+    color: var(--colour-text-primary);
+    outline: none;
+}
+
+input:focus {
+    border-color: #cccccc;
+}
+
+.field-hint {
+    font-size: 0.85rem;
+    color: var(--colour-text-light);
+    margin-top: 0.25rem;
+}
+
+.form-submit {
+    width: 100%;
+    border: 0;
+    cursor: pointer;
+    margin-top: 0.3rem;
+}
+
+.auth-alt {
+    margin-top: 1.2rem;
+    text-align: center;
+    color: var(--colour-text-muted);
+    font-size: 0.95rem;
+}
+
+.auth-alt a {
+    color: var(--colour-text-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-alt a:hover {
+    opacity: 0.8;
+}
+
+.alert {
+    border: 1px solid var(--colour-border);
+    background: var(--colour-grey-light);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.2rem;
+    text-align: left;
+}
+
+.alert-error {
+    border-color: #e7c3c3;
+    background: #fff6f6;
+}
+
+@media (max-width: 600px) {
+    .auth-card {
+        padding: 2rem 1.5rem;
+    }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
