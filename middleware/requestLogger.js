@@ -85,6 +85,7 @@ module.exports = function requestLogger(req, res, next) {
 			level,
 			level === "INFO" ? "Request processed successfully." : "Request failed.",
 			{
+				...(req.user?.id && { user: { id: req.user.id } }),
 				request: buildRequestPayload(req),
 				response,
 				meta: {
