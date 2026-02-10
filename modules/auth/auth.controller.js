@@ -10,7 +10,8 @@ async function register(req, res, next) {
 		id: user.id,
 		email: user.email,
 		forename: user.forename,
-		surname: user.surname
+		surname: user.surname,
+		role: user.role
 	};
 
 	return res.status(201).json({ message: "Registered successfully." });
@@ -28,7 +29,8 @@ async function login(req, res, next) {
 			id: user.id,
 			email: user.email,
 			forename: user.forename,
-			surname: user.surname
+			surname: user.surname,
+			role: user.role
 		};
 
 		return res.status(200).json({ message: "Logged in successfully." });

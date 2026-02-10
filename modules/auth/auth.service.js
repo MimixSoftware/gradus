@@ -24,13 +24,14 @@ async function register({ email, forename, surname, password }) {
 		id: result.insertId,
 		email,
 		forename,
-		surname
+		surname,
+		role: "user"
 	};
 }
 
 async function login({ email, password }) {
 	const [rows] = await db.query(
-		`SELECT id, email, forename, surname, password_hash
+		`SELECT id, email, forename, surname, password_hash, role
 		FROM users
 		WHERE email = ?
 		LIMIT 1`,
@@ -52,7 +53,8 @@ async function login({ email, password }) {
 		id: user.id,
 		email: user.email,
 		forename: user.forename,
-		surname: user.surname
+		surname: user.surname,
+		role: user.role
 	};
 }
 

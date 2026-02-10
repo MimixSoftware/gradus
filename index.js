@@ -11,6 +11,7 @@ const maintenanceMode = require('./middleware/maintenanceMode');
 const requestLogger = require("./middleware/requestLogger");
 const errorHandler = require("./middleware/errorHandler");
 const createSessionMiddleware = require("./middleware/session");
+const attachUser = require("./middleware/attachUser");
 
 const PORT = process.env.PORT;
 
@@ -25,10 +26,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(createSessionMiddleware(db));
 
-app.use((req, res, next) => {
-	res.locals.user = req.session?.user ?? null;
-	next();
-});
+app.use(attachUser);
 
 app.use(requestLogger);
 app.use(maintenanceMode);
