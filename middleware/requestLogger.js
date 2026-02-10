@@ -14,6 +14,32 @@ function getLogLevel(statusCode) {
 	return "INFO";
 }
 
+function buildRequestPayload(req) {
+	const payload = {
+		method: req.method,
+		url: req.originalUrl,
+		ipAddress: getClientIp(req)
+	};
+
+	if (req.params && Object.keys(req.params).length > 0) {
+		payload.params = req.params;
+	}
+
+	if (req.query && Object.keys(req.query).length > 0) {
+		payload.query = req.query;
+	}
+
+	if (req.body && Object.keys(req.body).length > 0) {
+		payload.body = {
+			...req.body,
+			password: req.body.password && "[REDACTED]",
+			confirmPassword: req.body.confirmPassword && "[REDACTED]"
+		};
+	}
+
+	return payload;
+}
+
 module.exports = function requestLogger(req, res, next) {
 	const start = process.hrtime.bigint();
 
@@ -59,11 +85,7 @@ module.exports = function requestLogger(req, res, next) {
 			level,
 			level === "INFO" ? "Request processed successfully." : "Request failed.",
 			{
-				request: {
-					method: req.method,
-					url: req.originalUrl,
-					ipAddress: getClientIp(req)
-				},
+				request: buildRequestPayload(req),
 				response,
 				meta: {
 					durationMs: Math.round(durationMs * 100) / 100
