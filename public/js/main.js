@@ -96,6 +96,24 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	}
 
+	// Mobile nav menu
+	const toggle = document.querySelector(".nav-toggle");
+	const menu = document.querySelector("#nav-menu");
+
+	if (toggle && menu) {
+		toggle.addEventListener("click", (e) => {
+			e.stopPropagation();
+			menu.classList.toggle("is-open");
+		});
+
+		document.addEventListener("click", (e) => {
+			if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+				menu.classList.remove("is-open");
+			}
+		});
+	}
+
+
 	// current-year span
 	currentYearElement = document.getElementById("current-year");
 	if (currentYearElement) {

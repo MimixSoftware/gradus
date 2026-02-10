@@ -5,15 +5,22 @@
 		</div>
 
 		<nav class="nav">
-			<% if (user) { %>
-				<a href="/statistics" class="nav-link">Statistics</a>
-				<a href="/schedule" class="nav-link">My Schedule</a>
-				<a href="/options" class="nav-link">Options</a>
-				<a href="#" id="logout-link" class="btn btn-primary">Logout</a>
-			<% } else { %>
-				<a href="/login" class="nav-link">Login</a>
-				<a href="/register" class="btn btn-primary">Register</a>
-			<% } %>
+			<button class="nav-toggle" type="button">
+				<span class="burger"></span>
+			</button>
+
+			<div class="nav-menu" id="nav-menu">
+				<% if (user) { %>
+					<a href="/statistics" class="nav-link">Statistics</a>
+					<a href="/schedule" class="nav-link">My Schedule</a>
+					<a href="/options" class="nav-link">Options</a>
+					<a href="#" id="logout-link" class="btn btn-primary">Logout</a>
+				<% } else { %>
+					<a href="/login" class="nav-link">Login</a>
+					<a href="/register" class="btn btn-primary">Register</a>
+				<% } %>
+			</div>
 		</nav>
+
 	</div>
 </header>
