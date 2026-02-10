@@ -88,6 +88,7 @@ module.exports = function requestLogger(req, res, next) {
 				...(req.user?.id && { user: { id: req.user.id } }),
 				request: buildRequestPayload(req),
 				response,
+				...(statusCode >= 500 && req._error && { error: req._error }),
 				meta: {
 					durationMs: Math.round(durationMs * 100) / 100
 				}
