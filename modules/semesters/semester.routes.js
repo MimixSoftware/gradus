@@ -1,0 +1,14 @@
+const express = require("express");
+const router = express.Router();
+
+const { requireApiAuth } = require("../../middleware/authGuards");
+const asyncHandler = require('../../utils/asyncHandler');
+const semesterController = require("./semester.controller");
+
+router.get("/", requireApiAuth, asyncHandler(semesterController.findAll));
+router.post("/", requireApiAuth, asyncHandler(semesterController.create));
+router.get("/:semesterId", requireApiAuth, asyncHandler(semesterController.findById));
+router.patch("/:semesterId", requireApiAuth, asyncHandler(semesterController.update));
+router.delete("/:semesterId", requireApiAuth, asyncHandler(semesterController.remove));
+
+module.exports = router;

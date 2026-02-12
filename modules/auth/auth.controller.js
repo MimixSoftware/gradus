@@ -1,7 +1,7 @@
 const authService = require("./auth.service");
 const authValidation = require("./auth.validation");
 
-async function register(req, res, next) {
+async function register(req, res) {
 	const validated = authValidation.validateRegisterInput(req.body);
 
 	const user = await authService.register(validated);

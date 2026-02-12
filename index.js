@@ -34,6 +34,9 @@ app.use(maintenanceMode);
 const authRoutes = require("./modules/auth/auth.routes");
 app.use("/api/auth", authRoutes);
 
+const semesterRoutes = require("./modules/semesters/semester.routes");
+app.use("/api/semesters", semesterRoutes);
+
 const pageRoutes = require("./routes/pages");
 app.use(pageRoutes);
 

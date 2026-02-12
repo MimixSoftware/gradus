@@ -32,12 +32,39 @@ function buildRequestPayload(req) {
 	if (req.body && Object.keys(req.body).length > 0) {
 		payload.body = {
 			...req.body,
-			password: req.body.password && "[REDACTED]",
-			confirmPassword: req.body.confirmPassword && "[REDACTED]"
+			password: req.body.password && "[redacted]",
+			confirmPassword: req.body.confirmPassword && "[redacted]",
+			availability: Array.isArray(req.body.availability) && `[${req.body.availability.length} slots]`,
 		};
 	}
 
 	return payload;
+}
+
+function sanitiseJsonBody(body) {
+	if (body) {
+		if (body.semester?.availability) {
+			return {
+				...body,
+				semester: {
+					...body.semester,
+					availability: `[${body.semester.availability.length} slots]`
+				}
+			};
+		}
+
+		if (Array.isArray(body.semesters)) {
+			return {
+				...body,
+				semesters: body.semesters.map(s => ({
+					...s,
+					availability: `[${s.availability.length} slots]`
+				}))
+			};
+		}
+	}
+
+	return body;
 }
 
 module.exports = function requestLogger(req, res, next) {
@@ -75,7 +102,7 @@ module.exports = function requestLogger(req, res, next) {
 		} else if (captured?.type === "json") {
 			response = {
 				statusCode,
-				body: captured.body
+				body: sanitiseJsonBody(captured.body)
 			};
 		} else {
 			response = { statusCode };
