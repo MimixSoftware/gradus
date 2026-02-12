@@ -1,0 +1,14 @@
+CREATE TABLE semesters (
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	user_id INT UNSIGNED NOT NULL,
+	name VARCHAR(100) NOT NULL,
+	start_date DATE NOT NULL,
+	end_date DATE NOT NULL,
+	availability BINARY(21) NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+	CONSTRAINT fk_semesters_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	CONSTRAINT uq_semesters_user_name UNIQUE (user_id, name),
+	CONSTRAINT chk_semester_dates CHECK (start_date <= end_date)
+);
