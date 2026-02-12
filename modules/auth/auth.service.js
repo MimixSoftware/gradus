@@ -6,27 +6,28 @@ const AppError = require('../../utils/AppError');
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS);
 
 async function register({ email, forename, surname, password }) {
-	const [existing] = await db.query("SELECT id FROM users WHERE email = ? LIMIT 1", [email]);
+	try {
+		const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-	if (existing.length > 0) {
-		throw new AppError("Email already in use.", 409);
+		const [result] = await db.query(
+			`INSERT INTO users (email, forename, surname, password_hash)
+			VALUES (?, ?, ?, ?)`,
+			[email, forename, surname, password_hash]
+		);
+
+		return {
+			id: result.insertId,
+			email,
+			forename,
+			surname,
+			role: "user"
+		};
+	} catch (err) {
+		if (err.code === "ER_DUP_ENTRY") {
+			throw new AppError("Email already in use.", 409);
+		}
+		throw err;
 	}
-
-	const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-
-	const [result] = await db.query(
-		`INSERT INTO users (email, forename, surname, password_hash)
-		VALUES (?, ?, ?, ?)`,
-		[email, forename, surname, password_hash]
-	);
-
-	return {
-		id: result.insertId,
-		email,
-		forename,
-		surname,
-		role: "user"
-	};
 }
 
 async function login({ email, password }) {
