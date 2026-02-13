@@ -6,7 +6,7 @@ validateEnv();
 const express = require('express');
 const path = require('path');
 
-const db = require('./db');
+const db = require('./database/db');
 const maintenanceMode = require('./middleware/maintenanceMode');
 const requestLogger = require("./middleware/requestLogger");
 const errorHandler = require("./middleware/errorHandler");

@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 
-const db = require("../../db");
+const db = require("../../database/db");
 const AppError = require('../../utils/AppError');
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS);

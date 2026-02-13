@@ -2,14 +2,14 @@ const v = require("../../utils/validationUtils");
 const AppError = require("../../utils/AppError");
 
 function validateRegisterInput({ email, forename, surname, password, confirmPassword } = {}) {
+	forename = v.validateRequiredString(forename, "Forename", { max: 100 });
+	surname = v.validateRequiredString(surname, "Surname", { max: 100 });
 	email = v.validateRequiredString(email, "Email", {
 		toLowerCase: true,
 		max: 255,
 		pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 		patternMessage: "Invalid email format."
 	});
-	forename = v.validateRequiredString(forename, "Name", { max: 100 });
-	surname = v.validateRequiredString(surname, "Surname", { max: 100 });
 	password = v.validateRequiredString(password, "Password", { trim: false, min: 8, max: 72 });
 
 	if (password !== confirmPassword) {
