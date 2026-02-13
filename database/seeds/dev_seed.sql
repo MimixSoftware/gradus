@@ -113,3 +113,80 @@ VALUES
 	5,
 	'2025-11-15 23:59:59'
 );
+
+-- tasks
+INSERT INTO tasks
+(assignment_id, name, description, status, deadline, etc_minutes, atc_minutes)
+VALUES
+(
+	1,
+	'Read lecture notes',
+	'Review lecture slides and highlight key concepts.',
+ 	'todo',
+	'2026-03-01 20:00:00', 
+	60,
+	NULL
+),
+(
+	1,
+	'Implement practice problems',
+ 	'Solve coding exercises from tutorial sheet.',
+ 	'doing',
+	'2026-03-02 22:00:00',
+	120,
+	NULL
+),
+(
+	1,
+	'Write summary notes',
+	'Condense key ideas into revision notes.',
+	'done',
+	'2026-02-25 18:00:00',
+	90,
+	80
+),
+(
+	2,
+	'Design ER diagram',
+	'Create initial ERD draft for project dataset.',
+	'todo',
+	'2026-03-05 21:00:00',
+	75,
+	NULL
+),
+(
+	4,
+	'Read case study',
+	'Review company financial statements.',
+	'todo',
+	'2026-03-03 19:00:00',
+	45,
+	NULL
+),
+(
+	4,
+	'Calculate financial ratios',
+	'Compute liquidity and profitability ratios.',
+	'doing',
+	'2026-03-04 20:30:00',
+	90,
+	NULL
+),
+(
+	4,
+	'Prepare analysis report',
+ 	'Write summary interpretation of ratios.',
+ 	'done',
+	'2026-02-28 17:00:00',
+	120,
+	110
+),
+(
+	5,
+	'Prepare costing worksheet',
+	'Draft absorption costing calculations.',
+	'todo',
+	'2026-03-07 21:00:00',
+	60,
+	NULL
+);
