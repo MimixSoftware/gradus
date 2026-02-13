@@ -13,6 +13,6 @@ CREATE TABLE tasks (
 
     CONSTRAINT fk_tasks_assignment FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE CASCADE,
     CONSTRAINT uq_tasks_assignment_name UNIQUE (assignment_id, name),
-    CONSTRAINT chk_tasks_etc_minutes CHECK (etc_minutes IS NULL OR etc_minutes >= 1),
-    CONSTRAINT chk_tasks_atc_minutes CHECK (atc_minutes IS NULL OR atc_minutes >= 1)
+    CONSTRAINT chk_tasks_etc_minutes CHECK (etc_minutes IS NULL OR (etc_minutes BETWEEN 1 AND 1440)),
+    CONSTRAINT chk_tasks_atc_minutes CHECK (atc_minutes IS NULL OR (atc_minutes BETWEEN 1 AND 1440))
 );

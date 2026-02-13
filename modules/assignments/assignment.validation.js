@@ -8,7 +8,7 @@ function validateCreateInModuleInput({ name, description, weight, confidence, de
     description = v.validateOptionalString(description, "Description", { max: 500 }) ?? null;
     weight = v.validateOptionalInt(weight, "Weight", { min: 1, max: 100 }) ?? null;
 	confidence = v.validateOptionalInt(confidence, "Confidence", { min: 1, max: 5 }) ?? null;
-	deadline = v.validateOptionalUtcDatetime(deadline) ?? null;
+	deadline = v.validateOptionalUtcDatetime(deadline, "Deadline") ?? null;
 
 	return { name, description, weight, confidence, deadline };
 }
@@ -44,7 +44,7 @@ function validateUpdateInput({ name, description, status, weight, confidence, de
 		updates.confidence = v.parseOptionalInt(weight, "Confidence", { min: 1, max: 5 });
 	}
 	if (hasDeadline) {
-		updates.deadline = v.validateRequiredUtcDatetime(deadline);
+		updates.deadline = v.validateOptionalUtcDatetime(deadline, "Deadline");
 	}
 
 	return updates;
