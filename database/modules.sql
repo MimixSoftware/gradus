@@ -2,7 +2,7 @@ CREATE TABLE modules (
 	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 	semester_id INT UNSIGNED NOT NULL,
 	name VARCHAR(100) NOT NULL,
-	credits TINYINT UNSIGNED NULL,
+	credits TINYINT UNSIGNED NOT NULL DEFAULT 0,
 	colour CHAR(7) NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -10,5 +10,5 @@ CREATE TABLE modules (
 	CONSTRAINT fk_modules_semester FOREIGN KEY (semester_id) REFERENCES semesters(id) ON DELETE CASCADE,
 	CONSTRAINT uq_modules_semester_name UNIQUE (semester_id, name),
 	CONSTRAINT chk_modules_colour CHECK (colour REGEXP '^#[0-9A-Fa-f]{6}$'),
-	CONSTRAINT chk_modules_credits CHECK (credits IS NULL OR credits BETWEEN 0 AND 60)
+	CONSTRAINT chk_modules_credits CHECK (credits BETWEEN 0 AND 60)
 );

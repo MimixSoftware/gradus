@@ -125,7 +125,7 @@ async function update(userId, semesterId, { name, startDate, endDate, availabili
 		values.push(name);
 	}
 
-	if (startDate !== undefined && startDate !== undefined) {
+	if (startDate !== undefined && endDate !== undefined) {
 		await overlapCheck(userId, endDate, startDate);
 
 		setParts.push("start_date = ?");
