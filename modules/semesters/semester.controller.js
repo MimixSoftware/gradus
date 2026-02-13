@@ -12,7 +12,7 @@ async function create(req, res) {
 
 	const semester = await semesterService.create(req.user.id, validated);
 
-	return res.status(201).json({ messsage: "Semester created successfully.", semester });
+	return res.status(201).json({ message: "Semester created successfully.", semester });
 }
 
 async function findById(req, res) {

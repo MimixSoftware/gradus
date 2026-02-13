@@ -21,7 +21,7 @@ async function createInSemester(req, res) {
 
 	const module = await moduleService.createInSemester(req.user.id, semesterId, validated);
 
-	return res.status(201).json({ messsage: "Module created successfully.", module });
+	return res.status(201).json({ message: "Module created successfully.", module });
 }
 
 async function findById(req, res) {

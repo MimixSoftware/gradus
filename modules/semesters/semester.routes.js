@@ -5,6 +5,7 @@ const { requireApiAuth } = require("../../middleware/authGuards");
 const asyncHandler = require('../../utils/asyncHandler');
 const semesterController = require("./semester.controller");
 const moduleController = require("../modules/module.controller");
+const assignmentController = require("../assignments/assignment.controller");
 
 router.get("/", requireApiAuth, asyncHandler(semesterController.findAll));
 router.post("/", requireApiAuth, asyncHandler(semesterController.create));
@@ -14,5 +15,7 @@ router.delete("/:semesterId", requireApiAuth, asyncHandler(semesterController.re
 
 router.get("/:semesterId/modules", requireApiAuth, asyncHandler(moduleController.findAllBySemester));
 router.post("/:semesterId/modules", requireApiAuth, asyncHandler(moduleController.createInSemester));
+
+router.get("/:semesterId/assignments", requireApiAuth, asyncHandler(assignmentController.findAllBySemester));
 
 module.exports = router;

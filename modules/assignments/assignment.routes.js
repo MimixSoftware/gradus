@@ -6,8 +6,8 @@ const asyncHandler = require('../../utils/asyncHandler');
 const assignmentController = require("./assignment.controller");
 
 router.get("/", requireApiAuth, asyncHandler(assignmentController.findAll));
-router.get("/:moduleId", requireApiAuth, asyncHandler(assignmentController.findById));
-router.patch("/:moduleId", requireApiAuth, asyncHandler(assignmentController.update));
-router.delete("/:moduleId", requireApiAuth, asyncHandler(assignmentController.remove));
+router.get("/:assignmentId", requireApiAuth, asyncHandler(assignmentController.findById));
+router.patch("/:assignmentId", requireApiAuth, asyncHandler(assignmentController.update));
+router.delete("/:assignmentId", requireApiAuth, asyncHandler(assignmentController.remove));
 
 module.exports = router;

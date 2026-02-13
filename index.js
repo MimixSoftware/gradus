@@ -40,6 +40,9 @@ app.use("/api/semesters", semesterRoutes);
 const moduleRoutes = require("./modules/modules/module.routes");
 app.use("/api/modules", moduleRoutes);
 
+const assignmentRoutes = require("./modules/assignments/assignment.routes");
+app.use("/api/assignments", assignmentRoutes);
+
 const pageRoutes = require("./routes/pages");
 app.use(pageRoutes);
 
