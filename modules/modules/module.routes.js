@@ -6,7 +6,6 @@ const asyncHandler = require('../../utils/asyncHandler');
 const moduleController = require("./module.controller");
 
 router.get("/", requireApiAuth, asyncHandler(moduleController.findAll));
-router.post("/", requireApiAuth, asyncHandler(moduleController.create));
 router.get("/:moduleId", requireApiAuth, asyncHandler(moduleController.findById));
 router.patch("/:moduleId", requireApiAuth, asyncHandler(moduleController.update));
 router.delete("/:moduleId", requireApiAuth, asyncHandler(moduleController.remove));

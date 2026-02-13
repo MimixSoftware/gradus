@@ -29,12 +29,30 @@ async function findAll(userId) {
 	}));
 }
 
-async function create(userId, { semesterId, name, credits, colour }) {
+async function findAllBySemester(userId, semesterId) {
+	const [rows] = await db.query(
+		`SELECT m.id, m.semester_id, m.name, m.credits, m.colour, m.created_at, m.updated_at
+		 FROM modules m
+		 INNER JOIN semesters s ON s.id = m.semester_id
+		 WHERE s.user_id = ? AND s.id = ?
+		 ORDER BY m.id DESC`,
+		[userId, semesterId]
+	);
+
+	return rows.map((m) => ({
+		id: m.id,
+		semesterId: m.semester_id,
+		name: m.name,
+		credits: m.credits,
+		colour: m.colour,
+		createdAt: m.created_at,
+		updatedAt: m.updated_at
+	}));
+}
+
+async function createInSemester(userId, semesterId, { name, credits, colour }) {
 	const [semRows] = await db.query(
-		`SELECT 1
-		FROM semesters
-		WHERE id = ? AND user_id = ?
-		LIMIT 1`,
+		`SELECT 1 FROM semesters WHERE id = ? AND user_id = ? LIMIT 1`,
 		[semesterId, userId]
 	);
 
@@ -45,7 +63,7 @@ async function create(userId, { semesterId, name, credits, colour }) {
 	try {
 		const [result] = await db.query(
 			`INSERT INTO modules (semester_id, name, credits, colour)
-			VALUES (?, ?, ?, ?)`,
+			 VALUES (?, ?, ?, ?)`,
 			[semesterId, name, credits, colour]
 		);
 
@@ -149,4 +167,4 @@ async function remove(userId, moduleId) {
 	}
 }
 
-module.exports = { findAll, create, findById, update, remove };
+module.exports = { findAll, findAllBySemester, createInSemester, findById, update, remove };

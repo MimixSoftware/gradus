@@ -1,15 +1,13 @@
 const AppError = require("../../utils/AppError");
 
-function validateCreateInput({ semesterId, name, credits, colour }) {
+function validateCreateInput({ name, credits, colour }) {
 	name = name?.trim();
 	credits = Number(credits ?? 0);
 	colour = colour?.trim();
 	
-	if (!semesterId || !name || !colour) {
+	if (!name || !colour) {
 		throw new AppError("All fields are required.", 400);
 	}
-
-	semesterId = validateSemesterId(semesterId);
 
 	if (name.length > 100) {
 		throw new AppError("Name must not exceed 100 characters.", 400);
@@ -24,7 +22,6 @@ function validateCreateInput({ semesterId, name, credits, colour }) {
 	}
 
 	return {
-		semesterId,
 		name,
 		credits,
 		colour
@@ -112,4 +109,4 @@ function validateSemesterId(semesterId) {
 	return semesterId;
 }
 
-module.exports = { validateCreateInput, validateUpdateInput, validateModuleId };
+module.exports = { validateCreateInput, validateUpdateInput, validateModuleId, validateSemesterId };

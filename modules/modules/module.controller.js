@@ -7,10 +7,19 @@ async function findAll(req, res) {
 	return res.status(200).json({ modules });
 }
 
+async function findAllBySemester(req, res) {
+	const semesterId = moduleValidation.validateSemesterId(req.params.semesterId);
+
+	const modules = await moduleService.findAllBySemester(req.user.id, semesterId);
+
+	return res.status(200).json({ modules });
+}
+
 async function create(req, res) {
+	const semesterId = moduleValidation.validateSemesterId(req.params.semesterId);
 	const validated = moduleValidation.validateCreateInput(req.body);
 
-	const module = await moduleService.create(req.user.id, validated);
+	const module = await moduleService.createInSemester(req.user.id, semesterId, validated);
 
 	return res.status(201).json({ messsage: "Module created successfully.", module });
 }
@@ -40,4 +49,4 @@ async function remove(req, res) {
 	return res.status(204).json({ message: "Module deleted successfully." });
 }
 
-module.exports = { findAll, create, findById, update, remove };
+module.exports = { findAll, findAllBySemester, create, findById, update, remove };
