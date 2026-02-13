@@ -125,18 +125,4 @@ function validateUpdateInput({ name, startDate, endDate, availability } = {}) {
 	return updates;
 }
 
-function validateSemesterId(semesterId) {
-	if (!semesterId) {
-		throw new AppError("Semester ID is required.", 400);
-	}
-
-	semesterId = Number(semesterId);
-
-	if (!Number.isInteger(semesterId) || semesterId <= 0) {
-		throw new AppError("Invalid semester ID.", 400);
-	}
-
-	return semesterId;
-}
-
-module.exports = { validateCreateInput, validateUpdateInput, validateSemesterId };
+module.exports = { validateCreateInput, validateUpdateInput };

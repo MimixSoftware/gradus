@@ -1,5 +1,6 @@
 const moduleService = require("./module.service");
 const moduleValidation = require("./module.validation");
+const { validateId } = require("../../utils/validationUtils");
 
 async function findAll(req, res) {
 	const modules = await moduleService.findAll(req.user.id);
@@ -8,7 +9,7 @@ async function findAll(req, res) {
 }
 
 async function findAllBySemester(req, res) {
-	const semesterId = moduleValidation.validateSemesterId(req.params.semesterId);
+	const semesterId = validateId(req.params.semesterId, "Semester ID");
 
 	const modules = await moduleService.findAllBySemester(req.user.id, semesterId);
 
@@ -16,7 +17,7 @@ async function findAllBySemester(req, res) {
 }
 
 async function createInSemester(req, res) {
-	const semesterId = moduleValidation.validateSemesterId(req.params.semesterId);
+	const semesterId = validateId(req.params.semesterId, "Semester ID");
 	const validated = moduleValidation.validateCreateInSemesterInput(req.body);
 
 	const module = await moduleService.createInSemester(req.user.id, semesterId, validated);
@@ -25,7 +26,7 @@ async function createInSemester(req, res) {
 }
 
 async function findById(req, res) {
-	const moduleId = moduleValidation.validateModuleId(req.params.moduleId);
+	const moduleId = validateId(req.params.moduleId, "Module ID");
 
 	const module = await moduleService.findById(req.user.id, moduleId);
 
@@ -33,7 +34,7 @@ async function findById(req, res) {
 }
 
 async function update(req, res) {
-	const moduleId = moduleValidation.validateModuleId(req.params.moduleId);
+	const moduleId = validateId(req.params.moduleId, "Module ID");
 	const validated = moduleValidation.validateUpdateInput(req.body);
 
 	const module = await moduleService.update(req.user.id, moduleId, validated);
@@ -42,7 +43,7 @@ async function update(req, res) {
 }
 
 async function remove(req, res) {
-	const moduleId = moduleValidation.validateModuleId(req.params.moduleId);
+	const moduleId = validateId(req.params.moduleId, "Module ID");
 
 	await moduleService.remove(req.user.id, moduleId);
 

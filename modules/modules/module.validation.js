@@ -81,32 +81,4 @@ function validateUpdateInput({ name, credits, colour } = {}) {
 	return updates;
 }
 
-function validateModuleId(moduleId) {
-	if (!moduleId) {
-		throw new AppError("Module ID is required.", 400);
-	}
-
-	moduleId = Number(moduleId);
-
-	if (!Number.isInteger(moduleId) || moduleId <= 0) {
-		throw new AppError("Invalid module ID.", 400);
-	}
-
-	return moduleId;
-}
-
-function validateSemesterId(semesterId) {
-	if (!semesterId) {
-		throw new AppError("Semester ID is required.", 400);
-	}
-
-	semesterId = Number(semesterId);
-
-	if (!Number.isInteger(semesterId) || semesterId <= 0) {
-		throw new AppError("Invalid semester ID.", 400);
-	}
-
-	return semesterId;
-}
-
-module.exports = { validateCreateInSemesterInput, validateUpdateInput, validateModuleId, validateSemesterId };
+module.exports = { validateCreateInSemesterInput, validateUpdateInput };
