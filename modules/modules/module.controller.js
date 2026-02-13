@@ -1,6 +1,6 @@
 const moduleService = require("./module.service");
 const moduleValidation = require("./module.validation");
-const { validateId } = require("../../utils/validationUtils");
+const { validateRequiredInt } = require("../../utils/validationUtils");
 
 async function findAll(req, res) {
 	const modules = await moduleService.findAll(req.user.id);
@@ -9,7 +9,7 @@ async function findAll(req, res) {
 }
 
 async function findAllBySemester(req, res) {
-	const semesterId = validateId(req.params.semesterId, "Semester ID");
+	const semesterId = validateRequiredInt(req.params.semesterId, "Semester ID", { min: 1 });
 
 	const modules = await moduleService.findAllBySemester(req.user.id, semesterId);
 
@@ -17,7 +17,7 @@ async function findAllBySemester(req, res) {
 }
 
 async function createInSemester(req, res) {
-	const semesterId = validateId(req.params.semesterId, "Semester ID");
+	const semesterId = validateRequiredInt(req.params.semesterId, "Semester ID", { min: 1 });
 	const validated = moduleValidation.validateCreateInSemesterInput(req.body);
 
 	const module = await moduleService.createInSemester(req.user.id, semesterId, validated);
@@ -26,7 +26,7 @@ async function createInSemester(req, res) {
 }
 
 async function findById(req, res) {
-	const moduleId = validateId(req.params.moduleId, "Module ID");
+	const moduleId = validateRequiredInt(req.params.moduleId, "Module ID", { min: 1 });
 
 	const module = await moduleService.findById(req.user.id, moduleId);
 
@@ -34,7 +34,7 @@ async function findById(req, res) {
 }
 
 async function update(req, res) {
-	const moduleId = validateId(req.params.moduleId, "Module ID");
+	const moduleId = validateRequiredInt(req.params.moduleId, "Module ID", { min: 1 });
 	const validated = moduleValidation.validateUpdateInput(req.body);
 
 	const module = await moduleService.update(req.user.id, moduleId, validated);
@@ -43,7 +43,7 @@ async function update(req, res) {
 }
 
 async function remove(req, res) {
-	const moduleId = validateId(req.params.moduleId, "Module ID");
+	const moduleId = validateRequiredInt(req.params.moduleId, "Module ID", { min: 1 });
 
 	await moduleService.remove(req.user.id, moduleId);
 

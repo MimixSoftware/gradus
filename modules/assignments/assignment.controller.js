@@ -1,6 +1,6 @@
 const assignmentService = require("./assignment.service");
 const assignmentValidation = require("./assignment.validation");
-const { validateId } = require("../../utils/validationUtils");
+const { validateRequiredInt } = require("../../utils/validationUtils");
 
 async function findAll(req, res) {
 	const assignments = await assignmentService.findAll(req.user.id);
@@ -9,7 +9,7 @@ async function findAll(req, res) {
 }
 
 async function findAllBySemester(req, res) {
-	const semesterId = validateId(req.params.semesterId, "Semester ID");
+	const semesterId = validateRequiredInt(req.params.semesterId, "Semester ID", { min: 1 });
 
 	const assignments = await assignmentService.findAllBySemester(req.user.id, semesterId);
 
@@ -17,7 +17,7 @@ async function findAllBySemester(req, res) {
 }
 
 async function findAllByModule(req, res) {
-	const moduleId = validateId(req.params.moduleId, "Module ID");
+	const moduleId = validateRequiredInt(req.params.moduleId, "Module ID", { min: 1 });
 
 	const assignments = await assignmentService.findAllByModule(req.user.id, moduleId);
 
@@ -25,7 +25,7 @@ async function findAllByModule(req, res) {
 }
 
 async function createInModule(req, res) {
-	const moduleId = validateId(req.params.moduleId, "Module ID");
+	const moduleId = validateRequiredInt(req.params.moduleId, "Module ID", { min: 1 });
 	const validated = assignmentValidation.validateCreateInModuleInput(req.body);
 
 	const assignment = await assignmentService.createInModule(req.user.id, moduleId, validated);
@@ -34,7 +34,7 @@ async function createInModule(req, res) {
 }
 
 async function findById(req, res) {
-	const assignmentId = validateId(req.params.assignmentId, "Assignment ID");
+	const assignmentId = validateRequiredInt(req.params.assignmentId, "Assignment ID", { min: 1 });
 
 	const assignment = await assignmentService.findById(req.user.id, assignmentId);
 
@@ -42,7 +42,7 @@ async function findById(req, res) {
 }
 
 async function update(req, res) {
-	const assignmentId = validateId(req.params.assignmentId, "Assignment ID");
+	const assignmentId = validateRequiredInt(req.params.assignmentId, "Assignment ID", { min: 1 });
 	const validated = assignmentValidation.validateUpdateInput(req.body);
 
 	const assignment = await assignmentService.update(req.user.id, assignmentId, validated);
@@ -51,7 +51,7 @@ async function update(req, res) {
 }
 
 async function remove(req, res) {
-	const assignmentId = validateId(req.params.assignmentId, "Assignment ID");
+	const assignmentId = validateRequiredInt(req.params.assignmentId, "Assignment ID", { min: 1 });
 
 	await assignmentService.remove(req.user.id, assignmentId);
 

@@ -1,6 +1,6 @@
 const semesterService = require("./semester.service");
 const semesterValidation = require("./semester.validation");
-const { validateId } = require("../../utils/validationUtils");
+const { validateRequiredInt } = require("../../utils/validationUtils");
 
 async function findAll(req, res) {
 	const semesters = await semesterService.findAll(req.user.id);
@@ -17,7 +17,7 @@ async function create(req, res) {
 }
 
 async function findById(req, res) {
-	const semesterId = validateId(req.params.semesterId, "Semester ID");
+	const semesterId = validateRequiredInt(req.params.semesterId, "Semester ID", { min: 1 });
 
 	const semester = await semesterService.findById(req.user.id, semesterId);
 
@@ -25,7 +25,7 @@ async function findById(req, res) {
 }
 
 async function update(req, res) {
-	const semesterId = validateId(req.params.semesterId, "Semester ID");
+	const semesterId = validateRequiredInt(req.params.semesterId, "Semester ID", { min: 1 });
 	const validated = semesterValidation.validateUpdateInput(req.body);
 
 	const semester = await semesterService.update(req.user.id, semesterId, validated);
@@ -34,7 +34,7 @@ async function update(req, res) {
 }
 
 async function remove(req, res) {
-	const semesterId = validateId(req.params.semesterId, "Semester ID");
+	const semesterId = validateRequiredInt(req.params.semesterId, "Semester ID", { min: 1 });
 
 	await semesterService.remove(req.user.id, semesterId);
 

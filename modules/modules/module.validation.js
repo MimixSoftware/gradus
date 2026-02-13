@@ -1,25 +1,14 @@
+const v = require("../../utils/validationUtils");
 const AppError = require("../../utils/AppError");
 
 function validateCreateInSemesterInput({ name, credits, colour } = {}) {
-	name = name?.trim();
-	credits = Number(credits ?? 0);
-	colour = colour?.trim();
-	
-	if (!name || !colour) {
-		throw new AppError("All fields are required.", 400);
-	}
-
-	if (name.length > 100) {
-		throw new AppError("Name must not exceed 100 characters.", 400);
-	}
-
-	if (!Number.isInteger(credits) || credits < 0 || credits > 60) {
-		throw new AppError("Credits must be an integer between 0 and 60.", 400);
-	}
-
-	if (!/^#[0-9A-Fa-f]{6}$/.test(colour)) {
-		throw new AppError("Colour must be a valid hex code.", 400);
-	}
+	name = v.validateRequiredString(name, "Name", { max: 100 });
+	credits = v.validateOptionalInt(credits, "Credits", { min: 0, max: 60 });
+	endDate = v.validateRequiredDate(endDate, "End Date");
+	colour = v.validateRequiredString(colour, "Colour", {
+		pattern: /^#[0-9A-Fa-f]{6}$/,
+		patternMessage: "Colour must be a valid hex code."
+	});
 
 	return {
 		name,
@@ -41,41 +30,16 @@ function validateUpdateInput({ name, credits, colour } = {}) {
 	const updates = {};
 
 	if (hasName) {
-		name = name?.trim();
-
-		if (!name) {
-			throw new AppError("Name must not be empty.", 400);
-		}
-
-		if (name.length > 100) {
-			throw new AppError("Name must not exceed 100 characters.", 400);
-		}
-
-		updates.name = name;
+		updates.name = v.validateRequiredString(name, "Name", { max: 100 });;
 	}
-
 	if (hasCredits) {
-		credits = Number(credits ?? 0);
-
-		if (!Number.isInteger(credits) || credits < 0 || credits > 60) {
-			throw new AppError("Credits must be an integer between 0 and 60.", 400);
-		}
-
-		updates.credits = credits;
+		updates.credits = v.validateOptionalInt(credits, "Credits", { min: 0, max: 60 });
 	}
-	
 	if (hasColour) {
-		colour = colour?.trim();
-
-		if (!colour) {
-			throw new AppError("Colour must not be empty.", 400);
-		}
-
-		if (!/^#[0-9A-Fa-f]{6}$/.test(colour)) {
-			throw new AppError("Colour must be a valid hex code.", 400);
-		}
-
-		updates.colour = colour;
+		updates.colour = v.validateRequiredString(colour, "Colour", {
+			pattern: /^#[0-9A-Fa-f]{6}$/,
+			patternMessage: "Colour must be a valid hex code."
+		});
 	}
 
 	return updates;
