@@ -1,6 +1,6 @@
 const AppError = require("../../utils/AppError");
 
-function validateCreateInput({ name, startDate, endDate, availability }) {
+function validateCreateInput({ name, startDate, endDate, availability } = {}) {
 	name = name?.trim();
 
 	
@@ -51,7 +51,7 @@ function validateCreateInput({ name, startDate, endDate, availability }) {
 	};
 }
 
-function validateUpdateInput({ name, startDate, endDate, availability }) {
+function validateUpdateInput({ name, startDate, endDate, availability } = {}) {
 	const hasName = name !== undefined;
 	const hasStart = startDate !== undefined;
 	const hasEnd = endDate !== undefined;

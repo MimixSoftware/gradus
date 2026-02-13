@@ -1,6 +1,6 @@
 const AppError = require("../../utils/AppError");
 
-function validateCreateInput({ name, credits, colour }) {
+function validateCreateInSemesterInput({ name, credits, colour } = {}) {
 	name = name?.trim();
 	credits = Number(credits ?? 0);
 	colour = colour?.trim();
@@ -28,7 +28,7 @@ function validateCreateInput({ name, credits, colour }) {
 	};
 }
 
-function validateUpdateInput({ name, credits, colour }) {
+function validateUpdateInput({ name, credits, colour } = {}) {
 	const hasName = name !== undefined;
 	const hasCredits = credits !== undefined;
 	const hasColour = colour !== undefined;
@@ -109,4 +109,4 @@ function validateSemesterId(semesterId) {
 	return semesterId;
 }
 
-module.exports = { validateCreateInput, validateUpdateInput, validateModuleId, validateSemesterId };
+module.exports = { validateCreateInSemesterInput, validateUpdateInput, validateModuleId, validateSemesterId };

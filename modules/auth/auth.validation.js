@@ -1,6 +1,6 @@
 const AppError = require("../../utils/AppError");
 
-function validateRegisterInput({ email, forename, surname, password, confirmPassword }) {
+function validateRegisterInput({ email, forename, surname, password, confirmPassword } = {}) {
 	email = email?.trim().toLowerCase();
 	forename = forename?.trim();
 	surname = surname?.trim();
@@ -46,7 +46,7 @@ function validateRegisterInput({ email, forename, surname, password, confirmPass
 	};
 }
 
-function validateLoginInput({ email, password }) {
+function validateLoginInput({ email, password } = {}) {
 	email = email?.trim().toLowerCase();
 
 	if (!email || !password) {
