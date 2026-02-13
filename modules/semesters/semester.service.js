@@ -1,6 +1,19 @@
 const db = require("../../db");
 const AppError = require('../../utils/AppError');
 
+function mapSemesterRow(s) {
+	return {
+		id: s.id,
+		userId: s.user_id,
+		name: s.name,
+		startDate: s.start_date,
+		endDate: s.end_date,
+		availability: unpackAvailability(s.availability),
+		createdAt: s.created_at,
+		updatedAt: s.updated_at
+	};
+}
+
 function packAvailability(slots) {
 	const buf = Buffer.alloc(21, 0);
 
@@ -56,16 +69,7 @@ async function findAll(userId) {
 		[userId]
 	);
 
-	return rows.map((r) => ({
-		id: r.id,
-		userId: r.user_id,
-		name: r.name,
-		startDate: r.start_date,
-		endDate: r.end_date,
-		availability: unpackAvailability(r.availability),
-		createdAt: r.created_at,
-		updatedAt: r.updated_at
-	}));
+	return rows.map(mapSemesterRow);
 }
 
 async function create(userId, { name, startDate, endDate, availability }) {
@@ -102,18 +106,7 @@ async function findById(userId, semesterId) {
 		throw new AppError("Semester not found.", 404);
 	}
 
-	const s = rows[0];
-
-	return {
-		id: s.id,
-		userId: s.user_id,
-		name: s.name,
-		startDate: s.start_date,
-		endDate: s.end_date,
-		availability: unpackAvailability(s.availability),
-		createdAt: s.created_at,
-		updatedAt: s.updated_at
-	};
+	return mapSemesterRow(rows[0]);
 }
 
 async function update(userId, semesterId, { name, startDate, endDate, availability }) {

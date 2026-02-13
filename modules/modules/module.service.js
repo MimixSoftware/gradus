@@ -1,6 +1,18 @@
 const db = require("../../db");
 const AppError = require('../../utils/AppError');
 
+function mapModuleRow(m) {
+	return {
+		id: m.id,
+		semesterId: m.semester_id,
+		name: m.name,
+		credits: m.credits,
+		colour: m.colour,
+		createdAt: m.created_at,
+		updatedAt: m.updated_at
+	};
+}
+
 async function findAll(userId) {
 	const [rows] = await db.query(
 		`SELECT
@@ -18,15 +30,7 @@ async function findAll(userId) {
 		[userId]
 	);
 
-	return rows.map((m) => ({
-		id: m.id,
-		semesterId: m.semester_id,
-		name: m.name,
-		credits: m.credits,
-		colour: m.colour,
-		createdAt: m.created_at,
-		updatedAt: m.updated_at
-	}));
+	return rows.map(mapModuleRow);
 }
 
 async function findAllBySemester(userId, semesterId) {
@@ -39,15 +43,7 @@ async function findAllBySemester(userId, semesterId) {
 		[userId, semesterId]
 	);
 
-	return rows.map((m) => ({
-		id: m.id,
-		semesterId: m.semester_id,
-		name: m.name,
-		credits: m.credits,
-		colour: m.colour,
-		createdAt: m.created_at,
-		updatedAt: m.updated_at
-	}));
+	return rows.map(mapModuleRow);
 }
 
 async function createInSemester(userId, semesterId, { name, credits, colour }) {
@@ -97,17 +93,7 @@ async function findById(userId, moduleId) {
 		throw new AppError("Module not found.", 404);
 	}
 
-	const m = rows[0];
-
-	return {
-		id: m.id,
-		semesterId: m.semester_id,
-		name: m.name,
-		credits: m.credits,
-		colour: m.colour,
-		createdAt: m.created_at,
-		updatedAt: m.updated_at
-	};
+	return mapModuleRow(rows[0]);
 }
 
 async function update(userId, moduleId, { name, credits, colour }) {
