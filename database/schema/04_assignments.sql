@@ -4,7 +4,7 @@ CREATE TABLE assignments (
 	module_id INT UNSIGNED NOT NULL,
 	name VARCHAR(100) NOT NULL,
 	description VARCHAR(500) NULL,
-	status ENUM('active', 'archived') NOT NULL DEFAULT 'active',
+	status ENUM('active', 'completed') NOT NULL DEFAULT 'active',
 	weight TINYINT UNSIGNED NULL,
 	confidence TINYINT UNSIGNED NULL,
 	deadline TIMESTAMP NULL,

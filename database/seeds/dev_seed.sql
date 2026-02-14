@@ -81,7 +81,7 @@ VALUES
 	3, 
 	'Project Retrospective',
 	'Short retrospective on team workflow, lessons learned, and improvements.',
- 	'archived', 
+ 	'completed', 
 	10, 
 	5, 
 	'2025-12-01 23:59:59'
@@ -108,7 +108,7 @@ VALUES
 	9,
 	'Corporate Finance Quiz 1',
  	'Quiz covering NPV, IRR, and cost of capital basics.',
- 	'archived',
+ 	'completed',
 	10,
 	5,
 	'2025-11-15 23:59:59'

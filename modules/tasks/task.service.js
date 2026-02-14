@@ -16,6 +16,21 @@ function mapTaskRow(t) {
 	};
 }
 
+async function getTaskAssignmentStatus(userId, taskId) {
+	const [rows] = await db.query(
+		`SELECT a.status AS assignment_status
+		FROM tasks t
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE t.id = ? AND s.user_id = ?
+		LIMIT 1`,
+		[taskId, userId]
+	);
+
+	return rows[0]?.assignment_status;
+}
+
 async function findAll(userId) {
 	const [rows] = await db.query(
 		`SELECT
@@ -109,6 +124,16 @@ async function findById(userId, taskId) {
 async function update(userId, taskId, updates) {
 	const setParts = [];
 	const values = [];
+	
+	const assignmentStatus = await getTaskAssignmentStatus(userId, taskId);
+
+	if (assignmentStatus === undefined) {
+		throw new AppError("Task not found.", 404);
+	}
+
+	if (assignmentStatus === "completed") {
+		throw new AppError("Cannot modify tasks in a completed assignment. Reopen the assignment first.", 409);
+	}
 
 	if (updates.name !== undefined) {
 		setParts.push("t.name = ?");
@@ -171,6 +196,16 @@ async function update(userId, taskId, updates) {
 }
 
 async function remove(userId, taskId) {
+	const assignmentStatus = await getTaskAssignmentStatus(userId, taskId);
+
+	if (assignmentStatus === undefined) {
+		throw new AppError("Task not found.", 404);
+	}
+
+	if (assignmentStatus === "completed") {
+		throw new AppError("Cannot delete tasks in a completed assignment. Reopen the assignment first.", 409);
+	}
+
 	const [result] = await db.query(
 		`DELETE t
 		FROM tasks t
