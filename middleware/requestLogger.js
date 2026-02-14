@@ -34,7 +34,9 @@ function buildRequestPayload(req) {
 			...req.body,
 			password: req.body.password && "[redacted]",
 			confirmPassword: req.body.confirmPassword && "[redacted]",
-			availability: Array.isArray(req.body.availability) && `[${req.body.availability.length} slots]`,
+			...(Array.isArray(req.body.availability) && {
+				availability: `[${req.body.availability.length} slots]`,
+			})
 		};
 	}
 
