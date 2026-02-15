@@ -12,7 +12,60 @@
 	<%- include('partials/header') %>
 
 	<main class="page">
-        <h1>Welcome, <%- user.forename %>!</h1>
+        <div class="dashboard">
+			<header class="dash-header">
+				<div class="dash-title">
+					<h1>Welcome back <span class="dash-name"><%= user.forename %></span>!</h1>
+					<div class="dash-subline">
+						<span></span>
+						<a class="dash-link" href="#">Change Semester</a>
+					</div>
+				</div>
+
+				<div class="dash-meta">
+					<div class="dash-datetime">
+						<div class="dash-date">T</div>
+						<div class="dash-time"></div>
+					</div>
+				</div>
+			</header>
+
+			<section class="dash-grid">
+
+				<article class="dash-card">
+					<h2 class="dash-card-title">Your Modules</h2>
+
+					<ul class="dash-list dash-list--editable" data-list="modules"></ul>
+
+					<div class="dash-actions">
+						<a class="btn btn-small" href="#">New</a>
+					</div>
+				</article>
+
+				<article class="dash-card">
+					<h2 class="dash-card-title">Your Assignments</h2>
+
+					<ul class="dash-list dash-list--clickable" data-list="assignments"></ul>
+
+					<div class="dash-actions">
+						<a class="btn btn-small" href="#">New</a>
+						<a class="btn btn-small" href="#">View Completed</a>
+					</div>
+				</article>
+
+				<article class="dash-card">
+					<h2 class="dash-card-title">Today</h2>
+
+					<ul class="dash-list"></ul>
+
+					<div class="dash-actions">
+						<a class="btn btn-small" href="#">My Schedule</a>
+					</div>
+				</article>
+
+			</section>
+
+		</div>
 	</main>
 
 	<%- include('partials/footer') %>
