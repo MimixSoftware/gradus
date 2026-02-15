@@ -12,6 +12,8 @@ async function update(req, res) {
 
 	const preferences = await preferencesService.update(req.user.id, validated);
 
+	req.session.preferences = preferences;
+
 	return res.status(200).json({ message: "Preferences updated successfully.", preferences });
 }
 
