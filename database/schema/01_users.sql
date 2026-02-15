@@ -6,6 +6,8 @@ CREATE TABLE users (
 	surname VARCHAR(100) NOT NULL,
 	password_hash VARCHAR(60) NOT NULL,
 	role ENUM('user','admin') NOT NULL DEFAULT 'user',
+	status ENUM('active','suspended') NOT NULL DEFAULT 'active',
+	last_login_at TIMESTAMP NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

@@ -44,6 +44,20 @@ VALUES
 	UNHEX('FFFFFFFF00000000AAAAAAAA55555555BBBBCCCCDD')
 );
 
+-- preferences
+INSERT INTO preferences (user_id, active_semester_id, theme)
+VALUES
+(
+	1,
+	2,
+	'light'
+),
+(
+	2,
+	3,
+	'dark'
+);
+
 -- modules
 INSERT INTO modules (semester_id, name, credits, colour)
 VALUES

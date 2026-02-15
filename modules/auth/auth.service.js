@@ -3,36 +3,60 @@ const bcrypt = require("bcrypt");
 const db = require("../../database/db");
 const AppError = require('../../utils/AppError');
 
+const preferenceService = require("../preferences/preference.service");
+
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS);
 
 async function register({ email, forename, surname, password }) {
+	const connection = await db.getConnection();
 	try {
+		await connection.beginTransaction();
+
 		const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-		const [result] = await db.query(
-			`INSERT INTO users (email, forename, surname, password_hash)
-			VALUES (?, ?, ?, ?)`,
+		const [userResult] = await connection.query(
+			`INSERT INTO users (email, forename, surname, password_hash, last_login_at)
+			 VALUES (?, ?, ?, ?, NOW())`,
 			[email, forename, surname, password_hash]
 		);
+		const userId = userResult.insertId;
+
+		await connection.query(
+			`INSERT INTO preferences (user_id, active_semester_id, theme)
+			 VALUES (?, ?, ?)`,
+			[userId, null, "light"]
+		);
+
+		await connection.commit();
+
+		const preferences = await preferenceService.getByUserId(userId);
 
 		return {
-			id: result.insertId,
-			email,
-			forename,
-			surname,
-			role: "user"
+			user: {
+				id: userId,
+				email,
+				forename,
+				surname,
+				role: "user",
+				status: "active"
+			},
+			preferences
 		};
 	} catch (err) {
+		await connection.rollback();
+
 		if (err.code === "ER_DUP_ENTRY") {
 			throw new AppError("Email already in use.", 409);
 		}
 		throw err;
+	} finally {
+		connection.release();
 	}
 }
 
 async function login({ email, password }) {
 	const [rows] = await db.query(
-		`SELECT id, email, forename, surname, password_hash, role
+		`SELECT id, email, forename, surname, password_hash, role, status
 		FROM users
 		WHERE email = ?
 		LIMIT 1`,
@@ -44,35 +68,37 @@ async function login({ email, password }) {
 	}
 
 	const user = rows[0];
+
+	if (user.status !== "active") {
+		throw new AppError("Account suspended.", 403);
+	}
+
 	const ok = await bcrypt.compare(password, user.password_hash);
 
 	if (!ok) {
 		throw new AppError("Invalid email or password.", 401);
 	}
 
+	await db.query(
+		`UPDATE users 
+		SET last_login_at = NOW() 
+		WHERE id = ?`,
+		[user.id]
+	);
+
+	const preferences = await preferenceService.getByUserId(user.id);
+
 	return {
-		id: user.id,
-		email: user.email,
-		forename: user.forename,
-		surname: user.surname,
-		role: user.role
+		user: {
+			id: user.id,
+			email: user.email,
+			forename: user.forename,
+			surname: user.surname,
+			role: user.role,
+			status: user.status
+		},
+		preferences
 	};
 }
 
-async function getUserById(id) {
-	const [rows] = await db.query(
-		`SELECT id, email, forename, surname
-		FROM users
-		WHERE id = ?
-		LIMIT 1`,
-		[id]
-	);
-
-	if (rows.length === 0) {
-		throw new AppError("User not found.", 404);
-	}
-
-	return rows[0];
-}
-
-module.exports = { register, login, getUserById };
+module.exports = { register, login };
