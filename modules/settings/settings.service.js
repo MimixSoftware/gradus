@@ -1,32 +1,32 @@
 const db = require("../../database/db");
 const AppError = require('../../utils/AppError');
 
-function mapPreferenceRow(p) {
+function mapUserSettingsRow(us) {
 	return {
-		activeSemesterId: p.active_semester_id,
-		theme: p.theme
+		activeSemesterId: us.active_semester_id,
+		theme: us.theme
 	};
 }
 
 async function getByUserId(userId) {
 	const [rows] = await db.query(
 		`SELECT
-			p.user_id,
-			p.active_semester_id,
-			p.theme,
-			p.created_at,
-			p.updated_at
-		FROM preferences p
-		WHERE p.user_id = ?
+			us.user_id,
+			us.active_semester_id,
+			us.theme,
+			us.created_at,
+			us.updated_at
+		FROM user_settings us
+		WHERE us.user_id = ?
 		LIMIT 1`,
 		[userId]
 	);
 
 	if (rows.length === 0) {
-		throw new AppError("Preferences not found.", 404);
+		throw new AppError("Settings not found.", 404);
 	}
 
-	return mapPreferenceRow(rows[0]);
+	return mapUserSettingsRow(rows[0]);
 }
 
 async function update(userId, { activeSemesterId, theme }) {
@@ -45,12 +45,12 @@ async function update(userId, { activeSemesterId, theme }) {
 	}
 
 	if (activeSemesterId  !== undefined) {
-		setParts.push("p.active_semester_id = ?");
+		setParts.push("us.active_semester_id = ?");
 		values.push(activeSemesterId);
 	}
 
 	if (theme !== undefined) {
-		setParts.push("p.theme = ?");
+		setParts.push("us.theme = ?");
 		values.push(theme);
 	}
 
@@ -58,14 +58,14 @@ async function update(userId, { activeSemesterId, theme }) {
 
 	try {
 		const [result] = await db.query(
-			`UPDATE preferences p
+			`UPDATE user_settings us
 			SET ${setParts.join(", ")}
 			WHERE user_id = ?`,
 			values
 		);
 
 		if (result.affectedRows === 0) {
-			throw new AppError("Preferences not found.", 404);
+			throw new AppError("Settings not found.", 404);
 		}
 
 		return await getByUserId(userId);

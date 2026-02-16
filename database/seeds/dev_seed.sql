@@ -44,8 +44,8 @@ VALUES
 	UNHEX('FFFFFFFF00000000AAAAAAAA55555555BBBBCCCCDD')
 );
 
--- preferences
-INSERT INTO preferences (user_id, active_semester_id, theme)
+-- settings
+INSERT INTO user_settings (user_id, active_semester_id, theme)
 VALUES
 (
 	1,

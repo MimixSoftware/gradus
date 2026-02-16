@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const db = require("../../database/db");
 const AppError = require('../../utils/AppError');
 
-const preferenceService = require("../preferences/preference.service");
+const settingsService = require("../settings/settings.service");
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS);
 
@@ -22,14 +22,14 @@ async function register({ email, forename, surname, password }) {
 		const userId = userResult.insertId;
 
 		await connection.query(
-			`INSERT INTO preferences (user_id, active_semester_id, theme)
+			`INSERT INTO user_settings (user_id, active_semester_id, theme)
 			 VALUES (?, ?, ?)`,
 			[userId, null, "light"]
 		);
 
 		await connection.commit();
 
-		const preferences = await preferenceService.getByUserId(userId);
+		const settings = await settingsService.getByUserId(userId);
 
 		return {
 			user: {
@@ -40,7 +40,7 @@ async function register({ email, forename, surname, password }) {
 				role: "user",
 				status: "active"
 			},
-			preferences
+			settings
 		};
 	} catch (err) {
 		await connection.rollback();
@@ -86,7 +86,7 @@ async function login({ email, password }) {
 		[user.id]
 	);
 
-	const preferences = await preferenceService.getByUserId(user.id);
+	const settings = await settingsService.getByUserId(user.id);
 
 	return {
 		user: {
@@ -97,7 +97,7 @@ async function login({ email, password }) {
 			role: user.role,
 			status: user.status
 		},
-		preferences
+		settings
 	};
 }
 

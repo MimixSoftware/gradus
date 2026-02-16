@@ -34,8 +34,8 @@ app.use(maintenanceMode);
 const authRoutes = require("./modules/auth/auth.routes");
 app.use("/api/auth", authRoutes);
 
-const preferenceRoutes = require("./modules/preferences/preference.routes");
-app.use("/api/preferences", preferenceRoutes);
+const settingsRoutes = require("./modules/settings/settings.routes");
+app.use("/api/settings", settingsRoutes);
 
 const semesterRoutes = require("./modules/semesters/semester.routes");
 app.use("/api/semesters", semesterRoutes);

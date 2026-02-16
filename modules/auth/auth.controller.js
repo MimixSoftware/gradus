@@ -4,10 +4,10 @@ const authValidation = require("./auth.validation");
 async function register(req, res) {
 	const validated = authValidation.validateRegisterInput(req.body);
 
-	const { user, preferences } = await authService.register(validated);
+	const { user, settings } = await authService.register(validated);
 
 	req.session.user = user;
-	req.session.preferences = preferences;
+	req.session.settings = settings;
 
 	return res.status(201).json({ message: "Registered successfully." });
 }
@@ -15,13 +15,13 @@ async function register(req, res) {
 async function login(req, res, next) {
 	const validated = authValidation.validateLoginInput(req.body);
 
-	const { user, preferences } = await authService.login(validated);
+	const { user, settings } = await authService.login(validated);
 
 	req.session.regenerate((regenErr) => {
 		if (regenErr) return next(regenErr);
 
 		req.session.user = user;
-		req.session.preferences = preferences;
+		req.session.settings = settings;
 
 		return res.status(200).json({ message: "Logged in successfully." });
 	});
