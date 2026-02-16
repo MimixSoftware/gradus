@@ -12,19 +12,19 @@
 	<%- include('partials/header') %>
 
 	<main class="page">
-        <div class="dashboard">
+        <div class="dashboard" data-active-semester-id="<%= preferences.activeSemesterId %>">
 			<header class="dash-header">
 				<div class="dash-title">
 					<h1>Welcome back <span class="dash-name"><%= user.forename %></span>!</h1>
 					<div class="dash-subline">
-						<span></span>
+						<span id="active-semester-name"></span>
 						<a class="dash-link" href="#">Change Semester</a>
 					</div>
 				</div>
 
 				<div class="dash-meta">
 					<div class="dash-datetime">
-						<div class="dash-date">T</div>
+						<div class="dash-date"></div>
 						<div class="dash-time"></div>
 					</div>
 				</div>
@@ -56,7 +56,7 @@
 				<article class="dash-card">
 					<h2 class="dash-card-title">Today</h2>
 
-					<ul class="dash-list"></ul>
+					<ul class="dash-list" data-list="today"></ul>
 
 					<div class="dash-actions">
 						<a class="btn btn-small" href="#">My Schedule</a>

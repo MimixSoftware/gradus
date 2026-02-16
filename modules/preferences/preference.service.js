@@ -33,6 +33,17 @@ async function update(userId, { activeSemesterId, theme }) {
 	const setParts = [];
 	const values = [];
 
+	if (activeSemesterId !== undefined && activeSemesterId !== null) {
+		const [semRows] = await db.query(
+			`SELECT 1 FROM semesters WHERE id = ? AND user_id = ? LIMIT 1`,
+			[activeSemesterId, userId]
+		);
+
+		if (semRows.length === 0) {
+			throw new AppError("Semester not found.", 404);
+		}
+	}
+
 	if (activeSemesterId  !== undefined) {
 		setParts.push("p.active_semester_id = ?");
 		values.push(activeSemesterId);
@@ -47,7 +58,7 @@ async function update(userId, { activeSemesterId, theme }) {
 
 	try {
 		const [result] = await db.query(
-			`UPDATE user_preferences
+			`UPDATE preferences p
 			SET ${setParts.join(", ")}
 			WHERE user_id = ?`,
 			values

@@ -549,6 +549,13 @@ input:focus {
 	overflow-x: hidden;
 }
 
+.dash-empty {
+	padding: 1rem;
+	text-align: center;
+	font-size: 0.9rem;
+	color: var(--text-muted);
+}
+
 .dash-item {
 	border-radius: 8px;
 }

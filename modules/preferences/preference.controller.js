@@ -10,7 +10,7 @@ async function getByUserId(req, res) {
 async function update(req, res) {
 	const validated = preferenceValidation.validateUpdateInput(req.body);
 
-	const preferences = await preferencesService.update(req.user.id, validated);
+	const preferences = await preferenceService.update(req.user.id, validated);
 
 	req.session.preferences = preferences;
 

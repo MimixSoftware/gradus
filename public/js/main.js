@@ -1,3 +1,4 @@
+// Request Helpers
 async function postJson(url, data) {
 	const res = await fetch(url, {
 		method: "POST",
@@ -41,20 +42,50 @@ async function getJson(url) {
 	return payload;
 }
 
-function setAuthError(el, message) {
-	if (!el) return;
+async function patchJson(url, data) {
+	const res = await fetch(url, {
+		method: "PATCH",
+		headers: { "Content-Type": "application/json", "Accept": "application/json" },
+		credentials: "same-origin",
+		body: JSON.stringify(data)
+	});
+
+	let payload = null;
+	try { payload = await res.json(); } catch (_) {}
+
+	if (!res.ok) {
+		const msg = payload?.message || `Request failed (${res.status})`;
+		const err = new Error(msg);
+		err.status = res.status;
+		err.payload = payload;
+		throw err;
+	}
+
+	return payload;
+}
+
+// Helpers
+function setAlert(alertEl, message) {
 	if (message) {
-		el.textContent = message;
-		el.style.display = "block";
+		alertEl.textContent = message;
+		alertEl.style.display = "block";
 	} else {
-		el.textContent = "";
-		el.style.display = "none";
+		alertEl.textContent = "";
+		alertEl.style.display = "none";
 	}
 }
 
-function updateDashboardClock(dateEl, timeEl) {
-	if (!dateEl || !timeEl) return;
+function renderActiveSemesterName(semesterNameEl, activeSemesterId, semesterById) {
+	if (!activeSemesterId) {
+		semesterNameEl.textContent = "";
+		return;
+	}
 
+	const semester = semesterById.get(activeSemesterId);
+	semesterNameEl.textContent = semester.name;
+}
+
+function refreshDashboardClock(dateEl, timeEl) {
 	const now = new Date();
 
 	const dateStr = now.toLocaleDateString(undefined, {
@@ -73,7 +104,7 @@ function updateDashboardClock(dateEl, timeEl) {
 	timeEl.textContent = timeStr;
 }
 
-function formatDue(iso) {
+function formatDueDate(iso) {
 	if (!iso) return "No deadline";
 
 	const due = new Date(iso);
@@ -119,8 +150,25 @@ function formatDue(iso) {
 	return `${day} ${monthShort} ${year}, ${time}`;
 }
 
-function renderModulesList(listEl, modules) {
+function renderEmptyState(listEl, message) {
 	if (!listEl) return;
+
+	listEl.innerHTML = "";
+
+	const li = document.createElement("li");
+	li.className = "dash-empty";
+
+	li.textContent = message;
+
+	listEl.appendChild(li);
+}
+
+function renderModulesList(listEl, modules) {
+	if (!modules.length) {
+		renderEmptyState(listEl, "No modules yet. Create one to get started.");
+		return;
+	}
+
 	listEl.innerHTML = "";
 
 	for (const m of modules) {
@@ -170,7 +218,11 @@ function renderModulesList(listEl, modules) {
 }
 
 function renderAssignmentsList(listEl, assignments, moduleById) {
-	if (!listEl) return;
+	if (!assignments.length) {
+		renderEmptyState(listEl, "No assignments yet. Create one to get started.");
+		return;
+	}
+
 	listEl.innerHTML = "";
 
 	for (const a of assignments) {
@@ -208,7 +260,7 @@ function renderAssignmentsList(listEl, assignments, moduleById) {
 
 		const meta2 = document.createElement("div");
 		meta2.className = "dash-item-meta";
-		meta2.textContent = `Due: ${formatDue(a.deadline)}`;
+		meta2.textContent = `Due: ${formatDueDate(a.deadline)}`;
 
 		content.appendChild(meta1);
 		content.appendChild(meta2);
@@ -221,132 +273,182 @@ function renderAssignmentsList(listEl, assignments, moduleById) {
 	}
 }
 
-async function loadDashboardData() {
-	const modulesListEl = document.querySelector('[data-list="modules"]');
-	const assignmentsListEl = document.querySelector('[data-list="assignments"]');
-
-	if (!modulesListEl && !assignmentsListEl) return;
-
-	const [modulesPayload, assignmentsPayload] = await Promise.all([
-		getJson("/api/modules"),
-		getJson("/api/assignments")
-	]);
-
-	const modules = Array.isArray(modulesPayload?.modules) ? modulesPayload.modules : [];
-	const assignments = Array.isArray(assignmentsPayload?.assignments) ? assignmentsPayload.assignments : [];
-
-	const moduleById = new Map(modules.map(m => [m.id, m]));
-
-	if (modulesListEl) renderModulesList(modulesListEl, modules);
-	if (assignmentsListEl) renderAssignmentsList(assignmentsListEl, assignments, moduleById);
+function renderTodayList(listEl, scheduledTasks, moduleById) {
+	if (!scheduledTasks.length) {
+		renderEmptyState(listEl, "Nothing is scheduled today! 🥳");
+		return;
+	}
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-	// Login form
-	const loginForm = document.getElementById("login-form");
-	if (loginForm) {
-		const errorEl = document.getElementById("auth-error");
+async function refreshDashboardData(dashboardEl, semesterNameEl, modulesListEl, assignmentsListEl, todayListEl) {
+	const activeSemesterIdRaw = dashboardEl.dataset.activeSemesterId;
+	const activeSemesterId = activeSemesterIdRaw ? Number(activeSemesterIdRaw) : null;
 
-		loginForm.addEventListener("submit", async (e) => {
-			e.preventDefault();
-			setAuthError(errorEl, "");
+	const [semestersPayload, modulesPayload, assignmentsPayload] = await Promise.all([
+		getJson("/api/semesters"),
+		getJson(`/api/semesters/${activeSemesterId}/modules`),
+		getJson(`/api/semesters/${activeSemesterId}/assignments`)
+	]);
 
-			const formData = new FormData(loginForm);
-			const email = formData.get("email");
-			const password = formData.get("password");
+	const semesters = Array.isArray(semestersPayload?.semesters) ? semestersPayload.semesters : [];
+	const modules = Array.isArray(modulesPayload?.modules) ? modulesPayload.modules : [];
+	const assignments = Array.isArray(assignmentsPayload?.assignments) ? assignmentsPayload.assignments : [];
+	assignments.sort((a, b) => {
+		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+		return aTime - bTime;
+	});
 
-			try {
-				await postJson("/api/auth/login", { email, password });
-				window.location.href = "/dashboard";
-			} catch (err) {
-				setAuthError(errorEl, err.message);
-			}
-		});
-	}
+	const semesterById = new Map(semesters.map(s => [s.id, s]));
+	const moduleById = new Map(modules.map(m => [m.id, m]));
 
-	// Register form
-	const registerFormEl = document.getElementById("register-form");
-	if (registerFormEl) {
-		const errorEl = document.getElementById("auth-error");
+	renderActiveSemesterName(semesterNameEl, activeSemesterId, semesterById);
 
-		registerFormEl.addEventListener("submit", async (e) => {
-			e.preventDefault();
-			setAuthError(errorEl, "");
+	renderModulesList(modulesListEl, modules);
+	renderAssignmentsList(assignmentsListEl, assignments.filter(a => a.status === "active"), moduleById);
+	renderTodayList(todayListEl, [], moduleById);
+}
 
-			const formData = new FormData(registerFormEl);
-			const forename = formData.get("forename");
-			const surname = formData.get("surname");
-			const email = formData.get("email");
-			const password = formData.get("password");
-			const confirmPassword = formData.get("confirmPassword");
+// Setups
+function setupLoginForm(formEl, errorEl) {
+	formEl.addEventListener("submit", async (e) => {
+		e.preventDefault();
+		setAlert(errorEl, "");
 
-			try {
-				await postJson("/api/auth/register", {
-					forename,
-					surname,
-					email,
-					password,
-					confirmPassword
-				});
-			window.location.href = "/dashboard";
-			} catch (err) {
-				setAuthError(errorEl, err.message);
-			}
-		});
-	}
-
-	// Mobile nav menu
-	const navToggleEl = document.querySelector(".nav-toggle");
-	const navMenuEl = document.querySelector("#nav-menu");
-
-	if (navToggleEl && navMenuEl) {
-		navToggleEl.addEventListener("click", (e) => {
-			e.stopPropagation();
-			navMenuEl.classList.toggle("is-open");
-		});
-
-		document.addEventListener("click", (e) => {
-			if (!navMenuEl.contains(e.target) && !navToggleEl.contains(e.target)) {
-				navMenuEl.classList.remove("is-open");
-			}
-		});
-	}
-
-	// logout link
-	const logoutLinkEl= document.querySelector("#logout-link");
-	if (logoutLinkEl) {
-		logoutLinkEl.addEventListener("click", async (e) => {
-			e.preventDefault();
-
-			try {
-				await postJson("/api/auth/logout");
-				window.location.href = "/";
-			} catch (err) {
-				console.error(err);
-			}
-		});
-	}
-
-	// dashboard
-	dashboardEl = document.querySelector(".dashboard");
-	if (dashboardEl) {
-		const dateEl = document.querySelector(".dash-date");
-		const timeEl = document.querySelector(".dash-time");
-
-		updateDashboardClock(dateEl, timeEl)
-		setInterval(() => updateDashboardClock(dateEl, timeEl), 1000);
+		const formData = new FormData(formEl);
+		const email = formData.get("email");
+		const password = formData.get("password");
 
 		try {
-			await loadDashboardData();
+			await postJson("/api/auth/login", { email, password });
+			window.location.href = "/dashboard";
+		} catch (err) {
+			setAlert(errorEl, err.message);
+		}
+	});
+}
+
+function setupRegisterForm(formEl, errorEl) {
+	formEl.addEventListener("submit", async (e) => {
+		e.preventDefault();
+		setAlert(errorEl, "");
+
+		const formData = new FormData(formEl);
+		const forename = formData.get("forename");
+		const surname = formData.get("surname");
+		const email = formData.get("email");
+		const password = formData.get("password");
+		const confirmPassword = formData.get("confirmPassword");
+
+		try {
+			await postJson("/api/auth/register", {
+				forename,
+				surname,
+				email,
+				password,
+				confirmPassword
+			});
+		window.location.href = "/dashboard";
+		} catch (err) {
+			setAlert(errorEl, err.message);
+		}
+	});
+}
+
+function setupLogoutLink(navLinkEl) {
+	navLinkEl.addEventListener("click", async (e) => {
+		e.preventDefault();
+
+		try {
+			await postJson("/api/auth/logout");
+			window.location.href = "/";
 		} catch (err) {
 			console.error(err);
 		}
+	});
+}
+
+function setupMobileNav(toggleEl, menuEl) {
+	toggleEl.addEventListener("click", (e) => {
+		e.stopPropagation();
+		menuEl.classList.toggle("is-open");
+	});
+
+	document.addEventListener("click", (e) => {
+		if (!menuEl.contains(e.target) && !toggleEl.contains(e.target)) {
+			menuEl.classList.remove("is-open");
+		}
+	});
+}
+
+function setupDashboardClock(dateEl, timeEl) {
+	refreshDashboardClock(dateEl, timeEl)
+	setInterval(() => refreshDashboardClock(dateEl, timeEl), 1000);
+}
+
+// Inits
+function initAuthForms() {
+	const loginForm = document.getElementById("login-form");
+	if (loginForm) {
+		const errorEl = document.getElementById("auth-error");;
+		setupLoginForm(loginForm, errorEl);
 	}
 
-	// current-year span
-	currentYearEl = document.getElementById("current-year");
-	if (currentYearEl) {
-		const currentYear = new Date().getFullYear();
-		currentYearEl.textContent = currentYear;
+	const registerForm = document.getElementById("register-form");
+	if (registerForm) {
+		const errorEl = document.getElementById("auth-error");;
+		setupRegisterForm(registerForm, errorEl);
 	}
+}
+
+function initFooterYear() {
+	currentYearEl = document.getElementById("current-year");
+	if (!currentYearEl) return;
+
+	const currentYear = new Date().getFullYear();
+	currentYearEl.textContent = currentYear;
+}
+
+function initLogoutLink() {
+	const logoutLinkEl= document.getElementById("logout-link");
+	if (!logoutLinkEl) return;
+
+	setupLogoutLink(logoutLinkEl);
+}
+
+function initMobileNav() {
+	const navToggleEl = document.querySelector(".nav-toggle");
+	const navMenuEl = document.getElementById("nav-menu");
+	if (!navToggleEl || !navMenuEl) return; 
+	
+	setupMobileNav(navToggleEl, navMenuEl);
+}
+
+async function initDashboard() {
+	const dashboardEl = document.querySelector(".dashboard");
+	if (!dashboardEl) return;
+	
+	const dateEl = document.querySelector(".dash-date");
+	const timeEl = document.querySelector(".dash-time");
+	setupDashboardClock(dateEl, timeEl);
+
+	const semesterNameEl = document.getElementById("active-semester-name");
+	const modulesListEl = document.querySelector('[data-list="modules"]');
+	const assignmentsListEl = document.querySelector('[data-list="assignments"]');
+	const todayListEl = document.querySelector('[data-list="today"]');
+
+	try {
+		await refreshDashboardData(dashboardEl, semesterNameEl, modulesListEl, assignmentsListEl, todayListEl);
+	}
+	catch (err) {
+		console.error(err);
+	}
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+	initAuthForms();
+	initMobileNav();
+	initLogoutLink();
+	await initDashboard();
+	initFooterYear();
 });
