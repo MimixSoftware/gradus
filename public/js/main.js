@@ -76,13 +76,29 @@ async function patchJson(url, data) {
 }
 
 // App State Refresh
-async function refreshAppState() {
-	const [settingsPayload, semestersPayload] = await Promise.all([
-		getJson("/api/settings"),
-		getJson("/api/semesters")
-	]);
+async function refreshSettings() {
+	try {
+		const payload = await getJson("/api/settings");
+		const settings = payload.settings;
 
-	const settings = settingsPayload.settings;
+		appState.activeSemesterId = settings.activeSemesterId;
+		appState.theme = settings.theme;
+
+		applyTheme(appState.theme);
+
+		return settings;
+	} catch (err) {
+		if (err.status === 401) return null;
+		throw err;
+	}
+}
+
+async function refreshAppState() {
+	const settings = await refreshSettings();
+  	if (!settings) return;
+
+	const semestersPayload = await getJson("/api/semesters");
+
 	const semesters = semestersPayload.semesters;
 
 	appState.activeSemesterId = settings.activeSemesterId;
@@ -686,6 +702,11 @@ function initNewAssignmentForm() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+	const publicRoutes = ["/", "/login", "/register"];
+	if (!publicRoutes.includes(window.location.pathname)) {
+		await refreshSettings();
+	}
+
 	initAuthForms();
 	initMobileNav();
 	initLogoutLink();
