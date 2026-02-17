@@ -133,7 +133,7 @@ function validateRequiredUtcDatetime(value, label) {
 function validateOptionalUtcDatetime(value, label) {
 	if (value === undefined) return undefined;
 	if (value === null || value === "") return null;
-	return validateRequiredUtcDatetime(value, label, options);
+	return validateRequiredUtcDatetime(value, label);
 }
 
 function validateBinaryIntArray(value, label, expectedLength) {

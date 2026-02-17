@@ -12,7 +12,7 @@
 	<%- include('partials/header') %>
 
 	<main class="page">
-        <div class="dashboard" data-active-semester-id="<%= settings.activeSemesterId %>">
+        <div class="dashboard">
 			<header class="dash-header">
 				<div class="dash-title">
 					<h1>Welcome back <span class="dash-name"><%= user.forename %></span>!</h1>
@@ -48,7 +48,7 @@
 					<ul class="dash-list dash-list--clickable" data-list="assignments"></ul>
 
 					<div class="dash-actions">
-						<a class="btn btn-small" href="#">New</a>
+						<button type="button" class="btn btn-small" data-modal-open="new-assignment-modal">New</button>
 						<a class="btn btn-small" href="#">View Completed</a>
 					</div>
 				</article>
@@ -69,6 +69,80 @@
 	</main>
 
 	<%- include('partials/footer') %>
+
+	<!-- New Assignment Modal -->
+	<div class="modal" id="new-assignment-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="new-assignment-title">New Assignment</div>
+					<div class="field-hint">Create an assignment under a module in your active semester.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="new-assignment-form">
+				<div
+					id="na-error"
+					class="alert alert-error"
+					style="display: none;"
+					role="alert"
+				>Test</div>
+
+				<div class="form-row">
+					<label for="na-name">Assignment name</label>
+					<input id="na-name" name="name" type="text" maxlength="100" required placeholder="e.g. Networks Report" />
+				</div>
+
+				<div class="form-grid">
+					<div class="form-row">
+						<label for="na-module">Module</label>
+						<select id="na-module" name="moduleId" required>
+							<option value="" disabled selected>Select a module…</option>
+							<!-- populated by JS -->
+						</select>
+					</div>
+
+					<div class="form-row">
+						<label for="na-deadline">Deadline</label>
+						<input id="na-deadline" name="deadline" type="datetime-local" />
+						<div class="field-hint">Optional. Leave empty if you don’t have a deadline yet.</div>
+					</div>
+				</div>
+
+				<div class="form-row">
+					<label for="na-description">Description</label>
+					<textarea id="na-description" name="description" maxlength="500" placeholder="Optional notes, requirements, marking scheme, etc."></textarea>
+				</div>
+
+				<div class="form-row">
+					<div class="range-row">
+						<label for="na-weight">Weight</label>
+						<div class="range-value"><span id="na-weight-val">0</span>%</div>
+					</div>
+					<input id="na-weight" name="weight" type="range" min="0" max="100" step="1" value="0" />
+				</div>
+
+				<div class="form-row">
+					<div class="range-row">
+						<label for="na-confidence">Confidence</label>
+						<div class="range-value"><span id="na-confidence-val">0</span>/5</div>
+					</div>
+					<input id="na-confidence" name="confidence" type="range" min="0" max="5" step="1" value="0" />
+					<div class="field-hint">0 = no clue yet, 5 = very confident.</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="new-assignment-form">Create</button>
+			</footer>
+		</div>
+	</div>
+
 
 	<script src="/js/main.js"></script>
 </body>

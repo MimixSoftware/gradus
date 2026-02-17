@@ -1,3 +1,14 @@
+// App State
+const appState = {
+	activeSemesterId: null,
+	theme: "system",
+	semesters: [],
+	modules: [],
+	assignments: [],
+	semesterById: new Map(),
+	moduleById: new Map()
+};
+
 // Request Helpers
 async function postJson(url, data) {
 	const res = await fetch(url, {
@@ -64,6 +75,57 @@ async function patchJson(url, data) {
 	return payload;
 }
 
+// App State Refresh
+async function refreshAppState() {
+	const [settingsPayload, semestersPayload] = await Promise.all([
+		getJson("/api/settings"),
+		getJson("/api/semesters")
+	]);
+
+	const settings = settingsPayload.settings;
+	const semesters = semestersPayload.semesters;
+
+	appState.activeSemesterId = settings.activeSemesterId;
+	appState.theme = settings.theme;
+	appState.semesters = semesters;
+	appState.semesterById = new Map(semesters.map(s => [s.id, s]));
+
+	applyTheme(appState.theme);
+
+	if (!settings.activeSemesterId) {
+		appState.modules = [];
+		appState.assignments = [];
+		appState.moduleById = new Map();
+		return;
+	}
+
+	const [modulesPayload, assignmentsPayload] = await Promise.all([
+		getJson(`/api/semesters/${settings.activeSemesterId}/modules`),
+		getJson(`/api/semesters/${settings.activeSemesterId}/assignments`)
+	]);
+
+	const modules = modulesPayload.modules;
+	const assignments = assignmentsPayload.assignments;
+
+	assignments.sort((a, b) => {
+		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+		return aTime - bTime;
+	});
+
+	appState.modules = modules;
+	appState.assignments = assignments;
+	appState.moduleById = new Map(modules.map(m => [m.id, m]));
+}
+
+function applyTheme(theme) {
+	if (theme === "system") {
+    	document.documentElement.removeAttribute("data-theme");
+  	} else {
+    	document.documentElement.setAttribute("data-theme", theme);
+  	}
+}
+
 // Helpers
 function setAlert(alertEl, message) {
 	if (message) {
@@ -75,13 +137,35 @@ function setAlert(alertEl, message) {
 	}
 }
 
-function renderActiveSemesterName(semesterNameEl, activeSemesterId, semesterById) {
-	if (!activeSemesterId) {
+function showToast(message, { type = "success", duration = 3000 } = {}) {
+	const container = document.getElementById("toast-container");
+
+	const toast = document.createElement("div");
+	toast.className = `toast toast-${type}`;
+	toast.textContent = message;
+
+	container.appendChild(toast);
+
+	requestAnimationFrame(() => {
+		toast.classList.add("is-visible");
+	});
+
+	setTimeout(() => {
+		toast.classList.remove("is-visible");
+
+		setTimeout(() => {
+			toast.remove();
+		}, 160);
+	}, duration);
+}
+
+function renderActiveSemesterName(semesterNameEl) {
+	if (!appState.activeSemesterId) {
 		semesterNameEl.textContent = "";
 		return;
 	}
 
-	const semester = semesterById.get(activeSemesterId);
+	const semester = appState.semesterById.get(appState.activeSemesterId);
 	semesterNameEl.textContent = semester.name;
 }
 
@@ -150,9 +234,14 @@ function formatDueDate(iso) {
 	return `${day} ${monthShort} ${year}, ${time}`;
 }
 
-function renderEmptyState(listEl, message) {
-	if (!listEl) return;
+function toUtcIso(datetimeLocal) {
+	if (!datetimeLocal) return null;
 
+	const date = new Date(datetimeLocal);
+	return date.toISOString();
+}
+
+function renderEmptyListState(listEl, message) {
 	listEl.innerHTML = "";
 
 	const li = document.createElement("li");
@@ -163,15 +252,15 @@ function renderEmptyState(listEl, message) {
 	listEl.appendChild(li);
 }
 
-function renderModulesList(listEl, modules) {
-	if (!modules.length) {
-		renderEmptyState(listEl, "No modules yet. Create one to get started.");
+function renderModulesList(listEl) {
+	if (!appState.modules.length) {
+		renderEmptyListState(listEl, "No modules yet. Create one to get started.");
 		return;
 	}
 
 	listEl.innerHTML = "";
 
-	for (const m of modules) {
+	for (const m of appState.modules) {
 		const li = document.createElement("li");
 		li.className = "dash-item";
 
@@ -217,16 +306,23 @@ function renderModulesList(listEl, modules) {
 	}
 }
 
-function renderAssignmentsList(listEl, assignments, moduleById) {
+function renderAssignmentsList(listEl, { showCompleted = false } = {}) {
+	const assignments = showCompleted
+		? [
+			...appState.assignments.filter(a => a.status === "active"),
+			...appState.assignments.filter(a => a.status === "completed")
+		  ]
+		: appState.assignments.filter(a => a.status === "active");
+
 	if (!assignments.length) {
-		renderEmptyState(listEl, "No assignments yet. Create one to get started.");
+		renderEmptyListState(listEl, "No assignments yet. Create one to get started.");
 		return;
 	}
 
 	listEl.innerHTML = "";
 
 	for (const a of assignments) {
-		const mod = moduleById.get(a.moduleId);
+		const mod = appState.moduleById.get(a.moduleId);
 		const moduleName = mod?.name ?? "Unknown module";
 		const moduleColour = mod?.colour ?? "#4f7cff";
 
@@ -273,40 +369,57 @@ function renderAssignmentsList(listEl, assignments, moduleById) {
 	}
 }
 
-function renderTodayList(listEl, scheduledTasks, moduleById) {
-	if (!scheduledTasks.length) {
-		renderEmptyState(listEl, "Nothing is scheduled today! 🥳");
+function renderTodayList(listEl, todayScheduledTasks = []) {
+	if (!todayScheduledTasks.length) {
+		renderEmptyListState(listEl, "Nothing is scheduled today! 🥳");
 		return;
 	}
 }
 
-async function refreshDashboardData(dashboardEl, semesterNameEl, modulesListEl, assignmentsListEl, todayListEl) {
-	const activeSemesterIdRaw = dashboardEl.dataset.activeSemesterId;
-	const activeSemesterId = activeSemesterIdRaw ? Number(activeSemesterIdRaw) : null;
+function populateModuleSelect(selectEl, { keepValue = true } = {}) {
+	const prev = keepValue ? selectEl.value : "";
 
-	const [semestersPayload, modulesPayload, assignmentsPayload] = await Promise.all([
-		getJson("/api/semesters"),
-		getJson(`/api/semesters/${activeSemesterId}/modules`),
-		getJson(`/api/semesters/${activeSemesterId}/assignments`)
-	]);
+	const placeholder = selectEl.querySelector('option[value=""]');
+	selectEl.innerHTML = "";
+	if (placeholder) selectEl.appendChild(placeholder);
+	else {
+		const opt = document.createElement("option");
+		opt.value = "";
+		opt.disabled = true;
+		opt.selected = true;
+		opt.textContent = "Select a module…";
+		selectEl.appendChild(opt);
+	}
 
-	const semesters = Array.isArray(semestersPayload?.semesters) ? semestersPayload.semesters : [];
-	const modules = Array.isArray(modulesPayload?.modules) ? modulesPayload.modules : [];
-	const assignments = Array.isArray(assignmentsPayload?.assignments) ? assignmentsPayload.assignments : [];
-	assignments.sort((a, b) => {
-		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-		return aTime - bTime;
-	});
+	for (const m of appState.modules) {
+		const opt = document.createElement("option");
+		opt.value = String(m.id);
+		opt.textContent = m.name;
+		selectEl.appendChild(opt);
+	}
 
-	const semesterById = new Map(semesters.map(s => [s.id, s]));
-	const moduleById = new Map(modules.map(m => [m.id, m]));
+	if (keepValue && prev && appState.modules.some(m => String(m.id) === prev)) {
+		selectEl.value = prev;
+	} else {
+		selectEl.value = "";
+	}
+}
 
-	renderActiveSemesterName(semesterNameEl, activeSemesterId, semesterById);
+async function refreshDashboardGrid() {
+	const semesterNameEl = document.getElementById("active-semester-name");
+	const modulesListEl = document.querySelector('[data-list="modules"]');
+	const assignmentsListEl = document.querySelector('[data-list="assignments"]');
+	const todayListEl = document.querySelector('[data-list="today"]');
+	
+	await refreshAppState();
 
-	renderModulesList(modulesListEl, modules);
-	renderAssignmentsList(assignmentsListEl, assignments.filter(a => a.status === "active"), moduleById);
-	renderTodayList(todayListEl, [], moduleById);
+	renderActiveSemesterName(semesterNameEl);
+	renderModulesList(modulesListEl);
+	renderAssignmentsList(assignmentsListEl);
+	renderTodayList(todayListEl);
+
+	const moduleSelectEl = document.getElementById("na-module");
+	populateModuleSelect(moduleSelectEl);
 }
 
 // Setups
@@ -386,6 +499,18 @@ function setupDashboardClock(dateEl, timeEl) {
 	setInterval(() => refreshDashboardClock(dateEl, timeEl), 1000);
 }
 
+function setupRangeLabel(rangeEl, valueEl, formatter = (v) => v) {
+	if (!rangeEl || !valueEl) return;
+
+	const sync = () => {
+		valueEl.textContent = formatter(rangeEl.value);
+	};
+
+	rangeEl.addEventListener("input", sync);
+
+	sync();
+}
+
 // Inits
 function initAuthForms() {
 	const loginForm = document.getElementById("login-form");
@@ -432,17 +557,132 @@ async function initDashboard() {
 	const timeEl = document.querySelector(".dash-time");
 	setupDashboardClock(dateEl, timeEl);
 
-	const semesterNameEl = document.getElementById("active-semester-name");
-	const modulesListEl = document.querySelector('[data-list="modules"]');
-	const assignmentsListEl = document.querySelector('[data-list="assignments"]');
-	const todayListEl = document.querySelector('[data-list="today"]');
-
 	try {
-		await refreshDashboardData(dashboardEl, semesterNameEl, modulesListEl, assignmentsListEl, todayListEl);
+		await refreshDashboardGrid();
 	}
 	catch (err) {
-		console.error(err);
+		showToast(err, { type: "error" });
 	}
+}
+
+function initModals() {
+	const openModal = (modal) => {
+		modal.classList.add("is-open");
+		document.body.classList.add("modal-open");
+
+		const firstFocusable = modal.querySelector(
+			'input:not([type="hidden"]), select, textarea, button'
+		);
+		if (firstFocusable) firstFocusable.focus();
+	};
+
+	const closeModal = (modal) => {
+		modal.classList.remove("is-open");
+		document.body.classList.remove("modal-open");
+
+		const form = modal.querySelector("form");
+		if (form) form.reset();
+
+		modal.querySelectorAll(".alert").forEach((alert) => {
+			alert.style.display = "none";
+			alert.textContent = "";
+		});
+
+		const dialog = modal.querySelector(".modal-dialog");
+		if (dialog) dialog.classList.remove("is-invalid");
+	};
+
+	document.addEventListener("click", (e) => {
+		const openBtn = e.target.closest("[data-modal-open]");
+		if (openBtn) {
+			const modalId = openBtn.dataset.modalOpen;
+			const modal = document.getElementById(modalId);
+			if (!modal) return;
+
+			openModal(modal);
+			return;
+		}
+
+		const closeBtn = e.target.closest("[data-modal-close]");
+		if (closeBtn) {
+			const modal = closeBtn.closest(".modal");
+			if (!modal) return;
+
+			closeModal(modal);
+			return;
+		}
+	});
+
+	document.addEventListener("keydown", (e) => {
+		if (e.key !== "Escape") return;
+
+		const modal = document.querySelector(".modal.is-open");
+		if (!modal) return;
+
+		closeModal(modal);
+	});
+}
+
+function initNewAssignmentForm() {
+	const form = document.getElementById("new-assignment-form");
+	if (!form) return;
+
+	const weightEl = form.querySelector("#na-weight");
+	const weightValEl = form.querySelector("#na-weight-val");
+
+	const confEl = form.querySelector("#na-confidence");
+	const confValEl = form.querySelector("#na-confidence-val");
+
+	const syncRanges = () => {
+		if (weightEl && weightValEl) weightValEl.textContent = weightEl.value;
+		if (confEl && confValEl) confValEl.textContent = confEl.value;
+	};
+
+	weightEl?.addEventListener("input", syncRanges);
+	confEl?.addEventListener("input", syncRanges);
+
+	syncRanges();
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("na-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+		const moduleId = formData.get("moduleId");
+
+		const weightVal = Number(formData.get("weight"));
+		const confidenceVal = Number(formData.get("confidence"));
+
+		const payload = {
+			name: formData.get("name"),
+			description: formData.get("description") || null,
+			weight: weightVal === 0 ? null : weightVal,
+			confidence: confidenceVal === 0 ? null : confidenceVal,
+			deadline: toUtcIso(formData.get("deadline"))
+		};
+
+		try {
+			const res = await postJson(`/api/modules/${moduleId}/assignments`, payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			await refreshDashboardGrid();
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -450,5 +690,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initMobileNav();
 	initLogoutLink();
 	await initDashboard();
+	initModals();
+	initNewAssignmentForm();
 	initFooterYear();
 });
