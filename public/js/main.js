@@ -9,6 +9,8 @@ const appState = {
 	moduleById: new Map()
 };
 
+let showCompletedAssignments = false;
+
 // Request Helpers
 async function requestJson(method, url, data) {
 	const options = {
@@ -294,10 +296,7 @@ function renderModulesList(listEl) {
 
 function renderAssignmentsList(listEl, { showCompleted = false } = {}) {
 	const assignments = showCompleted
-		? [
-			...appState.assignments.filter(a => a.status === "active"),
-			...appState.assignments.filter(a => a.status === "completed")
-		  ]
+		? appState.assignments 
 		: appState.assignments.filter(a => a.status === "active");
 
 	if (!assignments.length) {
@@ -401,7 +400,9 @@ async function refreshDashboardGrid() {
 
 	renderActiveSemesterName(semesterNameEl);
 	renderModulesList(modulesListEl);
-	renderAssignmentsList(assignmentsListEl);
+	renderAssignmentsList(assignmentsListEl, {
+		showCompleted: showCompletedAssignments
+	});
 	renderTodayList(todayListEl);
 
 	const moduleSelectEl = document.getElementById("na-module");
@@ -952,6 +953,32 @@ function initDeleteModuleForm() {
 	});
 }
 
+function initAssignmentsToggle() {
+	const btn = document.getElementById("toggle-completed-btn");
+	const listEl = document.querySelector('[data-list="assignments"]');
+	if (!btn || !listEl) return;
+
+	const updateLabel = () => {
+		btn.textContent = showCompletedAssignments
+			? "Hide Completed"
+			: "Show Completed";
+	};
+
+	btn.addEventListener("click", (e) => {
+		e.preventDefault();
+
+		showCompletedAssignments = !showCompletedAssignments;
+
+		renderAssignmentsList(listEl, {
+			showCompleted: showCompletedAssignments
+		});
+
+		updateLabel();
+	});
+
+	updateLabel();
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
 	const publicRoutes = ["/", "/login", "/register"];
 	if (!publicRoutes.includes(window.location.pathname)) {
@@ -968,5 +995,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initNewModuleForm();
 	initEditModuleForm();
 	initDeleteModuleForm();
+	initAssignmentsToggle();
 	initFooterYear();
 });
