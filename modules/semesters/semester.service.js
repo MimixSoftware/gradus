@@ -44,16 +44,25 @@ function unpackAvailability(buf) {
 	return slots;
 }
 
-async function overlapCheck(userId, endDate, startDate) {
-	const [rows] = await db.query(
-		`SELECT 1
-		 FROM semesters
-		 WHERE user_id = ?
-		   AND start_date <= ?
-		   AND end_date >= ?
-		 LIMIT 1`,
-		[userId, endDate, startDate]
-	);
+async function overlapCheck(userId, startDate, endDate, { excludeSemesterId = null } = {}) {
+	const params = [userId, endDate, startDate];
+
+	let sql = `
+		SELECT 1
+		FROM semesters
+		WHERE user_id = ?
+		  AND start_date <= ?
+		  AND end_date >= ?
+	`;
+
+	if (excludeSemesterId != null) {
+		sql += ` AND id <> ?`;
+		params.push(excludeSemesterId);
+	}
+
+	sql += ` LIMIT 1`;
+
+	const [rows] = await db.query(sql, params);
 
 	if (rows.length > 0) {
 		throw new AppError("Semester dates overlap with an existing semester.", 409);
@@ -119,7 +128,9 @@ async function update(userId, semesterId, { name, startDate, endDate, availabili
 	}
 
 	if (startDate !== undefined && endDate !== undefined) {
-		await overlapCheck(userId, endDate, startDate);
+		await overlapCheck(userId, endDate, startDate, {
+			excludeSemesterId: semesterId
+		});
 
 		setParts.push("start_date = ?");
 		values.push(startDate);

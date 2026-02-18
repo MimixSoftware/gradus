@@ -146,14 +146,22 @@ function showToast(message, { type = "success", duration = 3000 } = {}) {
 	}, duration);
 }
 
-function renderActiveSemesterName(semesterNameEl) {
-	if (!appState.activeSemesterId) {
-		semesterNameEl.textContent = "";
-		return;
+function renderSemesterStatusAndActions({ semesterNameEl, newModuleBtnEl }) {
+	const hasActive = !!appState.activeSemesterId;
+
+	if (!hasActive) {
+		semesterNameEl.textContent = "No semester selected";
+		semesterNameEl.classList.add("warning-text");
+	} else {
+		const semester = appState.semesterById.get(appState.activeSemesterId);
+		semesterNameEl.textContent = semester?.name ?? "";
+		semesterNameEl.classList.remove("warning-text");
 	}
 
-	const semester = appState.semesterById.get(appState.activeSemesterId);
-	semesterNameEl.textContent = semester.name;
+	if (newModuleBtnEl) {
+		newModuleBtnEl.disabled = !hasActive;
+		newModuleBtnEl.title = !hasActive ? "Select an active semester to create modules." : "";
+	}
 }
 
 function refreshDashboardClock(dateEl, timeEl) {
@@ -396,10 +404,12 @@ async function refreshDashboardGrid() {
 	const modulesListEl = document.querySelector('[data-list="modules"]');
 	const assignmentsListEl = document.querySelector('[data-list="assignments"]');
 	const todayListEl = document.querySelector('[data-list="today"]');
+	const newModuleBtnEl = document.querySelector('[data-modal-open="new-module-modal"]');
 	
 	await refreshAppState();
 
-	renderActiveSemesterName(semesterNameEl);
+	renderSemesterStatusAndActions({ semesterNameEl, newModuleBtnEl });
+
 	renderModulesList(modulesListEl);
 	renderAssignmentsList(assignmentsListEl, {
 		showCompleted: showCompletedAssignments
@@ -469,6 +479,171 @@ async function openDeleteModuleModal(moduleId) {
 	}
 }
 
+function openDeleteSemesterModal(semesterId) {
+	const modal = document.getElementById("delete-semester-modal");
+	const form = document.getElementById("delete-semester-form");
+	if (!modal || !form) return;
+
+	const errorEl = document.getElementById("ds-error");
+	const msgEl = document.getElementById("ds-message");
+	const countsEl = document.getElementById("ds-counts");
+
+	setAlert(errorEl, "");
+	countsEl.textContent = "";
+
+	const s = appState.semesters.find(x => Number(x.id) === Number(semesterId));
+	const name = s?.name ?? "this semester";
+
+	form.querySelector("#ds-id").value = String(semesterId);
+	msgEl.textContent = `Are you sure you want to delete “${name}”?`;
+
+	if (appState.activeSemesterId && Number(appState.activeSemesterId) === Number(semesterId)) {
+		countsEl.textContent = "This is your active semester. Your active semester will be cleared.";
+	}
+
+	modal.classList.add("is-open");
+	document.body.classList.add("modal-open");
+}
+
+function renderSemestersList(listEl) {
+	if (!appState.semesters.length) {
+		renderEmptyListState(listEl, "No semesters yet. Create one to get started.");
+		return;
+	}
+
+	listEl.innerHTML = "";
+
+	for (const s of appState.semesters) {
+		const li = document.createElement("li");
+		li.className = "dash-item";
+
+		const inner = document.createElement("div");
+		inner.className = "dash-item-inner";
+
+		const row = document.createElement("div");
+		row.className = "dash-item-row";
+
+		const title = document.createElement("div");
+		title.className = "dash-item-main";
+		title.textContent = s.name;
+
+		row.appendChild(title);
+
+		const actions = document.createElement("div");
+		actions.className = "dash-item-actions";
+
+		const editBtn = document.createElement("button");
+		editBtn.className = "icon-btn";
+		editBtn.type = "button";
+		editBtn.textContent = "✎";
+		editBtn.dataset.semesterId = s.id;
+		editBtn.dataset.action = "edit";
+
+		const deleteBtn = document.createElement("button");
+		deleteBtn.className = "icon-btn icon-btn-danger";
+		deleteBtn.type = "button";
+		deleteBtn.textContent = "✖";
+		deleteBtn.dataset.semesterId = s.id;
+		deleteBtn.dataset.action = "delete";
+
+		actions.appendChild(editBtn);
+		actions.appendChild(deleteBtn);
+
+		inner.appendChild(row);
+		inner.appendChild(actions);
+
+		li.appendChild(inner);
+		listEl.appendChild(li);
+	}
+}
+
+function populateActiveSemesterSelect(selectEl) {
+	const prev = selectEl.value;
+
+	const placeholder = selectEl.querySelector('option[value=""]');
+	selectEl.innerHTML = "";
+	if (placeholder) selectEl.appendChild(placeholder);
+	else {
+		const opt = document.createElement("option");
+		opt.value = "";
+		opt.disabled = true;
+		opt.selected = true;
+		opt.textContent = "Select a semester…";
+		selectEl.appendChild(opt);
+	}
+
+	for (const s of appState.semesters) {
+		const opt = document.createElement("option");
+		opt.value = String(s.id);
+		opt.textContent = s.name;
+		selectEl.appendChild(opt);
+	}
+
+	if (appState.activeSemesterId != null) {
+		selectEl.value = String(appState.activeSemesterId);
+	} else {
+		selectEl.value = "";
+	}
+}
+
+function semesterModalShowListView(modalEl) {
+	const screenList = modalEl.querySelector("#semester-screen-list");
+	const screenForm = modalEl.querySelector("#semester-screen-form");
+	const footerList = modalEl.querySelector("#semester-footer-list");
+	const footerForm = modalEl.querySelector("#semester-footer-form");
+
+	if (screenList) screenList.style.display = "";
+	if (screenForm) screenForm.style.display = "none";
+	if (footerList) footerList.style.display = "";
+	if (footerForm) footerForm.style.display = "none";
+
+	const formErrorEl = modalEl.querySelector("#sm-form-error");
+	if (formErrorEl) setAlert(formErrorEl, "");
+}
+
+function semesterModalShowFormView(modalEl, mode, semester) {
+	const screenList = modalEl.querySelector("#semester-screen-list");
+	const screenForm = modalEl.querySelector("#semester-screen-form");
+	const footerList = modalEl.querySelector("#semester-footer-list");
+	const footerForm = modalEl.querySelector("#semester-footer-form");
+
+	if (screenList) screenList.style.display = "none";
+	if (screenForm) screenForm.style.display = "";
+	if (footerList) footerList.style.display = "none";
+	if (footerForm) footerForm.style.display = "";
+
+	const titleEl = modalEl.querySelector("#semester-modal-title");
+	const saveBtn = modalEl.querySelector("#sm-save-btn");
+
+	if (mode === "new") {
+		if (titleEl) titleEl.textContent = "New Semester";
+		if (saveBtn) saveBtn.textContent = "Create";
+		fillSemesterForm(modalEl, null);
+	} else {
+		if (titleEl) titleEl.textContent = "Edit Semester";
+		if (saveBtn) saveBtn.textContent = "Save";
+		fillSemesterForm(modalEl, semester);
+	}
+
+	const formErrorEl = modalEl.querySelector("#sm-form-error");
+	if (formErrorEl) setAlert(formErrorEl, "");
+}
+
+function fillSemesterForm(modalEl, semester) {
+	const idEl = modalEl.querySelector("#sm-id");
+	const nameEl = modalEl.querySelector("#sm-name");
+	const startEl = modalEl.querySelector("#sm-start");
+	const endEl = modalEl.querySelector("#sm-end");
+
+	if (idEl) idEl.value = semester ? String(semester.id) : "";
+	if (nameEl) nameEl.value = semester ? (semester.name || "") : "";
+
+	const start = semester ? semester.startDate : null;
+	const end = semester ? semester.endDate : null;
+
+	if (startEl) startEl.value = semester ? start : "";
+	if (endEl) endEl.value = semester ? end : "";
+}
 
 // Setups
 function setupLoginForm(formEl, errorEl) {
@@ -934,7 +1109,7 @@ function initDeleteModuleForm() {
 		const id = Number(formData.get("id"));
 
 		try {
-			const res = await deleteJson(`/api/modules/${id}`);
+			await deleteJson(`/api/modules/${id}`);
 
 			const modal = form.closest(".modal");
 			modal.classList.remove("is-open");
@@ -980,6 +1155,157 @@ function initAssignmentsToggle() {
 	updateLabel();
 }
 
+function initSemesterModal() {
+	const modalEl = document.getElementById("semester-modal");
+	if (!modalEl) return;
+
+	const listEl = modalEl.querySelector('ul[data-list="semesters"]');
+	const activeSelect = modalEl.querySelector("#sm-active");
+
+	const listErrorEl = modalEl.querySelector("#sm-error");
+	const formErrorEl = modalEl.querySelector("#sm-form-error");
+
+	const newBtn = modalEl.querySelector("#sm-new-btn");
+	const setActiveBtn = modalEl.querySelector("#sm-set-active-btn");
+	const cancelFormBtn = modalEl.querySelector("#sm-cancel-form-btn");
+	const formEl = modalEl.querySelector("#semester-form");
+
+	const titleEl = modalEl.querySelector("#semester-modal-title");
+
+	const refreshSemesterUI = () => {
+		if (activeSelect) populateActiveSemesterSelect(activeSelect);
+		if (listEl) renderSemestersList(listEl);
+	};
+
+	const openFreshListView = () => {
+		if (titleEl) titleEl.textContent = "Semesters";
+		if (listErrorEl) setAlert(listErrorEl, "");
+		if (formErrorEl) setAlert(formErrorEl, "");
+		semesterModalShowListView(modalEl);
+		refreshSemesterUI();
+	};
+	window.refreshSemesterModal = openFreshListView;
+
+	document.addEventListener("click", async (e) => {
+		const openBtn = e.target.closest('[data-modal-open="semester-modal"]');
+		if (!openBtn) return;
+
+		openFreshListView();
+	});
+
+	openFreshListView();
+
+	newBtn?.addEventListener("click", () => {
+		semesterModalShowFormView(modalEl, "new", null);
+	});
+
+	cancelFormBtn?.addEventListener("click", () => {
+		openFreshListView();
+	});
+
+	listEl?.addEventListener("click", async (e) => {
+		const btn = e.target.closest("button[data-semester-id][data-action]");
+		if (!btn) return;
+
+		const action = btn.dataset.action;
+		const semesterId = Number(btn.dataset.semesterId);
+
+		if (action === "edit") {
+			const semester = appState.semesters.find(s => Number(s.id) === semesterId);
+			if (!semester) return;
+			semesterModalShowFormView(modalEl, "edit", semester);
+			return;
+		}
+
+		if (action === "delete") {
+			openDeleteSemesterModal(semesterId);
+		}
+	});
+
+	setActiveBtn?.addEventListener("click", async () => {
+		const picked = activeSelect?.value;
+		if (!picked) return;
+
+		try {
+			await patchJson("/api/settings", { activeSemesterId: Number(picked) });
+
+			await refreshDashboardGrid();
+
+			refreshSemesterUI();
+			if (listErrorEl) setAlert(listErrorEl, "");
+
+			showToast("Active semester changed.");
+		} catch (err) {
+			if (listErrorEl) setAlert(listErrorEl, err.message);
+		}
+	});
+
+	formEl?.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		if (formErrorEl) setAlert(formErrorEl, "");
+
+		const id = modalEl.querySelector("#sm-id")?.value.trim() || "";
+		const name = modalEl.querySelector("#sm-name")?.value.trim() || "";
+		const startDate = modalEl.querySelector("#sm-start")?.value || "";
+		const endDate = modalEl.querySelector("#sm-end")?.value || "";
+		const availability = new Array(168).fill(0);
+
+		try {
+			if (!id) {
+				const res = await postJson("/api/semesters", { name, startDate, endDate, availability });
+				showToast(res.message);
+			} else {
+				const res = await patchJson(`/api/semesters/${Number(id)}`, { name, startDate, endDate });
+				showToast(res.message);
+			}
+	
+			await refreshDashboardGrid();
+			openFreshListView();
+		} catch (err) {
+			if (formErrorEl) setAlert(formErrorEl, err.message);
+		}
+	});
+}
+
+function initDeleteSemesterForm() {
+	const form = document.getElementById("delete-semester-form");
+	if (!form) return;
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("ds-error");
+		setAlert(errorEl, "");
+
+		const id = Number(new FormData(form).get("id"));
+
+		try {
+			await deleteJson(`/api/semesters/${id}`);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			await refreshDashboardGrid();
+
+			const semesterModal = document.getElementById("semester-modal");
+			if (semesterModal?.classList.contains("is-open")) {
+				window.refreshSemesterModal?.();
+			}
+
+			showToast("Semester deleted successfully.");
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
 	const publicRoutes = ["/", "/login", "/register"];
 	if (!publicRoutes.includes(window.location.pathname)) {
@@ -997,5 +1323,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initEditModuleForm();
 	initDeleteModuleForm();
 	initAssignmentsToggle();
+	initSemesterModal();
+	initDeleteSemesterForm();
 	initFooterYear();
 });

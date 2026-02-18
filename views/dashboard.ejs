@@ -18,7 +18,7 @@
 					<h1>Welcome back <span class="dash-name"><%= user.forename %></span>!</h1>
 					<div class="dash-subline">
 						<span id="active-semester-name"></span>
-						<a class="dash-link" href="#">Change Semester</a>
+						<a class="dash-link" href="#" data-modal-open="semester-modal">Manage Semesters</a>
 					</div>
 				</div>
 
@@ -287,7 +287,7 @@
 	<div class="modal" id="delete-module-modal">
 		<div class="modal-overlay" data-modal-close></div>
 
-		<div class="modal-dialog" role="dialog" aria-labelledby="delete-module-title">
+		<div class="modal-dialog" role="dialog">
 			<header class="modal-header">
 				<div>
 					<div class="modal-title" id="delete-module-title">Delete Module</div>
@@ -313,6 +313,126 @@
 			<footer class="modal-footer">
 				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
 				<button type="submit" class="btn btn-small btn-danger" form="delete-module-form">Delete</button>
+			</footer>
+		</div>
+	</div>
+
+	<!-- Change Semester Modal -->
+	<div class="modal" id="semester-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+			<div>
+				<div class="modal-title" id="semester-modal-title">Semesters</div>
+				<div class="field-hint">Set your active semester, or manage semesters.</div>
+			</div>
+
+			<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<div class="modal-body form">
+				<!-- SCREEN A: List and Pick -->
+				<section id="semester-screen-list">
+					<div
+					id="sm-error"
+					class="alert alert-error"
+					style="display:none;"
+					role="alert"
+					></div>
+
+					<div class="form-row">
+					<label for="sm-active">Active semester</label>
+					<select id="sm-active" name="activeSemesterId">
+						<option value="" disabled selected>Select a semester…</option>
+						<!-- populated by JS -->
+					</select>
+					<div class="field-hint">This controls what shows on your dashboard.</div>
+					</div>
+
+					<ul class="dash-list dash-list--editable" data-list="semesters"></ul>
+
+					<div class="dash-actions">
+					<button type="button" class="btn btn-small" id="sm-new-btn">New</button>
+					</div>
+				</section>
+
+				<!-- SCREEN B: Create/Edit -->
+				<section id="semester-screen-form" style="display:none;">
+					<div
+					id="sm-form-error"
+					class="alert alert-error"
+					style="display:none;"
+					role="alert"
+					></div>
+
+					<form id="semester-form" class="form">
+					<input type="hidden" id="sm-id" name="id" value="" />
+
+					<div class="form-row">
+						<label for="sm-name">Semester name</label>
+						<input id="sm-name" name="name" type="text" maxlength="100" required placeholder="e.g. Spring 2026" />
+					</div>
+
+					<div class="form-grid">
+						<div class="form-row">
+						<label for="sm-start">Start date</label>
+						<input id="sm-start" name="startDate" type="date" required />
+						</div>
+
+						<div class="form-row">
+						<label for="sm-end">End date</label>
+						<input id="sm-end" name="endDate" type="date" required />
+						</div>
+					</div>
+					</form>
+				</section>
+			</div>
+
+			<footer class="modal-footer">
+				<div id="semester-footer-list">
+					<button type="button" class="btn btn-small" data-modal-close>Close</button>
+					<button type="button" class="btn btn-small btn-primary" id="sm-set-active-btn">Set Active</button>
+				</div>
+
+				<div id="semester-footer-form" style="display:none;">
+					<button type="button" class="btn btn-small" id="sm-cancel-form-btn">Cancel</button>
+					<button type="submit" class="btn btn-small btn-primary" form="semester-form" id="sm-save-btn">Save</button>
+				</div>
+			</footer>
+		</div>
+	</div>
+
+	<!-- Delete Semester Modal -->
+	<div class="modal" id="delete-semester-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="delete-semester-title">Delete Semester</div>
+					<div class="field-hint">This action cannot be undone.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="delete-semester-form">
+				<input type="hidden" id="ds-id" name="id" />
+
+				<div id="ds-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+				<div class="modal-warning">
+					<div id="ds-message" class="modal-warning-text">
+						Are you sure you want to delete this semester?
+					</div>
+					<div id="ds-counts" class="field-hint" style="margin-top:.5rem;"></div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-danger" form="delete-semester-form">Delete</button>
 			</footer>
 		</div>
 	</div>

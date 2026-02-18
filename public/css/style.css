@@ -355,6 +355,15 @@ body {
 	opacity: 0.9;
 }
 
+.btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	background: var(--surface-muted);
+	color: var(--text-muted);
+	border-color: var(--border);
+	pointer-events: none;
+}
+
 /* Icon Buttons */
 .icon-btn {
 	border: 1px solid var(--border);
@@ -858,6 +867,10 @@ input:focus {
 	border-top: 1px solid var(--border);
 }
 
+.modal-footer > div {
+	display: contents;
+}
+
 select,
 textarea {
 	width: 100%;
@@ -923,7 +936,7 @@ body.modal-open {
 	padding: 1rem;
 }
 
-.modal-warning-text {
+.modal-warning-text, .warning-text {
 	color: var(--warning);
 	font-weight: 500;
 }
