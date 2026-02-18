@@ -93,6 +93,7 @@ async function refreshAppState() {
 	const modules = modulesPayload.modules;
 	const assignments = assignmentsPayload.assignments;
 
+	modules.sort((a, b) => a.name.localeCompare(b.name));
 	assignments.sort((a, b) => {
 		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
 		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
