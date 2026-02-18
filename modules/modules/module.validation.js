@@ -7,7 +7,7 @@ function validateCreateInSemesterInput({ name, credits, colour } = {}) {
 	colour = v.validateRequiredString(colour, "Colour", {
 		pattern: /^#[0-9A-Fa-f]{6}$/,
 		patternMessage: "Colour must be a valid hex code."
-	});
+	}).toUpperCase();
 
 	return {
 		name,
@@ -38,7 +38,7 @@ function validateUpdateInput({ name, credits, colour } = {}) {
 		updates.colour = v.validateRequiredString(colour, "Colour", {
 			pattern: /^#[0-9A-Fa-f]{6}$/,
 			patternMessage: "Colour must be a valid hex code."
-		});
+		}).toUpperCase();
 	}
 
 	return updates;

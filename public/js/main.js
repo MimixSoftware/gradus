@@ -9,6 +9,20 @@ const appState = {
 	moduleById: new Map()
 };
 
+// Variables
+const MODULE_COLOUR_PRESETS = [
+  "#3B82F6",
+  "#22C55E",
+  "#F97316",
+  "#A855F7",
+  "#EF4444",
+  "#14B8A6",
+  "#EAB308",
+  "#6366F1",
+  "#EC4899",
+  "#84CC16",
+];
+
 let showCompletedAssignments = false;
 
 // Request Helpers
@@ -70,6 +84,8 @@ async function refreshAppState() {
 	const semestersPayload = await getJson("/api/semesters");
 
 	const semesters = semestersPayload.semesters;
+	
+	semesters.sort((a, b) => a.name.localeCompare(b.name));
 
 	appState.activeSemesterId = settings.activeSemesterId;
 	appState.theme = settings.theme;
@@ -497,8 +513,10 @@ function openDeleteSemesterModal(semesterId) {
 	form.querySelector("#ds-id").value = String(semesterId);
 	msgEl.textContent = `Are you sure you want to delete “${name}”?`;
 
+	countsEl.textContent = "All modules and their associated assignments will be deleted.";
+
 	if (appState.activeSemesterId && Number(appState.activeSemesterId) === Number(semesterId)) {
-		countsEl.textContent = "This is your active semester. Your active semester will be cleared.";
+		countsEl.textContent += " This is your active semester. Your active semester will be cleared.";
 	}
 
 	modal.classList.add("is-open");
@@ -643,6 +661,15 @@ function fillSemesterForm(modalEl, semester) {
 
 	if (startEl) startEl.value = semester ? start : "";
 	if (endEl) endEl.value = semester ? end : "";
+}
+
+function pickRandomPresetModuleColour() {
+	const used = new Set(appState.modules.map(m => m.colour));
+
+	const available = MODULE_COLOUR_PRESETS.filter(c => !used.has(c));
+	const pool = available.length ? available : MODULE_COLOUR_PRESETS;
+
+	return pool[Math.floor(Math.random() * pool.length)];
 }
 
 // Setups
@@ -942,6 +969,14 @@ function initNewModuleForm() {
 		}
 	};
 
+	const setRandomDefaultColour = () => {
+		if (!colourPickerEl || !colourHexEl) return;
+
+		const picked = pickRandomPresetModuleColour(appState.modules);
+		colourPickerEl.value = picked;
+		colourHexEl.value = normalizeHex(picked);
+	};
+
 	colourPickerEl?.addEventListener("input", syncColourFromPicker);
 	colourHexEl?.addEventListener("input", syncColourFromHex);
 	colourHexEl?.addEventListener("blur", () => {
@@ -956,7 +991,13 @@ function initNewModuleForm() {
 		}
 	});
 
-	syncColourFromPicker();
+	document.addEventListener("click", (e) => {
+		const opener = e.target.closest('[data-modal-open="new-module-modal"]');
+		if (!opener) return;
+		setRandomDefaultColour();
+	});
+
+	setRandomDefaultColour();
 
 	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
@@ -981,7 +1022,7 @@ function initNewModuleForm() {
 			document.body.classList.remove("modal-open");
 
 			form.reset();
-			syncColourFromPicker();
+			setRandomDefaultColour();
 
 			await refreshDashboardGrid();
 
