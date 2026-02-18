@@ -701,6 +701,94 @@ function initNewAssignmentForm() {
 	});
 }
 
+function initNewModuleForm() {
+	const form = document.getElementById("new-module-form");
+	if (!form) return;
+
+	const colourPickerEl = form.querySelector("#nm-colour");
+	const colourHexEl = form.querySelector("#nm-colour-hex");
+
+	const errorEl = document.getElementById("nm-error");
+
+	const normalizeHex = (val) => {
+		if (!val) return "";
+		let v = String(val).trim();
+		if (!v.startsWith("#")) v = `#${v}`;
+		return v.toUpperCase();
+	};
+
+	const isValidHex = (val) => /^#[0-9A-F]{6}$/i.test(val);
+
+	const syncColourFromPicker = () => {
+		if (!colourPickerEl || !colourHexEl) return;
+		colourHexEl.value = normalizeHex(colourPickerEl.value);
+	};
+
+	const syncColourFromHex = () => {
+		if (!colourPickerEl || !colourHexEl) return;
+
+		const v = normalizeHex(colourHexEl.value);
+
+		if (isValidHex(v)) {
+			colourPickerEl.value = v;
+			colourHexEl.value = v;
+		}
+	};
+
+	colourPickerEl?.addEventListener("input", syncColourFromPicker);
+	colourHexEl?.addEventListener("input", syncColourFromHex);
+	colourHexEl?.addEventListener("blur", () => {
+		if (!colourPickerEl || !colourHexEl) return;
+
+		const v = normalizeHex(colourHexEl.value);
+		if (isValidHex(v)) {
+			colourPickerEl.value = v;
+			colourHexEl.value = v;
+		} else {
+			syncColourFromPicker();
+		}
+	});
+
+	syncColourFromPicker();
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+
+		const creditsVal = Number(formData.get("credits"));
+
+		const payload = {
+			name: formData.get("name"),
+			credits: creditsVal === 0 ? null : creditsVal,
+			colour: normalizeHex(formData.get("colour"))
+		};
+
+		try {
+			const res = await postJson(`/api/semesters/${appState.activeSemesterId}/modules`, payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+			syncColourFromPicker();
+
+			await refreshDashboardGrid();
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
 	const publicRoutes = ["/", "/login", "/register"];
 	if (!publicRoutes.includes(window.location.pathname)) {
@@ -713,5 +801,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 	await initDashboard();
 	initModals();
 	initNewAssignmentForm();
+	initNewModuleForm();
 	initFooterYear();
 });

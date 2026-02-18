@@ -38,7 +38,7 @@
 					<ul class="dash-list dash-list--editable" data-list="modules"></ul>
 
 					<div class="dash-actions">
-						<a class="btn btn-small" href="#">New</a>
+						<button type="button" class="btn btn-small" data-modal-open="new-module-modal">New</button>
 					</div>
 				</article>
 
@@ -143,6 +143,91 @@
 		</div>
 	</div>
 
+	<!-- New Module Modal -->
+	<div class="modal" id="new-module-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog" aria-labelledby="new-module-title">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="new-module-title">New Module</div>
+					<div class="field-hint">Create a module under your active semester.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="new-module-form">
+				<div
+					id="nm-error"
+					class="alert alert-error"
+					style="display: none;"
+					role="alert"
+				></div>
+
+				<div class="form-row">
+					<label for="nm-name">Module name</label>
+					<input
+						id="nm-name"
+						name="name"
+						type="text"
+						maxlength="100"
+						required
+						placeholder="e.g. Computer Networks"
+					/>
+				</div>
+
+				<div class="form-grid">
+					<div class="form-row">
+						<label for="nm-credits">Credits</label>
+						<input
+							id="nm-credits"
+							name="credits"
+							type="number"
+							min="0"
+							max="60"
+							step="1"
+							inputmode="numeric"
+							placeholder="Optional"
+						/>
+						<div class="field-hint">Optional. Leave empty if you don’t know yet.</div>
+					</div>
+
+					<div class="form-row">
+						<label for="nm-colour">Colour</label>
+
+						<div class="form-grid" style="grid-template-columns: auto 1fr;">
+							<input
+								id="nm-colour"
+								name="colour"
+								type="color"
+								value="#3b82f6"
+								required
+								aria-label="Pick a colour"
+								style="height: 42px; padding: 0; width: 56px;"
+							/>
+							<input
+								id="nm-colour-hex"
+								type="text"
+								inputmode="text"
+								placeholder="#3b82f6"
+								maxlength="7"
+								autocomplete="off"
+								spellcheck="false"
+							/>
+						</div>
+
+						<div class="field-hint">Pick a colour for the module (used in the UI).</div>
+					</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="new-module-form">Create</button>
+			</footer>
+		</div>
+	</div>
 
 	<script src="/js/main.js"></script>
 </body>

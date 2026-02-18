@@ -4,7 +4,6 @@ const AppError = require("../../utils/AppError");
 function validateCreateInSemesterInput({ name, credits, colour } = {}) {
 	name = v.validateRequiredString(name, "Name", { max: 100 });
 	credits = v.validateOptionalInt(credits, "Credits", { min: 0, max: 60 });
-	endDate = v.validateRequiredDate(endDate, "End Date");
 	colour = v.validateRequiredString(colour, "Colour", {
 		pattern: /^#[0-9A-Fa-f]{6}$/,
 		patternMessage: "Colour must be a valid hex code."
