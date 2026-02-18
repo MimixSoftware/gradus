@@ -24,7 +24,7 @@ async function register({ email, forename, surname, password }) {
 		await connection.query(
 			`INSERT INTO user_settings (user_id, active_semester_id, theme)
 			 VALUES (?, ?, ?)`,
-			[userId, null, "light"]
+			[userId, null, "system"]
 		);
 
 		await connection.commit();

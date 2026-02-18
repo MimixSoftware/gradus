@@ -2,7 +2,7 @@ USE gradus;
 CREATE TABLE user_settings (
 	user_id INT UNSIGNED PRIMARY KEY,
 	active_semester_id INT UNSIGNED NULL,
-	theme ENUM('light','dark','system') NOT NULL DEFAULT 'light',
+	theme ENUM('light','dark','system') NOT NULL DEFAULT 'system',
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
