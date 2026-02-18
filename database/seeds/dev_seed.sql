@@ -49,7 +49,7 @@ INSERT INTO user_settings (user_id, active_semester_id, theme)
 VALUES
 (
 	1,
-	2,
+	1,
 	'light'
 ),
 (

@@ -19,6 +19,10 @@
 	--red-200: #e7c3c3;
 	--red-600: #e74c3c;
 
+	--amber-50: #fffbf2;
+	--amber-200: #f2e2b8;
+	--amber-600: #f59e0b;
+
 	--green-50: #f4fbf7;
 	--green-200: #c7ead6;
 	--green-600: #27ae60;
@@ -48,6 +52,10 @@
 	--danger-bg: var(--red-50);
 	--danger-border: var(--red-200);
 	--danger: var(--red-600);
+
+	--warning-bg: var(--amber-50);
+	--warning-border: var(--amber-200);
+	--warning: var(--amber-600);
 
 	--success-bg: var(--green-50);
 	--success-border: var(--green-200);
@@ -89,6 +97,10 @@
 	--danger-bg: rgba(231,195,195,0.10);
 	--danger-border: rgba(231,195,195,0.35);
 	--danger: #ff6b5e;
+
+	--warning-bg: rgba(242, 226, 184, 0.10);
+	--warning-border: rgba(242, 226, 184, 0.35);
+	--warning: #fbbf24;
 
 	--success-bg: rgba(199,234,214,0.10);
 	--success-border: rgba(199,234,214,0.30);
@@ -132,6 +144,10 @@
 		--danger-bg: rgba(231,195,195,0.10);
 		--danger-border: rgba(231,195,195,0.35);
 		--danger: #ff6b5e;
+		
+		--warning-bg: rgba(242, 226, 184, 0.10);
+		--warning-border: rgba(242, 226, 184, 0.35);
+		--warning: #fbbf24;
 
 		--success-bg: rgba(199,234,214,0.10);
 		--success-border: rgba(199,234,214,0.30);
@@ -898,6 +914,18 @@ input[type="range"] {
 
 body.modal-open {
 	overflow: hidden;
+}
+
+.modal-warning {
+	background: var(--warning-bg);
+	border: 1px solid var(--warning-border);
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+.modal-warning-text {
+	color: var(--warning);
+	font-weight: 500;
 }
 
 /* Toasts */

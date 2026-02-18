@@ -10,56 +10,19 @@ const appState = {
 };
 
 // Request Helpers
-async function postJson(url, data) {
-	const res = await fetch(url, {
-		method: "POST",
-		headers: { "Content-Type": "application/json", "Accept": "application/json" },
-		credentials: "same-origin",
-		body: JSON.stringify(data)
-	});
-
-	let payload = null;
-	try { payload = await res.json(); } catch (_) {}
-
-	if (!res.ok) {
-		const msg = payload?.message || `Request failed (${res.status})`;
-		const err = new Error(msg);
-		err.status = res.status;
-		err.payload = payload;
-		throw err;
-	}
-
-	return payload;
-}
-
-async function getJson(url) {
-	const res = await fetch(url, {
-		method: "GET",
+async function requestJson(method, url, data) {
+	const options = {
+		method,
 		headers: { "Accept": "application/json" },
-		credentials: "same-origin"
-	});
-
-	let payload = null;
-	try { payload = await res.json(); } catch (_) {}
-
-	if (!res.ok) {
-		const msg = payload?.message || `Request failed (${res.status})`;
-		const err = new Error(msg);
-		err.status = res.status;
-		err.payload = payload;
-		throw err;
-	}
-
-	return payload;
-}
-
-async function patchJson(url, data) {
-	const res = await fetch(url, {
-		method: "PATCH",
-		headers: { "Content-Type": "application/json", "Accept": "application/json" },
 		credentials: "same-origin",
-		body: JSON.stringify(data)
-	});
+	};
+
+	if (data !== undefined) {
+		options.headers["Content-Type"] = "application/json";
+		options.body = JSON.stringify(data);
+	}
+
+	const res = await fetch(url, options);
 
 	let payload = null;
 	try { payload = await res.json(); } catch (_) {}
@@ -74,6 +37,11 @@ async function patchJson(url, data) {
 
 	return payload;
 }
+
+const getJson = (url) => requestJson("GET", url);
+const postJson = (url, data) => requestJson("POST", url, data);
+const patchJson = (url, data) => requestJson("PATCH", url, data);
+const deleteJson = (url) => requestJson("DELETE", url);
 
 // App State Refresh
 async function refreshSettings() {
@@ -461,6 +429,44 @@ function openEditModuleModal(moduleId) {
 	document.body.classList.add("modal-open");
 }
 
+async function openDeleteModuleModal(moduleId) {
+	const modal = document.getElementById("delete-module-modal");
+	const form = document.getElementById("delete-module-form");
+	if (!modal || !form) return;
+
+	const errorEl = document.getElementById("dm-error");
+	const msgEl = document.getElementById("dm-message");
+	const countsEl = document.getElementById("dm-counts");
+	const submitBtn = form.querySelector('button[type="submit"]');
+
+	setAlert(errorEl, "");
+	countsEl.textContent = "";
+	msgEl.textContent = "Are you sure you want to delete this module?";
+
+	form.querySelector("#dm-id").value = moduleId;
+
+	modal.classList.add("is-open");
+	document.body.classList.add("modal-open");
+
+	if (submitBtn) submitBtn.disabled = false;
+
+	const m = appState.moduleById?.get(Number(moduleId));
+	const moduleName = m?.name || "this module";
+
+	const aCount = (appState.assignments || []).reduce((acc, a) => {
+		const aModuleId = a.moduleId ?? a.module_id;
+		return acc + (Number(aModuleId) === Number(moduleId) ? 1 : 0);
+	}, 0);
+
+	msgEl.textContent = `Are you sure you want to delete “${moduleName}”?`;
+
+	if (aCount > 0) {
+		countsEl.textContent = `${aCount} assignment${aCount === 1 ? "" : "s"} will be deleted.`;
+	} else {
+		countsEl.textContent = "This module has no assignments.";
+	}
+}
+
 
 // Setups
 function setupLoginForm(formEl, errorEl) {
@@ -826,7 +832,7 @@ function initModulesListActions() {
 		if (btn.dataset.action === "edit") {
 			openEditModuleModal(moduleId);
 		} else if (btn.dataset.action === "delete") {
-			// Delete flow
+			openDeleteModuleModal(moduleId);
 		}
 	});
 }
@@ -912,6 +918,40 @@ function initEditModuleForm() {
 	});
 }
 
+function initDeleteModuleForm() {
+	const form = document.getElementById("delete-module-form");
+	if (!form) return;
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("dm-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+		const id = Number(formData.get("id"));
+
+		try {
+			const res = await deleteJson(`/api/modules/${id}`);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			await refreshDashboardGrid();
+			showToast("Module deleted successfully.");
+		} catch (err) {
+			setAlert(errorEl, err.message);
+
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
 	const publicRoutes = ["/", "/login", "/register"];
 	if (!publicRoutes.includes(window.location.pathname)) {
@@ -927,5 +967,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initNewAssignmentForm();
 	initNewModuleForm();
 	initEditModuleForm();
+	initDeleteModuleForm();
 	initFooterYear();
 });
