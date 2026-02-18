@@ -679,6 +679,10 @@ input:focus {
 	text-decoration: none;
 }
 
+.dash-item-inner--has-badge {
+	padding-right: 5rem;
+}
+
 .dash-item-link {
 	display: block;
 }
@@ -749,6 +753,46 @@ input:focus {
 	justify-content: flex-end;
 	gap: 0.5rem;
 	margin-top: 0.9rem;
+}
+
+.dash-item-status {
+	position: absolute;
+	top: 0.55rem;
+	right: 0.55rem;
+	font-size: 0.75rem;
+	padding: 0.2rem 0.45rem;
+	border-radius: 999px;
+	border: 1px solid var(--border);
+	background: var(--surface);
+	color: var(--text-muted);
+}
+
+.dash-item--completed .dash-item-inner {
+	opacity: 0.75;
+}
+
+.dash-item--completed .dash-item-main {
+	text-decoration: line-through;
+	text-decoration-thickness: 2px;
+}
+
+.dash-item--completed .dash-item-status {
+	color: var(--text-muted);
+}
+
+.dash-item--overdue .dash-item-inner {
+	border: 1px solid var(--red-200);
+	background: var(--red-50);
+}
+
+.dash-item--overdue .dash-item-main {
+	color: var(--red-600);
+}
+
+.dash-item--overdue .dash-item-status {
+	border-color: var(--red-200);
+	background: var(--red-50);
+	color: var(--red-600);
 }
 
 /* Responsive: Dashboard */

@@ -319,6 +319,12 @@ function renderModulesList(listEl) {
 	}
 }
 
+function isOverdue(deadline) {
+	if (!deadline) return false;
+	const due = new Date(deadline);
+	return due.getTime() < Date.now();
+}
+
 function renderAssignmentsList(listEl, { showCompleted = false } = {}) {
 	const assignments = showCompleted
 		? appState.assignments 
@@ -336,8 +342,13 @@ function renderAssignmentsList(listEl, { showCompleted = false } = {}) {
 		const moduleName = mod?.name ?? "Unknown module";
 		const moduleColour = mod?.colour ?? "#4f7cff";
 
+		const overdue = a.status === "active" && isOverdue(a.deadline);
+		const completed = a.status === "completed";
+
 		const li = document.createElement("li");
 		li.className = "dash-item";
+		if (completed) li.classList.add("dash-item--completed");
+		if (overdue) li.classList.add("dash-item--overdue");
 
 		const link = document.createElement("a");
 		link.className = "dash-item-link dash-item-inner";
@@ -356,6 +367,14 @@ function renderAssignmentsList(listEl, { showCompleted = false } = {}) {
 
 		row.appendChild(dot);
 		row.appendChild(title);
+
+		if (completed || overdue) {
+			const badge = document.createElement("span");
+			badge.className = "dash-item-status";
+			badge.textContent = completed ? "Completed" : "Overdue";
+			link.classList.add("dash-item-inner--has-badge");
+			link.appendChild(badge);
+		}
 
 		const content = document.createElement("div");
 		content.className = "dash-item-content";
