@@ -229,6 +229,63 @@
 		</div>
 	</div>
 
+	<!-- Edit Module Modal -->
+	<div class="modal" id="edit-module-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog" aria-labelledby="edit-module-title">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="edit-module-title">Edit Module</div>
+					<div class="field-hint">Update module details.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="edit-module-form">
+				<input type="hidden" id="em-id" name="id" />
+
+				<div id="em-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+				<div class="form-row">
+					<label for="em-name">Module name</label>
+					<input id="em-name" name="name" type="text" maxlength="100" required />
+				</div>
+
+				<div class="form-grid">
+					<div class="form-row">
+						<label for="em-credits">Credits</label>
+						<input id="em-credits" name="credits" type="number" min="0" max="60" step="1" />
+						<div class="field-hint">Optional.</div>
+					</div>
+
+					<div class="form-row">
+						<label for="em-colour">Colour</label>
+						<div class="form-grid" style="grid-template-columns: auto 1fr;">
+							<input
+								id="em-colour"
+								name="colour"
+								type="color"
+								value="#3b82f6"
+								required
+								style="height: 42px; padding: 0; width: 56px;"
+							/>
+
+							<input id="em-colour-hex" type="text" maxlength="7" autocomplete="off" spellcheck="false" />
+						</div>
+					</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="edit-module-form">Save</button>
+			</footer>
+		</div>
+	</div>
+
+
 	<script src="/js/main.js"></script>
 </body>
 </html>

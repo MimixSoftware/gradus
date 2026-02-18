@@ -305,12 +305,14 @@ function renderModulesList(listEl) {
 		editBtn.type = "button";
 		editBtn.textContent = "✎";
 		editBtn.dataset.moduleId = m.id;
+		editBtn.dataset.action = "edit";
 
 		const deleteBtn = document.createElement("button");
 		deleteBtn.className = "icon-btn icon-btn-danger";
 		deleteBtn.type = "button";
 		deleteBtn.textContent = "✖";
 		deleteBtn.dataset.moduleId = m.id;
+		deleteBtn.dataset.action = "delete";
 
 		actions.appendChild(editBtn);
 		actions.appendChild(deleteBtn);
@@ -437,6 +439,28 @@ async function refreshDashboardGrid() {
 	const moduleSelectEl = document.getElementById("na-module");
 	populateModuleSelect(moduleSelectEl);
 }
+
+function openEditModuleModal(moduleId) {
+	const m = appState.moduleById?.get(moduleId);
+	if (!m) return;
+
+	const form = document.getElementById("edit-module-form");
+	const modal = document.getElementById("edit-module-modal");
+	if (!form || !modal) return;
+
+	const errorEl = document.getElementById("em-error");
+	setAlert(errorEl, "");
+
+	form.querySelector("#em-id").value = m.id;
+	form.querySelector("#em-name").value = m.name ?? "";
+	form.querySelector("#em-credits").value = m.credits ?? "";
+	form.querySelector("#em-colour").value = m.colour ?? "#3b82f6";
+	form.querySelector("#em-colour-hex").value = (m.colour ?? "#3b82f6").toUpperCase();
+
+	modal.classList.add("is-open");
+	document.body.classList.add("modal-open");
+}
+
 
 // Setups
 function setupLoginForm(formEl, errorEl) {
@@ -789,6 +813,105 @@ function initNewModuleForm() {
 	});
 }
 
+function initModulesListActions() {
+	const modulesListEl = document.querySelector('[data-list="modules"]');
+	if (!modulesListEl) return;
+
+	modulesListEl.addEventListener("click", (e) => {
+		const btn = e.target.closest("button[data-module-id][data-action]");
+		if (!btn) return;
+
+		const moduleId = Number(btn.dataset.moduleId);
+
+		if (btn.dataset.action === "edit") {
+			openEditModuleModal(moduleId);
+		} else if (btn.dataset.action === "delete") {
+			// Delete flow
+		}
+	});
+}
+
+function initEditModuleForm() {
+	const form = document.getElementById("edit-module-form");
+	if (!form) return;
+
+	const picker = form.querySelector("#em-colour");
+	const hex = form.querySelector("#em-colour-hex");
+
+	const normalizeHex = (val) => {
+		if (!val) return "";
+		let v = String(val).trim();
+		if (!v.startsWith("#")) v = `#${v}`;
+		return v.toUpperCase();
+	};
+
+	const isValidHex = (val) => /^#[0-9A-F]{6}$/i.test(val);
+
+	const syncColour = () => {
+		if (!picker || !hex) return;
+		hex.value = normalizeHex(picker.value);
+	};
+
+	picker?.addEventListener("input", syncColour);
+
+	hex?.addEventListener("input", () => {
+		const v = normalizeHex(hex.value);
+		if (isValidHex(v)) {
+			picker.value = v;
+			hex.value = v;
+		}
+	});
+
+	hex?.addEventListener("blur", () => {
+		const v = normalizeHex(hex.value);
+		if (isValidHex(v)) {
+			picker.value = v;
+			hex.value = v;
+		} else {
+			syncColour();
+		}
+	});
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("em-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+
+		const id = Number(formData.get("id"));
+
+		const creditsVal = Number(formData.get("credits"));
+
+		const payload = { 
+			name: formData.get("name"),
+			credits: creditsVal === 0 ? null : creditsVal,
+			colour: normalizeHex(formData.get("colour"))
+		};
+
+		try {
+			const res = await patchJson(`/api/modules/${id}`, payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			await refreshDashboardGrid();
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
 	const publicRoutes = ["/", "/login", "/register"];
 	if (!publicRoutes.includes(window.location.pathname)) {
@@ -800,7 +923,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initLogoutLink();
 	await initDashboard();
 	initModals();
+	initModulesListActions();
 	initNewAssignmentForm();
 	initNewModuleForm();
+	initEditModuleForm();
 	initFooterYear();
 });
