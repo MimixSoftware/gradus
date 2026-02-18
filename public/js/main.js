@@ -162,10 +162,11 @@ function showToast(message, { type = "success", duration = 3000 } = {}) {
 	}, duration);
 }
 
-function renderSemesterStatusAndActions({ semesterNameEl, newModuleBtnEl }) {
-	const hasActive = !!appState.activeSemesterId;
+function renderSemesterStatusAndActions({ semesterNameEl, newModuleBtnEl, newAssignmentBtnEl }) {
+	const hasActiveSemesterId = !!appState.activeSemesterId;
+	const hasModules = appState.modules && appState.modules.length > 0;
 
-	if (!hasActive) {
+	if (!hasActiveSemesterId) {
 		semesterNameEl.textContent = "No semester selected";
 		semesterNameEl.classList.add("warning-text");
 	} else {
@@ -175,8 +176,11 @@ function renderSemesterStatusAndActions({ semesterNameEl, newModuleBtnEl }) {
 	}
 
 	if (newModuleBtnEl) {
-		newModuleBtnEl.disabled = !hasActive;
-		newModuleBtnEl.title = !hasActive ? "Select an active semester to create modules." : "";
+		newModuleBtnEl.disabled = !hasActiveSemesterId;
+	}
+
+	if (newAssignmentBtnEl) {
+		newAssignmentBtnEl.disabled = !hasActiveSemesterId || !hasModules;
 	}
 }
 
@@ -440,10 +444,11 @@ async function refreshDashboardGrid() {
 	const assignmentsListEl = document.querySelector('[data-list="assignments"]');
 	const todayListEl = document.querySelector('[data-list="today"]');
 	const newModuleBtnEl = document.querySelector('[data-modal-open="new-module-modal"]');
+	const newAssignmentBtnEl = document.querySelector('[data-modal-open="new-assignment-modal"]');
 	
 	await refreshAppState();
 
-	renderSemesterStatusAndActions({ semesterNameEl, newModuleBtnEl });
+	renderSemesterStatusAndActions({ semesterNameEl, newModuleBtnEl, newAssignmentBtnEl });
 
 	renderModulesList(modulesListEl);
 	renderAssignmentsList(assignmentsListEl, {

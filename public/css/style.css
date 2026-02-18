@@ -109,7 +109,8 @@
 	--focus-ring: #5a5a66;
 }
 
-:root[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+:root[data-theme="dark"] input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+:root[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
 	filter: invert(1);
 }
 
@@ -156,7 +157,8 @@
 		--focus-ring: #5a5a66;
 	}
 
-	input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+	input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+	input[type="date"]::-webkit-calendar-picker-indicator {
 		filter: invert(1);
 	}
 }
