@@ -11,54 +11,54 @@
 
 	<%- include('partials/header') %>
 
-	<main class="page">
-        <div class="dashboard">
-			<header class="dash-header">
-				<div class="dash-title">
-					<h1>Welcome back <span class="dash-name"><%= user.forename %></span>!</h1>
-					<div class="dash-subline">
+	<main class="page" data-page="dashboard">
+        <div class="container">
+			<header class="ui-header">
+				<div class="ui-title">
+					<h1>Welcome back <span class="ui-name"><%= user.forename %></span>!</h1>
+					<div class="ui-subline">
 						<span id="active-semester-name"></span>
-						<a class="dash-link" href="#" data-modal-open="semester-modal">Manage Semesters</a>
+						<a class="ui-link" href="#" data-modal-open="semester-modal">Manage Semesters</a>
 					</div>
 				</div>
 
-				<div class="dash-meta">
-					<div class="dash-datetime">
+				<div class="ui-meta">
+					<div class="ui-datetime">
 						<div class="dash-date"></div>
-						<div class="dash-time"></div>
+						<div class="ui-time"></div>
 					</div>
 				</div>
 			</header>
 
-			<section class="dash-grid">
+			<section class="ui-grid">
 
-				<article class="dash-card">
-					<h2 class="dash-card-title">Your Modules</h2>
+				<article class="ui-card">
+					<h2 class="ui-card-title">Your Modules</h2>
 
-					<ul class="dash-list dash-list--editable" data-list="modules"></ul>
+					<ul class="ui-list ui-list--editable" data-list="modules"></ul>
 
-					<div class="dash-actions">
+					<div class="ui-actions">
 						<button type="button" class="btn btn-small" data-modal-open="new-module-modal">New</button>
 					</div>
 				</article>
 
-				<article class="dash-card">
-					<h2 class="dash-card-title">Your Assignments</h2>
+				<article class="ui-card">
+					<h2 class="ui-card-title">Your Assignments</h2>
 
-					<ul class="dash-list dash-list--clickable" data-list="assignments"></ul>
+					<ul class="ui-list ui-list--clickable" data-list="assignments"></ul>
 
-					<div class="dash-actions">
+					<div class="ui-actions">
 						<button type="button" class="btn btn-small" data-modal-open="new-assignment-modal">New</button>
 						<button type="button" class="btn btn-small" id="toggle-completed-btn">Show Completed</button>
 					</div>
 				</article>
 
-				<article class="dash-card">
-					<h2 class="dash-card-title">Today</h2>
+				<article class="ui-card">
+					<h2 class="ui-card-title">Today</h2>
 
-					<ul class="dash-list" data-list="today"></ul>
+					<ul class="ui-list" data-list="today"></ul>
 
-					<div class="dash-actions">
+					<div class="ui-actions">
 						<a class="btn btn-small" href="/schedule">My Schedule</a>
 					</div>
 				</article>
@@ -348,9 +348,9 @@
 					<div class="field-hint">This controls what shows on your dashboard.</div>
 					</div>
 
-					<ul class="dash-list dash-list--editable" data-list="semesters"></ul>
+					<ul class="ui-list ui-list--editable" data-list="semesters"></ul>
 
-					<div class="dash-actions">
+					<div class="ui-actions">
 					<button type="button" class="btn btn-small" id="sm-new-btn">New</button>
 					</div>
 				</section>

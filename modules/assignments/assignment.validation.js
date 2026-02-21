@@ -41,7 +41,7 @@ function validateUpdateInput({ name, description, status, weight, confidence, de
 		updates.weight = v.validateOptionalInt(weight, "Weight", { min: 1, max: 100 });
 	}
 	if (hasConfidence) {
-		updates.confidence = v.validateOptionalInt(weight, "Confidence", { min: 1, max: 5 });
+		updates.confidence = v.validateOptionalInt(confidence, "Confidence", { min: 1, max: 5 });
 	}
 	if (hasDeadline) {
 		updates.deadline = v.validateOptionalUtcDatetime(deadline, "Deadline");

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %> - Gradus</title>
+	<link rel="icon" href="/images/favicon.ico">
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+	<%- include('partials/header') %>
+
+	<main class="page" data-page="assignment" data-assignment-id="<%= assignmentId %>">
+		<div class="container">
+
+			<header class="ui-header">
+				<div class="ui-title">
+					<h1>
+						<span class="ui-name assignment-name"></span>
+					</h1>
+
+					<div class="ui-subline">
+						<span>
+							Module:
+							<strong class="assignment-module-name"></strong>
+						</span>
+
+						<span>•</span>
+
+						<span>
+							Due:
+							<strong class="assignment-due-date"></strong>
+						</span>
+					</div>
+				</div>
+
+				<div class="ui-meta">
+					<div class="ui-actions" style="margin-top: 0;">
+						<button type="button" class="btn btn-small" data-action="toggle-assignment-status">Complete</button>
+						<button type="button" class="btn btn-small" data-modal-open="edit-assignment-modal">Edit</button>
+						<button type="button" class="btn btn-small btn-danger" data-modal-open="delete-assignment-modal">Delete</button>
+					</div>
+				</div>
+			</header>
+
+			<section class="ui-grid">
+
+				<article class="ui-card">
+					<h2 class="ui-card-title">To Do</h2>
+
+					<ul class="ui-list ui-list--clickable">
+						<li class="ui-item">
+							<a class="ui-item-link ui-item-inner" href="#">
+								<div class="ui-item-row">
+									<span class="ui-dot" style="background: var(--gray-700);"></span>
+									<span class="ui-item-main">Task placeholder (To Do)</span>
+								</div>
+								<div class="ui-item-content">
+									<div class="ui-item-meta">Short description placeholder…</div>
+								</div>
+							</a>
+						</li>
+
+						<li class="ui-item">
+							<a class="ui-item-link ui-item-inner" href="#">
+								<div class="ui-item-row">
+									<span class="ui-dot" style="background: var(--gray-700);"></span>
+									<span class="ui-item-main">Another task placeholder</span>
+								</div>
+								<div class="ui-item-content">
+									<div class="ui-item-meta">Some extra info (e.g., ETC 45 mins)</div>
+								</div>
+							</a>
+						</li>
+					</ul>
+
+					<div class="ui-actions">
+						<button type="button" class="btn btn-small" data-modal-open="new-task-modal">New</button>
+					</div>
+				</article>
+
+				<article class="ui-card">
+					<h2 class="ui-card-title">Doing</h2>
+
+					<ul class="ui-list ui-list--clickable">
+						<li class="ui-item">
+							<a class="ui-item-link ui-item-inner ui-item-inner--has-badge" href="#">
+								<div class="ui-item-row">
+									<span class="ui-dot" style="background: var(--brand-600);"></span>
+									<span class="ui-item-main">Task placeholder (Doing)</span>
+								</div>
+
+								<div class="ui-item-content">
+									<div class="ui-item-meta">Started recently • placeholder</div>
+								</div>
+
+								<span class="ui-item-status">Doing</span>
+							</a>
+						</li>
+					</ul>
+
+					<div class="ui-actions">
+						<!-- No buttons here (per your spec) -->
+					</div>
+				</article>
+
+				<article class="ui-card">
+					<h2 class="ui-card-title">Done</h2>
+
+					<ul class="ui-list ui-list--clickable">
+						<li class="ui-item ui-item--completed">
+							<a class="ui-item-link ui-item-inner ui-item-inner--has-badge" href="#">
+								<div class="ui-item-row">
+									<span class="ui-dot" style="background: var(--green-600);"></span>
+									<span class="ui-item-main">Task placeholder (Done)</span>
+								</div>
+
+								<div class="ui-item-content">
+									<div class="ui-item-meta">Completed • placeholder</div>
+								</div>
+
+								<span class="ui-item-status">Done</span>
+							</a>
+						</li>
+					</ul>
+
+					<div class="ui-actions">
+						<!-- No buttons here (per your spec) -->
+					</div>
+				</article>
+
+			</section>
+
+		</div>
+	</main>
+
+	<%- include('partials/footer') %>
+
+	<!-- Edit Assignment Modal -->
+	<div class="modal" id="edit-assignment-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="edit-assignment-title">Edit Assignment</div>
+					<div class="field-hint">Update assignment details.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="edit-assignment-form">
+				<div
+					id="ea-error"
+					class="alert alert-error"
+					style="display: none;"
+					role="alert"
+				>Test</div>
+
+				<div class="form-row">
+					<label for="ea-name">Assignment name</label>
+					<input id="ea-name" name="name" type="text" maxlength="100" required placeholder="e.g. Networks Report" />
+
+					<label for="ea-deadline">Deadline</label>
+					<input id="ea-deadline" name="deadline" type="datetime-local" />
+					<div class="field-hint">Optional. Leave empty if you don’t have a deadline yet.</div>
+				</div>
+
+				<div class="form-row">
+					<label for="ea-description">Description</label>
+					<textarea id="ea-description" name="description" maxlength="500" placeholder="Optional notes, requirements, marking scheme, etc."></textarea>
+				</div>
+
+				<div class="form-row">
+					<div class="range-row">
+						<label for="ea-weight">Weight</label>
+						<div class="range-value"><span id="ea-weight-val">0</span>%</div>
+					</div>
+					<input id="ea-weight" name="weight" type="range" min="0" max="100" step="1" value="0" />
+				</div>
+
+				<div class="form-row">
+					<div class="range-row">
+						<label for="ea-confidence">Confidence</label>
+						<div class="range-value"><span id="ea-confidence-val">0</span>/5</div>
+					</div>
+					<input id="ea-confidence" name="confidence" type="range" min="0" max="5" step="1" value="0" />
+					<div class="field-hint">0 = no clue yet, 5 = very confident.</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="edit-assignment-form">Save</button>
+			</footer>
+		</div>
+	</div>
+
+	<!-- Delete Assignment Modal -->
+	<div class="modal" id="delete-assignment-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="delete-module-title">Delete Assignment</div>
+					<div class="field-hint">This action cannot be undone.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="delete-assignment-form">
+				<div id="da-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+				<div class="modal-warning">
+					<div id="da-message" class="modal-warning-text">
+						Are you sure you want to delete this assignment?
+					</div>
+					<div id="da-counts" class="field-hint" style="margin-top:.5rem;"></div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-danger" form="delete-assignment-form">Delete</button>
+			</footer>
+		</div>
+	</div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
