@@ -31,6 +31,21 @@ async function getTaskAssignmentStatus(userId, taskId) {
 	return rows[0]?.assignment_status;
 }
 
+async function getTaskStatus(userId, taskId) {
+	const [rows] = await db.query(
+		`SELECT t.status
+		FROM tasks t
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE t.id = ? AND s.user_id = ?
+		LIMIT 1`,
+		[taskId, userId]
+	);
+
+	return rows[0]?.status;
+}
+
 async function findAll(userId) {
 	const [rows] = await db.query(
 		`SELECT
@@ -126,13 +141,20 @@ async function update(userId, taskId, updates) {
 	const values = [];
 	
 	const assignmentStatus = await getTaskAssignmentStatus(userId, taskId);
-
 	if (assignmentStatus === undefined) {
 		throw new AppError("Task not found.", 404);
 	}
-
 	if (assignmentStatus === "completed") {
 		throw new AppError("Cannot modify tasks in a completed assignment. Reopen the assignment first.", 409);
+	}
+
+	const currentStatus = await getTaskStatus(userId, taskId);
+  	if (!currentStatus) {
+		throw new AppError("Task not found.", 404);
+	}
+	const nextStatus = updates.status !== undefined ? updates.status : currentStatus;
+	if (updates.atcMinutes !== undefined && nextStatus !== "done") {
+		throw new AppError("ATC can only be set when the task is in Done.", 409);
 	}
 
 	if (updates.name !== undefined) {
@@ -160,7 +182,9 @@ async function update(userId, taskId, updates) {
 		values.push(updates.etcMinutes);
 	}
 
-	if (updates.atcMinutes !== undefined) {
+	if (updates.status !== undefined && updates.status !== "done") {
+		setParts.push("t.atc_minutes = NULL");
+	} else if (updates.atcMinutes !== undefined) {
 		setParts.push("t.atc_minutes = ?");
 		values.push(updates.atcMinutes);
 	}

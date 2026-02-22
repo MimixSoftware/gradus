@@ -43,7 +43,7 @@ function validateUpdateInput({ name, description, status, deadline, etcMinutes, 
 		updates.etcMinutes = v.validateOptionalInt(etcMinutes, "Estimated Completion Time", { min: 1, max: 1440 });
 	}
 	if (hasAtcMinutes) {
-		updates.atcMinutes = v.validateOptionalInt(etcMinutes, "Actual Completion Time", { min: 1, max: 1440 });
+		updates.atcMinutes = v.validateOptionalInt(atcMinutes, "Actual Completion Time", { min: 1, max: 1440 });
 	}
 
 	return updates;

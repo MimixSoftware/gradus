@@ -690,7 +690,6 @@ async function initDashboard() {
 		const errorEl = document.getElementById("dm-error");
 		const msgEl = document.getElementById("dm-message");
 		const countsEl = document.getElementById("dm-counts");
-		const submitBtn = form.querySelector('button[type="submit"]');
 
 		setAlert(errorEl, "");
 		countsEl.textContent = "";
@@ -700,8 +699,6 @@ async function initDashboard() {
 
 		modal.classList.add("is-open");
 		document.body.classList.add("modal-open");
-
-		submitBtn.disabled = false;
 
 		const m = appState.moduleById.get(Number(moduleId));
 		const moduleName = m?.name || "this module";
@@ -1310,21 +1307,27 @@ async function initAssignment() {
 	const doneListEl = document.querySelector('[data-list="done"]');
 
 	document.addEventListener("assignment:updated", refreshAssignment);
+	document.addEventListener("task:created", refreshAssignment);
+	document.addEventListener("task:updated", refreshAssignment);
+	document.addEventListener("task:deleted", refreshAssignment);
 	editModal.addEventListener("modal:open", populateEditAssignmentForm);
 	main.addEventListener("click", handleAssignmentActions);
 
-	// modulesListEl.addEventListener("click", (e) => {
-	// 	const btn = e.target.closest("button[data-module-id][data-action]");
-	// 	if (!btn) return;
+	const handleTaskActions = (e) => {
+		const btn = e.target.closest('button[data-task-id][data-action]');
+		if (!btn) return;
 
-	// 	const moduleId = Number(btn.dataset.moduleId);
+		const taskId = Number(btn.dataset.taskId);
 
-	// 	if (btn.dataset.action === "edit") {
-	// 		openEditModuleModal(moduleId);
-	// 	} else if (btn.dataset.action === "delete") {
-	// 		openDeleteModuleModal(moduleId);
-	// 	}
-	// });
+		if (btn.dataset.action === "edit") {
+			openEditTaskModal(taskId);
+		} else if (btn.dataset.action === "delete") {
+			openDeleteTaskModal(taskId);
+		}
+	};
+	todoListEl.addEventListener("click", handleTaskActions);
+	doingListEl.addEventListener("click", handleTaskActions);
+	doneListEl.addEventListener("click", handleTaskActions);
 	
 	await refreshAssignment();
 
@@ -1481,6 +1484,73 @@ async function initAssignment() {
 		editForm.querySelector("#ea-confidence").value = conf;
 		document.getElementById("ea-confidence-val").textContent = conf;
 	}
+
+	function setTaskAtcVisibility(status) {
+		const atcRow = document.getElementById("et-atc-row");
+		const atcInput = document.getElementById("et-atc");
+		if (!atcRow || !atcInput) return;
+
+		const show = status === "done";
+		atcRow.style.display = show ? "" : "none";
+
+		if (!show) {
+			atcInput.value = "";
+		}
+	}
+
+	function openEditTaskModal(taskId) {
+		const t = appState.taskById.get(taskId);
+		if (!t) return;
+
+		const form = document.getElementById("edit-task-form");
+		const modal = document.getElementById("edit-task-modal");
+
+		const errorEl = document.getElementById("et-error");
+		setAlert(errorEl, "");
+
+		form.querySelector("#et-id").value = t.id;
+		form.querySelector("#et-name").value = t.name ?? "";
+		form.querySelector("#et-description").value = t.description ?? "";
+
+		form.querySelector("#et-deadline").value = t.deadline ? toDatetimeLocal(t.deadline) : "";
+
+		const statusSelect = form.querySelector("#et-status");
+		statusSelect.value = t.status ?? "todo";
+
+		form.querySelector("#et-etc").value = t.etcMinutes ?? "";
+
+		const atcInput = form.querySelector("#et-atc");
+		atcInput.value = t.atcMinutes ?? "";
+		setTaskAtcVisibility(statusSelect.value);
+
+		statusSelect.onchange = () => setTaskAtcVisibility(statusSelect.value);
+
+		modal.classList.add("is-open");
+		document.body.classList.add("modal-open");
+	}
+
+	async function openDeleteTaskModal(taskId) {
+		const modal = document.getElementById("delete-task-modal");
+		const form = document.getElementById("delete-task-form");
+
+		const errorEl = document.getElementById("dt-error");
+		const msgEl = document.getElementById("dt-message");
+		const countsEl = document.getElementById("dt-counts");
+
+		setAlert(errorEl, "");
+		countsEl.textContent = "";
+		msgEl.textContent = "Are you sure you want to delete this task?";
+
+		form.querySelector("#dt-id").value = taskId;
+
+		modal.classList.add("is-open");
+		document.body.classList.add("modal-open");
+
+		const t = appState.taskById.get(Number(taskId));
+		const taskName = t?.name || "this task";
+
+		msgEl.textContent = `Are you sure you want to delete “${taskName}”?`;
+	}
 }
 
 function initEditAssignmentForm() {
@@ -1562,6 +1632,129 @@ function initDeleteAssignmentForm() {
 			form.reset();
 
 			window.location.href = "/dashboard";
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
+function initNewTaskForm() {
+	const form = document.getElementById("new-task-form");
+	if (!form) return;
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("nt-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+		const etcMinutes = formData.get("etcMinutes");
+
+		const payload = {
+			name: formData.get("name"),
+			description: formData.get("description") || null,
+			deadline: toUtcIso(formData.get("deadline")),
+			etcMinutes: etcMinutes ? Number(etcMinutes) : null
+		};
+
+		try {
+			const res = await postJson(`/api/assignments/${appState.assignment.id}/tasks`, payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			document.dispatchEvent(new CustomEvent("task:created"));
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
+function initEditTaskForm() {
+	const form = document.getElementById("edit-task-form");
+	if (!form) return;
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("et-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+		const id = Number(formData.get("id"));
+		const status = String(formData.get("status") || "todo");
+		const etcMinutes = formData.get("etcMinutes");
+		const atcMinutes = formData.get("atcMinutes");
+
+		const payload = {
+			name: formData.get("name"),
+			description: formData.get("description") || null,
+			status,
+			deadline: toUtcIso(formData.get("deadline")),
+			etcMinutes: etcMinutes ? Number(etcMinutes) : null,
+		};
+
+		if (status === "done") {
+			payload.atcMinutes = atcMinutes ? Number(atcMinutes) : null;
+		}
+
+		try {
+			const res = await patchJson(`/api/tasks/${id}`, payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			document.dispatchEvent(new CustomEvent("task:updated"));
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
+function initDeleteTaskForm() {
+	const form = document.getElementById("delete-task-form");
+	if (!form) return;
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("dt-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+		const id = Number(formData.get("id"));
+
+		try {
+			await deleteJson(`/api/tasks/${id}`);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			document.dispatchEvent(new CustomEvent("task:deleted"));
+			showToast("Task deleted successfully.");
 		} catch (err) {
 			setAlert(errorEl, err.message);
 			const dialog = form.closest(".modal-dialog");
@@ -1688,4 +1881,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	await initAssignment();
 	initEditAssignmentForm();
 	initDeleteAssignmentForm();
+	initNewTaskForm();
+	initEditTaskForm();
+	initDeleteTaskForm();
 });

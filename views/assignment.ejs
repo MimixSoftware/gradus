@@ -172,6 +172,167 @@
 		</div>
 	</div>
 
+	<!-- New Task Modal -->
+	<div class="modal" id="new-task-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title">New Task</div>
+					<div class="field-hint">Create a task under an assignment.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="new-task-form">
+				<div id="nt-error" class="alert alert-error" style="display: none;"role="alert"></div>
+
+				<div class="form-row">
+					<label for="nt-name">Task name</label>
+					<input id="nt-name" name="name" type="text" maxlength="100" required placeholder="e.g. Research RPC retry strategies" />
+				</div>
+
+				<div class="form-row">
+					<label for="nt-deadline">Deadline</label>
+					<input id="nt-deadline" name="deadline" type="datetime-local" />
+					<div class="field-hint">Optional.</div>
+				</div>
+
+				<div class="form-row">
+					<label for="nt-description">Description</label>
+					<textarea id="nt-description" name="description" maxlength="500" placeholder="Optional notes or details..."></textarea>
+				</div>
+
+				<div class="form-row">
+					<div class="range-row">
+						<label for="nt-etc">Estimated Time (minutes)</label>
+						<button type="button" class="btn btn-small" id="nt-estimate-btn">Estimate</button>
+					</div>
+
+					<input id="nt-etc" name="etcMinutes" type="number" min="1" step="1" placeholder="e.g. 90" />
+
+					<div class="field-hint">
+						How long you think this task will take. Enter manually or let Gradus estimate based on task and assignment details.
+					</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="new-task-form">Create</button>
+			</footer>
+		</div>
+	</div>
+
+	<!-- Edit Task Modal -->
+	<div class="modal" id="edit-task-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title">Edit Task</div>
+					<div class="field-hint">Update task details.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="edit-task-form">
+				<input type="hidden" id="et-id" name="id" />
+
+				<div id="et-error" class="alert alert-error" style="display: none;"role="alert"></div>
+
+				<div class="form-row">
+					<label for="et-name">Task name</label>
+					<input id="et-name" name="name" type="text" maxlength="100" required placeholder="e.g. Research RPC retry strategies" />
+				</div>
+
+				<div class="form-row">
+					<label for="et-status">Status</label>
+					<select id="et-status" name="status" required>
+						<option value="todo">To Do</option>
+						<option value="doing">Doing</option>
+						<option value="done">Done</option>
+					</select>
+				</div>
+
+				<div class="form-row">
+					<label for="et-deadline">Deadline</label>
+					<input id="et-deadline" name="deadline" type="datetime-local" />
+					<div class="field-hint">Optional.</div>
+				</div>
+
+				<div class="form-row">
+					<label for="et-description">Description</label>
+					<textarea id="et-description" name="description" maxlength="500" placeholder="Optional notes or details..."></textarea>
+				</div>
+
+				<div class="form-row">
+					<div class="range-row">
+						<label for="et-etc">Estimated Time (minutes)</label>
+						<button type="button" class="btn btn-small" id="et-estimate-btn">Estimate</button>
+					</div>
+
+					<input id="et-etc" name="etcMinutes" type="number" min="1" step="1" placeholder="e.g. 90" />
+
+					<div class="field-hint">
+						How long you think this task will take. Enter manually or let Gradus estimate based on task and assignment details.
+					</div>
+				</div>
+
+				<div class="form-row" id="et-atc-row" style="display: none;">
+					<label for="et-atc">Actual Time (minutes)</label>
+					<input id="et-atc" name="atcMinutes" type="number" min="1" step="1" placeholder="e.g. 75" />
+					<div class="field-hint">
+						Optional. How long it actually took you to complete this task.
+					</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="edit-task-form">Save</button>
+			</footer>
+		</div>
+	</div>
+
+	<!-- Delete Task Modal -->
+	<div class="modal" id="delete-task-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="delete-module-title">Delete Task</div>
+					<div class="field-hint">This action cannot be undone.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="delete-task-form">
+				<input type="hidden" id="dt-id" name="id" />
+
+				<div id="dt-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+				<div class="modal-warning">
+					<div id="dt-message" class="modal-warning-text">
+						Are you sure you want to delete this task?
+					</div>
+					<div id="dt-counts" class="field-hint" style="margin-top:.5rem;"></div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-danger" form="delete-task-form">Delete</button>
+			</footer>
+		</div>
+	</div>
+
     <script src="/js/main.js"></script>
 </body>
 </html>
