@@ -379,6 +379,15 @@ body {
 	background: var(--danger-bg);
 }
 
+.icon-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	background: var(--surface-muted);
+	color: var(--text-muted);
+	border-color: var(--border);
+	pointer-events: none;
+}
+
 /* Hero */
 .hero {
 	flex: 1;
@@ -737,6 +746,11 @@ input:focus {
 	transition: opacity 120ms ease;
 }
 
+.ui-item-inner--has-badge .ui-item-actions {
+	top: auto;
+	bottom: 0.55rem;
+}
+
 .ui-list--editable .ui-item:hover .ui-item-actions,
 .ui-list--editable .ui-item:focus-within .ui-item-actions {
 	opacity: 1;
@@ -787,6 +801,30 @@ input:focus {
 .ui-item--overdue .ui-item-status {
 	border-color: var(--danger-border);
 	background: var(--danger-bg);
+	color: var(--danger);
+}
+
+.assignment-title-row {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.assignment-title-row .ui-item-status {
+	position: static;
+}
+
+.assignment-title-row .ui-item-status {
+	margin-top: 0.15rem;
+}
+
+.assignment-name--completed {
+	text-decoration: line-through;
+	text-decoration-thickness: 2px;
+	color: var(--text-muted);
+}
+
+.danger-text {
 	color: var(--danger);
 }
 

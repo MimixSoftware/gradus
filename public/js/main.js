@@ -1345,8 +1345,11 @@ async function initAssignment() {
 		doneListEl.innerHTML = "";
 
 		for (const t of appState.tasks) {
+			const overdue = t.status !== "done" && isOverdue(t.deadline);
+
 			const li = document.createElement("li");
 			li.className = "ui-item";
+			if (overdue) li.classList.add("ui-item--overdue");
 
 			const inner = document.createElement("div");
 			inner.className = "ui-item-inner";
@@ -1364,6 +1367,14 @@ async function initAssignment() {
 
 			row.appendChild(dot);
 			row.appendChild(title);
+
+			if (overdue) {
+				const badge = document.createElement("span");
+				badge.className = "ui-item-status";
+				badge.textContent = "Overdue";
+				inner.classList.add("ui-item-inner--has-badge");
+				inner.appendChild(badge);
+			}
 
 			const content = document.createElement("div");
 			content.className = "ui-item-content";
@@ -1408,6 +1419,11 @@ async function initAssignment() {
 			deleteBtn.dataset.taskId = t.id;
 			deleteBtn.dataset.action = "delete";
 
+			if (appState.assignment.status === "completed") {
+				editBtn.disabled = true;
+				deleteBtn.disabled = true;
+			}
+
 			actions.appendChild(editBtn);
 			actions.appendChild(deleteBtn);
 
@@ -1430,6 +1446,23 @@ async function initAssignment() {
 		dueDateEl.textContent = formatDueDate(appState.assignment.deadline);
 
 		const isCompleted = a.status === "completed";
+		const isOverdueAssignment = !isCompleted && isOverdue(a.deadline);
+		
+		assignmentNameEl.classList.toggle("assignment-name--completed", isCompleted);
+		dueDateEl.classList.toggle("muted-text", isCompleted);
+		dueDateEl.classList.toggle("danger-text", isOverdueAssignment);
+
+		const badgeEl = document.querySelector(".assignment-status");
+		if (isCompleted) {
+			badgeEl.textContent = "Completed";
+			badgeEl.style.display = "";
+		} else if (isOverdueAssignment) {
+			badgeEl.textContent = "Overdue";
+			badgeEl.style.display = "";
+		} else {
+			badgeEl.style.display = "none";
+		}
+
 		const hasIncompleteTasks = appState.tasks.some(
 			t => t.status !== "done"
 		);
@@ -1457,8 +1490,7 @@ async function initAssignment() {
 
 		try {
 			await patchJson(`/api/assignments/${a.id}`, { status: newStatus });
-			a.status = newStatus;
-			renderDetailsAndUpdateButtons();
+			await refreshAssignment();
 
 		} catch (err) {
 			console.error(err);
