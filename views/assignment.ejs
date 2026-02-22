@@ -334,6 +334,41 @@
 		</div>
 	</div>
 
+	<!-- Complete Task Modal -->
+	<div class="modal" id="complete-task-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title">Complete Task</div>
+					<div class="field-hint">Task marked as done. Add the actual time if you’d like.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="complete-task-form">
+				<input type="hidden" id="ct-id" name="id" />
+
+				<div id="ct-error" class="alert alert-error" style="display: none;"role="alert"></div>
+
+				<div class="form-row">
+					<label for="ct-atc">Actual Time (minutes)</label>
+					<input id="ct-atc" name="atcMinutes" type="number" min="1" step="1" placeholder="e.g. 75" />
+					<div class="field-hint">
+						Optional. How long it actually took you to complete this task.
+					</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Skip</button>
+				<button type="submit" class="btn btn-small btn-primary" form="complete-task-form">Complete</button>
+			</footer>
+		</div>
+	</div>
+
     <script src="/js/main.js"></script>
 </body>
 </html>

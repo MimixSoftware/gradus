@@ -2045,8 +2045,23 @@ function initTaskDragAndDrop() {
 
 		if (toStatus === fromStatus) return;
 
+		let atcMinutes = null;
+
+		if (toStatus === "done" && fromStatus !== "done") {
+			const t = appState.taskById.get(taskId);
+
+			if (t && t.atcMinutes == null) {
+				res = await openCompleteTaskModal(taskId);
+				atcMinutes = res.atcMinutes ?? null;
+			}
+		}
+
+
 		try {
-			await patchJson(`/api/tasks/${taskId}`, { status: toStatus });
+			await patchJson(`/api/tasks/${taskId}`, {
+				status: toStatus,
+				...(atcMinutes != null ? { atcMinutes } : {})
+			});
 			document.dispatchEvent(new CustomEvent("task:updated"));
 		} catch (err) {
 			document.dispatchEvent(new CustomEvent("task:updated"));
@@ -2072,6 +2087,60 @@ function initTaskDragAndDrop() {
 
 		if (before) listEl.insertBefore(cardEl, before);
 		else listEl.appendChild(cardEl);
+	}
+
+	function openCompleteTaskModal(taskId) {
+		const modal = document.getElementById("complete-task-modal");
+		const form = document.getElementById("complete-task-form");
+
+		const idEl = document.getElementById("ct-id");
+		const atcEl = document.getElementById("ct-atc");
+		const errorEl = document.getElementById("ct-error");
+
+		setAlert(errorEl, "");
+
+		idEl.value = taskId;
+		atcEl.value = "";
+
+		modal.classList.add("is-open");
+		document.body.classList.add("modal-open");
+
+		atcEl.focus();
+
+		return new Promise((resolve) => {
+
+			const close = (result) => {
+				modal.classList.remove("is-open");
+				document.body.classList.remove("modal-open");
+
+				form.removeEventListener("submit", onSubmit);
+				modal.removeEventListener("click", onCancel);
+
+				resolve(result);
+			};
+
+			const onSubmit = (e) => {
+				e.preventDefault();
+
+				const val = atcEl.value.trim();
+				if (!val) {
+					close({ atcMinutes: null });
+					return;
+				}
+
+				const n = Number(val);
+
+				close({ atcMinutes: n });
+			};
+
+			const onCancel = (e) => {
+				if (!e.target.closest("[data-modal-close]")) return;
+				close(null);
+			};
+
+			form.addEventListener("submit", onSubmit);
+			modal.addEventListener("click", onCancel);
+		});
 	}
 }
 

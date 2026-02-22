@@ -843,7 +843,6 @@ input:focus {
 .assignment-name--completed {
 	text-decoration: line-through;
 	text-decoration-thickness: 2px;
-	color: var(--text-muted);
 }
 
 .danger-text {
