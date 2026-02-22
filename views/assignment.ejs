@@ -212,7 +212,7 @@
 						<button type="button" class="btn btn-small" id="nt-estimate-btn">Estimate</button>
 					</div>
 
-					<input id="nt-etc" name="etcMinutes" type="number" min="1" step="1" placeholder="e.g. 90" />
+					<input id="nt-etc" name="etcMinutes" type="number" min="1" max="1440" step="1" placeholder="e.g. 90" />
 
 					<div class="field-hint">
 						How long you think this task will take. Enter manually or let Gradus estimate based on task and assignment details.
@@ -277,7 +277,7 @@
 						<button type="button" class="btn btn-small" id="et-estimate-btn">Estimate</button>
 					</div>
 
-					<input id="et-etc" name="etcMinutes" type="number" min="1" step="1" placeholder="e.g. 90" />
+					<input id="et-etc" name="etcMinutes" type="number" min="1" max="1440" step="1" placeholder="e.g. 90" />
 
 					<div class="field-hint">
 						How long you think this task will take. Enter manually or let Gradus estimate based on task and assignment details.
@@ -286,7 +286,7 @@
 
 				<div class="form-row" id="et-atc-row" style="display: none;">
 					<label for="et-atc">Actual Time (minutes)</label>
-					<input id="et-atc" name="atcMinutes" type="number" min="1" step="1" placeholder="e.g. 75" />
+					<input id="et-atc" name="atcMinutes" type="number" min="1" max="1440" step="1" placeholder="e.g. 75" />
 					<div class="field-hint">
 						Optional. How long it actually took you to complete this task.
 					</div>
@@ -355,7 +355,7 @@
 
 				<div class="form-row">
 					<label for="ct-atc">Actual Time (minutes)</label>
-					<input id="ct-atc" name="atcMinutes" type="number" min="1" step="1" placeholder="e.g. 75" />
+					<input id="ct-atc" name="atcMinutes" type="number" min="1" max="1440" step="1" placeholder="e.g. 75" />
 					<div class="field-hint">
 						Optional. How long it actually took you to complete this task.
 					</div>
