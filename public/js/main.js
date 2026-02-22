@@ -2051,8 +2051,7 @@ function initTaskDragAndDrop() {
 			const t = appState.taskById.get(taskId);
 
 			if (t && t.atcMinutes == null) {
-				res = await openCompleteTaskModal(taskId);
-				atcMinutes = res.atcMinutes ?? null;
+				atcMinutes = await openCompleteTaskModal(taskId);
 			}
 		}
 
@@ -2124,13 +2123,13 @@ function initTaskDragAndDrop() {
 
 				const val = atcEl.value.trim();
 				if (!val) {
-					close({ atcMinutes: null });
+					close(null);
 					return;
 				}
 
 				const n = Number(val);
 
-				close({ atcMinutes: n });
+				close(n);
 			};
 
 			const onCancel = (e) => {
