@@ -670,7 +670,6 @@ input:focus {
 	border-radius: 8px;
 	display: flex;
 	flex-direction: column;
-	gap: 0.25rem;
 	color: inherit;
 	text-decoration: none;
 }

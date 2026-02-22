@@ -49,31 +49,7 @@
 				<article class="ui-card">
 					<h2 class="ui-card-title">To Do</h2>
 
-					<ul class="ui-list ui-list--clickable">
-						<li class="ui-item">
-							<a class="ui-item-link ui-item-inner" href="#">
-								<div class="ui-item-row">
-									<span class="ui-dot" style="background: var(--gray-700);"></span>
-									<span class="ui-item-main">Task placeholder (To Do)</span>
-								</div>
-								<div class="ui-item-content">
-									<div class="ui-item-meta">Short description placeholder…</div>
-								</div>
-							</a>
-						</li>
-
-						<li class="ui-item">
-							<a class="ui-item-link ui-item-inner" href="#">
-								<div class="ui-item-row">
-									<span class="ui-dot" style="background: var(--gray-700);"></span>
-									<span class="ui-item-main">Another task placeholder</span>
-								</div>
-								<div class="ui-item-content">
-									<div class="ui-item-meta">Some extra info (e.g., ETC 45 mins)</div>
-								</div>
-							</a>
-						</li>
-					</ul>
+					<ul class="ui-list ui-list--editable" data-list="todo"></ul>
 
 					<div class="ui-actions">
 						<button type="button" class="btn btn-small" data-modal-open="new-task-modal">New</button>
@@ -83,51 +59,17 @@
 				<article class="ui-card">
 					<h2 class="ui-card-title">Doing</h2>
 
-					<ul class="ui-list ui-list--clickable">
-						<li class="ui-item">
-							<a class="ui-item-link ui-item-inner ui-item-inner--has-badge" href="#">
-								<div class="ui-item-row">
-									<span class="ui-dot" style="background: var(--brand-600);"></span>
-									<span class="ui-item-main">Task placeholder (Doing)</span>
-								</div>
+					<ul class="ui-list ui-list--editable" data-list="doing"></ul>
 
-								<div class="ui-item-content">
-									<div class="ui-item-meta">Started recently • placeholder</div>
-								</div>
-
-								<span class="ui-item-status">Doing</span>
-							</a>
-						</li>
-					</ul>
-
-					<div class="ui-actions">
-						<!-- No buttons here (per your spec) -->
-					</div>
+					<div class="ui-actions"></div>
 				</article>
 
 				<article class="ui-card">
 					<h2 class="ui-card-title">Done</h2>
 
-					<ul class="ui-list ui-list--clickable">
-						<li class="ui-item ui-item--completed">
-							<a class="ui-item-link ui-item-inner ui-item-inner--has-badge" href="#">
-								<div class="ui-item-row">
-									<span class="ui-dot" style="background: var(--green-600);"></span>
-									<span class="ui-item-main">Task placeholder (Done)</span>
-								</div>
+					<ul class="ui-list ui-list--editable" data-list="done"></ul>
 
-								<div class="ui-item-content">
-									<div class="ui-item-meta">Completed • placeholder</div>
-								</div>
-
-								<span class="ui-item-status">Done</span>
-							</a>
-						</li>
-					</ul>
-
-					<div class="ui-actions">
-						<!-- No buttons here (per your spec) -->
-					</div>
+					<div class="ui-actions"></div>
 				</article>
 
 			</section>

@@ -176,6 +176,12 @@ async function loadAssignmentData(assignmentId) {
 	const tasks = tasksPayload.tasks;
 	const module = modulePayload.module;
 
+	tasks.sort((a, b) => {
+		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+		return aTime - bTime;
+	});
+
 	appState.assignment = assignment;
 	appState.module = module;
 	appState.tasks = tasks;
@@ -284,6 +290,17 @@ function toDatetimeLocal(isoString) {
   const local = new Date(date.getTime() - offset * 60 * 1000);
 
   return local.toISOString().slice(0, 16);
+}
+
+function formatMinutes(minutes) {
+	if (minutes == null) return "";
+
+	const h = Math.floor(minutes / 60);
+	const m = minutes % 60;
+
+	if (h && m) return `${h}h ${m}m`;
+	if (h) return `${h}h`;
+	return `${m}m`;
 }
 
 function renderEmptyListState(listEl, message) {
@@ -1288,9 +1305,9 @@ async function initAssignment() {
 	const completeBtn = document.querySelector('[data-action="toggle-assignment-status"]');
 	const editBtn = document.querySelector('[data-modal-open="edit-assignment-modal"]');
 	const newTaskBtn = document.querySelector('[data-modal-open="new-task-modal"]');
-	// const assignmentNameEl = document.querySelector(".assignment-name");
-	// const moduleNameEl = document.querySelector(".assignment-module-name");
-	// const dueDateEl = document.querySelector(".assignment-due-date");
+	const todoListEl = document.querySelector('[data-list="todo"]');
+	const doingListEl = document.querySelector('[data-list="doing"]');
+	const doneListEl = document.querySelector('[data-list="done"]');
 
 	document.addEventListener("assignment:updated", refreshAssignment);
 	editModal.addEventListener("modal:open", populateEditAssignmentForm);
@@ -1315,64 +1332,92 @@ async function initAssignment() {
 		await loadAssignmentData(assignmentId);
 
 		renderDetailsAndUpdateButtons();
+		renderTaskBoard();
 	}
 	
 
-	// function renderModulesList() {
-	// 	if (!appState.modules.length) {
-	// 		renderEmptyListState(modulesListEl, "No modules yet. Create one to get started.");
-	// 		return;
-	// 	}
+	function renderTaskBoard() {
+		todoListEl.innerHTML = "";
+		doingListEl.innerHTML = "";
+		doneListEl.innerHTML = "";
 
-	// 	modulesListEl.innerHTML = "";
+		for (const t of appState.tasks) {
+			const li = document.createElement("li");
+			li.className = "ui-item";
 
-	// 	for (const m of appState.modules) {
-	// 		const li = document.createElement("li");
-	// 		li.className = "ui-item";
+			const inner = document.createElement("div");
+			inner.className = "ui-item-inner";
 
-	// 		const inner = document.createElement("div");
-	// 		inner.className = "ui-item-inner";
+			const row = document.createElement("div");
+			row.className = "ui-item-row";
 
-	// 		const row = document.createElement("div");
-	// 		row.className = "ui-item-row";
+			const dot = document.createElement("span");
+			dot.className = "ui-dot";
+			dot.style.backgroundColor = appState.module.colour;
 
-	// 		const dot = document.createElement("span");
-	// 		dot.className = "ui-dot";
-	// 		dot.style.backgroundColor = m.colour;
+			const title = document.createElement("div");
+			title.className = "ui-item-main";
+			title.textContent = t.name;
 
-	// 		const title = document.createElement("div");
-	// 		title.className = "ui-item-main";
-	// 		title.textContent = m.name;
+			row.appendChild(dot);
+			row.appendChild(title);
 
-	// 		row.appendChild(dot);
-	// 		row.appendChild(title);
+			const content = document.createElement("div");
+			content.className = "ui-item-content";
 
-	// 		const actions = document.createElement("div");
-	// 		actions.className = "ui-item-actions";
+			const meta1 = document.createElement("div");
+			meta1.className = "ui-item-meta";
+			meta1.textContent = `Due: ${formatDueDate(t.deadline)}`;
+			content.appendChild(meta1);
 
-	// 		const editBtn = document.createElement("button");
-	// 		editBtn.className = "icon-btn";
-	// 		editBtn.type = "button";
-	// 		editBtn.textContent = "✎";
-	// 		editBtn.dataset.moduleId = m.id;
-	// 		editBtn.dataset.action = "edit";
+			const meta2 = document.createElement("div");
+			meta2.className = "ui-item-meta";
 
-	// 		const deleteBtn = document.createElement("button");
-	// 		deleteBtn.className = "icon-btn icon-btn-danger";
-	// 		deleteBtn.type = "button";
-	// 		deleteBtn.textContent = "✖";
-	// 		deleteBtn.dataset.moduleId = m.id;
-	// 		deleteBtn.dataset.action = "delete";
+			const parts = [];
 
-	// 		actions.appendChild(editBtn);
-	// 		actions.appendChild(deleteBtn);
+			if (t.etcMinutes != null) {
+				parts.push(`ETC ${formatMinutes(t.etcMinutes)}`);
+			}
 
-	// 		inner.appendChild(row);
-	// 		inner.appendChild(actions);
-	// 		li.appendChild(inner);
-	// 		modulesListEl.appendChild(li);
-	// 	}
-	// }
+			if (t.atcMinutes != null) {
+				parts.push(`ATC ${formatMinutes(t.atcMinutes)}`);
+			}
+
+			if (parts.length) {
+				meta2.textContent = parts.join(" • ");
+				content.appendChild(meta2);
+			}
+
+			const actions = document.createElement("div");
+			actions.className = "ui-item-actions";
+
+			const editBtn = document.createElement("button");
+			editBtn.className = "icon-btn";
+			editBtn.type = "button";
+			editBtn.textContent = "✎";
+			editBtn.dataset.taskId = t.id;
+			editBtn.dataset.action = "edit";
+
+			const deleteBtn = document.createElement("button");
+			deleteBtn.className = "icon-btn icon-btn-danger";
+			deleteBtn.type = "button";
+			deleteBtn.textContent = "✖";
+			deleteBtn.dataset.taskId = t.id;
+			deleteBtn.dataset.action = "delete";
+
+			actions.appendChild(editBtn);
+			actions.appendChild(deleteBtn);
+
+			inner.appendChild(row);
+			inner.appendChild(content);
+			inner.appendChild(actions);
+			li.appendChild(inner);
+
+			if (t.status === "todo") todoListEl.appendChild(li);
+			else if (t.status === "doing") doingListEl.appendChild(li);
+			else if (t.status === "done") doneListEl.appendChild(li);
+		}
+	}
 
 	function renderDetailsAndUpdateButtons() {
 		const a = appState.assignment;
@@ -1382,8 +1427,12 @@ async function initAssignment() {
 		dueDateEl.textContent = formatDueDate(appState.assignment.deadline);
 
 		const isCompleted = a.status === "completed";
+		const hasIncompleteTasks = appState.tasks.some(
+			t => t.status !== "done"
+		);
 
 		completeBtn.textContent = isCompleted ? "Mark Active" : "Complete";
+		completeBtn.disabled = !isCompleted && hasIncompleteTasks;
 		editBtn.disabled = isCompleted;
 		newTaskBtn.disabled = isCompleted;
 	}
