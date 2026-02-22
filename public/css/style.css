@@ -670,6 +670,9 @@ input:focus {
 
 .ui-item {
 	border-radius: 8px;
+	list-style: none;
+	-webkit-user-select: none;
+	user-select: none;
 }
 
 .ui-item-inner {
@@ -804,6 +807,25 @@ input:focus {
 	color: var(--danger);
 }
 
+.ui-item.is-dragging { opacity: 0.25; }
+
+.ui-drag-ghost {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  transform: translate3d(0,0,0);
+  width: var(--ghost-w, auto);
+}
+
+.ui-list.is-drop-target {
+  border-color: var(--brand-600);
+}
+
+.ui-drag-ghost .ui-item-actions {
+	display: none;
+}
+
 .assignment-title-row {
 	display: flex;
 	align-items: center;
@@ -841,6 +863,10 @@ input:focus {
 	.ui-datetime {
 		text-align: left;
 		white-space: normal;
+	}
+
+	.ui-item-inner--has-badge {
+		min-height: 5.2rem;
 	}
 }
 

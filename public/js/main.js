@@ -1349,7 +1349,11 @@ async function initAssignment() {
 
 			const li = document.createElement("li");
 			li.className = "ui-item";
+			li.dataset.taskId = t.id;
 			if (overdue) li.classList.add("ui-item--overdue");
+			if (appState.assignment.status !== "completed") {
+				li.classList.add("ui-item--draggable");
+			}
 
 			const inner = document.createElement("div");
 			inner.className = "ui-item-inner";
@@ -1796,6 +1800,281 @@ function initDeleteTaskForm() {
 	});
 }
 
+function initTaskDragAndDrop() {
+	if (getRouteName() !== "assignment") return;
+
+	const boardEl = document.querySelector(".ui-grid");
+
+	let drag = null;
+
+	let pressTimer = null;
+	let press = null; // { card, pointerId, x, y, fromList, fromStatus }
+	let pressReady = false;
+
+	const HOLD_MS = 180;
+	const MOVE_PX = 8;
+
+	const EDGE_PX = 60;
+	const SCROLL_PX = 12;
+	let autoScrollRaf = null;
+	let lastPointerY = 0;
+
+	const startAutoScroll = () => {
+		if (autoScrollRaf) return;
+
+		const tick = () => {
+			if (!drag) {
+				autoScrollRaf = null;
+				return;
+			}
+
+			const y = lastPointerY;
+			const vh = window.innerHeight;
+
+			if (y < EDGE_PX) {
+				window.scrollBy(0, -SCROLL_PX);
+			} else if (y > vh - EDGE_PX) {
+				window.scrollBy(0, SCROLL_PX);
+			}
+
+			autoScrollRaf = requestAnimationFrame(tick);
+		};
+
+		autoScrollRaf = requestAnimationFrame(tick);
+	};
+
+	const stopAutoScroll = () => {
+		if (!autoScrollRaf) return;
+		cancelAnimationFrame(autoScrollRaf);
+		autoScrollRaf = null;
+	};
+
+	const clearDropHighlights = () => {
+		document
+			.querySelectorAll(".ui-list.is-drop-target")
+			.forEach(el => el.classList.remove("is-drop-target"));
+	};
+
+	const getListFromPoint = (x, y) => {
+		const el = document.elementFromPoint(x, y);
+		return el?.closest?.('.ui-list[data-list]');
+	};
+
+	const moveGhost = (e) => {
+		if (!drag) return;
+		drag.ghost.style.transform =
+			`translate3d(${e.clientX - drag.offsetX}px, ${e.clientY - drag.offsetY}px, 0)`;
+	};
+
+	const cleanupPress = () => {
+		clearTimeout(pressTimer);
+		pressTimer = null;
+		press = null;
+		pressReady = false;
+	};
+
+	const cleanupDrag = () => {
+		if (!drag) return;
+
+		drag.card.classList.remove("is-dragging");
+		drag.ghost?.remove();
+
+		boardEl.style.touchAction = drag.prevTouchAction ?? "";
+
+		stopAutoScroll();
+		clearDropHighlights();
+		drag = null;
+	};
+
+	const cleanupAll = () => {
+		cleanupPress();
+		cleanupDrag();
+	};
+
+	const startDragFromMoveEvent = (e) => {
+		if (!press || drag) return;
+
+		const card = press.card;
+		const fromList = press.fromList;
+
+		const rect = card.getBoundingClientRect();
+
+		const ghost = card.cloneNode(true);
+		ghost.classList.add("ui-drag-ghost");
+		ghost.style.width = `${rect.width}px`;
+		ghost.style.height = `${rect.height}px`;
+		document.body.appendChild(ghost);
+
+		card.classList.add("is-dragging");
+
+		const prevTouchAction = boardEl.style.touchAction;
+		boardEl.style.touchAction = "none";
+
+		drag = {
+			taskId: Number(card.dataset.taskId),
+			card,
+			ghost,
+			fromList,
+			fromStatus: press.fromStatus,
+			offsetX: e.clientX - rect.left,
+			offsetY: e.clientY - rect.top,
+			prevTouchAction
+		};
+
+		card.setPointerCapture(e.pointerId);
+
+		e.preventDefault();
+
+		moveGhost(e);
+
+		const overList = getListFromPoint(e.clientX, e.clientY);
+		clearDropHighlights();
+		if (overList) overList.classList.add("is-drop-target");
+
+		lastPointerY = e.clientY;
+		startAutoScroll();
+
+		cleanupPress();
+	};
+
+	boardEl.addEventListener(
+		"touchmove",
+		(e) => {
+			if (drag) e.preventDefault();
+		},
+		{ passive: false }
+	);
+
+	boardEl.addEventListener("pointerdown", (e) => {
+		if (appState.assignment.status === "completed") return;
+
+		const card = e.target.closest('.ui-item[data-task-id]');
+		if (!card) return;
+
+		if (e.target.closest("button, a, input, textarea, select")) return;
+
+		const fromList = card.closest('.ui-list[data-list]');
+		if (!fromList) return;
+
+		if (e.pointerType === "mouse") {
+			press = {
+				card,
+				pointerId: e.pointerId,
+				x: e.clientX,
+				y: e.clientY,
+				fromList,
+				fromStatus: fromList.dataset.list
+			};
+			pressReady = true;
+			startDragFromMoveEvent(e);
+			return;
+		}
+
+		cleanupAll();
+
+		press = {
+			card,
+			pointerId: e.pointerId,
+			x: e.clientX,
+			y: e.clientY,
+			fromList,
+			fromStatus: fromList.dataset.list
+		};
+
+		pressReady = false;
+
+		pressTimer = setTimeout(() => {
+			pressReady = true;
+		}, HOLD_MS);
+	});
+
+	boardEl.addEventListener("pointermove", (e) => {
+		if (drag) {
+			lastPointerY = e.clientY;
+			startAutoScroll();
+		}
+
+		if (!drag && press && e.pointerId === press.pointerId) {
+			const dx = e.clientX - press.x;
+			const dy = e.clientY - press.y;
+
+			if (!pressReady && Math.hypot(dx, dy) > MOVE_PX) {
+				cleanupPress();
+				return;
+			}
+
+			if (pressReady) {
+				startDragFromMoveEvent(e);
+				return;
+			}
+
+			return;
+		}
+
+		if (!drag) return;
+
+		moveGhost(e);
+
+		const overList = getListFromPoint(e.clientX, e.clientY);
+		clearDropHighlights();
+		if (overList) overList.classList.add("is-drop-target");
+	});
+
+	boardEl.addEventListener("pointerup", async (e) => {
+		if (!drag) {
+			cleanupPress();
+			return;
+		}
+
+		stopAutoScroll();
+
+		const overList = getListFromPoint(e.clientX, e.clientY);
+		const toStatus = overList?.dataset?.list;
+
+		const taskId = drag.taskId;
+		const fromStatus = drag.fromStatus;
+
+		if (!overList || !toStatus) {
+			cleanupDrag();
+			return;
+		}
+
+		insertTaskCardSortedById(overList, drag.card, drag.taskId);
+
+		cleanupDrag();
+
+		if (toStatus === fromStatus) return;
+
+		try {
+			await patchJson(`/api/tasks/${taskId}`, { status: toStatus });
+			document.dispatchEvent(new CustomEvent("task:updated"));
+		} catch (err) {
+			document.dispatchEvent(new CustomEvent("task:updated"));
+			showToast(err.message);
+		}
+	});
+
+	boardEl.addEventListener("pointercancel", cleanupAll);
+
+	function insertTaskCardSortedById(listEl, cardEl, taskId) {
+		const t = appState.taskById.get?.(Number(taskId));
+		const newTime = t?.deadline ? new Date(t.deadline).getTime() : Infinity;
+
+		const items = Array.from(listEl.querySelectorAll('.ui-item[data-task-id]'))
+			.filter(el => el !== cardEl);
+
+		const before = items.find(el => {
+			const id = Number(el.dataset.taskId);
+			const other = appState.taskById.get?.(id);
+			const otherTime = other?.deadline ? new Date(other.deadline).getTime() : Infinity;
+			return newTime < otherTime;
+		});
+
+		if (before) listEl.insertBefore(cardEl, before);
+		else listEl.appendChild(cardEl);
+	}
+}
+
 // Global Inits
 function initAuthForms() {
 	const loginForm = document.getElementById("login-form");
@@ -1916,4 +2195,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initNewTaskForm();
 	initEditTaskForm();
 	initDeleteTaskForm();
+	initTaskDragAndDrop();
 });
