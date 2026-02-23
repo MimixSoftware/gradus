@@ -1571,10 +1571,8 @@ async function initAssignment() {
 
 		const errorEl = document.getElementById("dt-error");
 		const msgEl = document.getElementById("dt-message");
-		const countsEl = document.getElementById("dt-counts");
 
 		setAlert(errorEl, "");
-		countsEl.textContent = "";
 		msgEl.textContent = "Are you sure you want to delete this task?";
 
 		form.querySelector("#dt-id").value = taskId;
