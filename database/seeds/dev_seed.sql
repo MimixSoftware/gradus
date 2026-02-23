@@ -166,3 +166,21 @@ VALUES
 (16, 'Adjusting Entries Practice', 'Accruals, prepayments, depreciation.', 'active', 20, 3, '2026-03-16 23:59:00'),
 (16, 'Cash Flow Statement', 'Prepare cash flow from given accounts.', 'active', 25, 4, '2026-04-18 23:59:00'),
 (16, 'Final Accounts CA', 'Prepare final accounts + commentary.', 'active', 35, 3, '2026-05-27 23:59:00');
+
+-- tasks
+INSERT INTO tasks (assignment_id, name, description, status, deadline, etc_minutes, atc_minutes)
+VALUES
+(22, 'Define scope & objectives', 'Write clear scope boundaries and success criteria.', 'done', '2026-02-20 23:59:00', 90, 85),
+(22, 'Draft milestones timeline', 'Create milestone list with expected delivery dates.', 'doing', '2026-02-26 18:00:00', 120, NULL),
+(22, 'Identify risks', 'List key project risks and mitigation strategies.', 'todo', NULL, 60, NULL),
+(22, 'Write project overview', 'One-page summary of problem, solution, and value.', 'done', NULL, 75, 70),
+(22, 'Gather references', 'Collect academic and technical sources.', 'doing', NULL, NULL, NULL),
+(22, 'Document assumptions', 'Capture assumptions about users, tools, and constraints.', 'todo', NULL, NULL, NULL),
+(22, 'Final proofread', 'Check formatting, grammar, and rubric compliance.', 'todo', '2026-02-28 20:00:00', 45, NULL),
+(40, 'Outline reflection structure', 'Plan sections and key talking points.', 'done', '2026-03-01 21:00:00', 40, 35),
+(40, 'Collect teamwork examples', 'Gather real examples from the project.', 'doing', NULL, 60, NULL),
+(40, 'Write role & contribution section', 'Describe responsibilities and personal impact.', 'todo', '2026-03-05 23:59:00', 75, NULL),
+(40, 'Write conflict reflection', 'Reflect on disagreements and resolution.', 'todo', NULL, NULL, NULL),
+(40, 'Link to teamwork theory', 'Connect experiences to teamwork models.', 'doing', '2026-03-07 18:00:00', 50, NULL),
+(40, 'Edit for clarity', 'Improve tone, structure, and flow.', 'todo', '2026-03-08 20:00:00', 45, NULL),
+(40, 'Final submission check', 'Spellcheck, formatting, and rubric review.', 'done', '2026-03-09 21:30:00', NULL, 25);
