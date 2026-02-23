@@ -1344,6 +1344,11 @@ async function initAssignment() {
 		doingListEl.innerHTML = "";
 		doneListEl.innerHTML = "";
 
+		if (!appState.tasks.length) {
+			renderEmptyListState(todoListEl, "Create a task to get started.");
+			return;
+		}
+
 		for (const t of appState.tasks) {
 			const overdue = t.status !== "done" && isOverdue(t.deadline);
 
