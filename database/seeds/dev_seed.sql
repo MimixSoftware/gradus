@@ -180,3 +180,18 @@ VALUES
 (40, 'Link to teamwork theory', 'Connect experiences to teamwork models.', 'doing', '2026-03-07 18:00:00', 50, NULL),
 (40, 'Edit for clarity', 'Improve tone, structure, and flow.', 'todo', '2026-03-08 20:00:00', 45, NULL),
 (40, 'Final submission check', 'Spellcheck, formatting, and rubric review.', 'done', '2026-03-09 21:30:00', NULL, 25);
+
+-- study_sessions
+INSERT INTO study_sessions (semester_id, day_of_week, start_time, duration_minutes)
+VALUES
+(2, 0, '09:00:00', 120),
+(2, 0, '14:00:00', 90),
+(2, 1, '18:00:00', 120),
+(2, 2, '10:00:00', 180),
+(2, 3, '16:30:00', 60),
+(2, 5, '11:00:00', 120),
+(4, 0, '17:00:00', 90),
+(4, 1, '08:00:00', 60),
+(4, 2, '15:00:00', 120),
+(4, 4, '13:00:00', 240),
+(4, 6, '19:30:00', 60);
