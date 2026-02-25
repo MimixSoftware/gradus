@@ -221,6 +221,100 @@
 		</div>
 	</div>
 
+	<!-- Edit Study Session Modal -->
+	<div class="modal" id="edit-study-session-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title">Edit Study Session</div>
+					<div class="field-hint">Update a recurring weekly study block for assignment work.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="edit-study-session-form">
+				<input type="hidden" id="ess-id" name="id" />
+
+				<div id="ess-error" class="alert alert-error" style="display: none;" role="alert"></div>
+
+				<div class="form-row">
+					<label for="ess-day">Day</label>
+					<select id="ess-day" name="dayOfWeek" required>
+						<!-- populated by JS -->
+					</select>
+				</div>
+
+				<div class="form-grid">
+					<div class="form-row">
+						<label for="ess-start">Start Time</label>
+						<select id="ess-start" name="startTime" required>
+							<!-- populated by JS -->
+						</select>
+						<div class="field-hint">15-minute increments.</div>
+					</div>
+
+					<div class="form-row">
+						<label for="ess-duration">Duration</label>
+						<select id="ess-duration" name="durationMinutes" required>
+							<option value="15">15 mins</option>
+							<option value="30">30 mins</option>
+							<option value="45">45 mins</option>
+							<option value="60">1 hour</option>
+							<option value="75">1h 15m</option>
+							<option value="90">1h 30m</option>
+							<option value="120">2 hours</option>
+							<option value="150">2h 30m</option>
+							<option value="180">3 hours</option>
+							<option value="240">4 hours</option>
+						</select>
+					</div>
+				</div>
+
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="edit-study-session-form">Save</button>
+			</footer>
+		</div>
+	</div>
+
+	<!-- Delete Study Session Modal -->
+	<div class="modal" id="delete-study-session-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="delete-study-session-title">Delete Study Session</div>
+					<div class="field-hint">This action cannot be undone.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="delete-study-session-form">
+				<input type="hidden" id="dss-id" name="id" />
+
+				<div id="dss-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+				<div class="modal-warning">
+					<div id="dss-message" class="modal-warning-text">
+						Are you sure you want to delete this study session?
+					</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-danger" form="delete-study-session-form">Delete</button>
+			</footer>
+		</div>
+	</div>
+
 	<script src="/js/main.js"></script>
 </body>
 </html>

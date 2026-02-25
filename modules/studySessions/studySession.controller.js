@@ -35,7 +35,7 @@ async function findById(req, res) {
 
 async function update(req, res) {
 	const studySessionId = validateRequiredInt(req.params.studySessionId, "Study Session ID", { min: 1 });
-	const validated = studySessionService.validateUpdateInput(req.body);
+	const validated = studySessionValidation.validateUpdateInput(req.body);
 
 	const studySession = await studySessionService.update(req.user.id, studySessionId, validated);
 

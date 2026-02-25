@@ -2358,68 +2358,41 @@ async function initStudySessions() {
 		}
 	}
 
-	function openEditStudySessionModal() {
-		console.log("to be implemented");
+	function openEditStudySessionModal(studySessionId) {
+		const ss = appState.studySessionById.get(studySessionId);
+		if (!ss) return;
+
+		const form = document.getElementById("edit-study-session-form");
+		const modal = document.getElementById("edit-study-session-modal");
+		if (!form || !modal) return;
+
+		const errorEl = document.getElementById("ess-error");
+		setAlert(errorEl, "");
+
+		form.querySelector("#ess-id").value = ss.id;
+		form.querySelector("#ess-day").value = ss.dayOfWeek;
+		form.querySelector("#ess-start").value = formatTime(ss.startTime);
+		form.querySelector("#ess-duration").value = ss.durationMinutes;
+
+		modal.classList.add("is-open");
+		document.body.classList.add("modal-open");
 	}
 
-	// function openEditModuleModal(moduleId) {
-	// 	const m = appState.moduleById.get(moduleId);
-	// 	if (!m) return;
+	async function openDeleteStudySessionModal(studySessionId) {
+		const modal = document.getElementById("delete-study-session-modal");
+		const form = document.getElementById("delete-study-session-form");
 
-	// 	const form = document.getElementById("edit-module-form");
-	// 	const modal = document.getElementById("edit-module-modal");
-	// 	if (!form || !modal) return;
+		const errorEl = document.getElementById("dss-error");
+		const msgEl = document.getElementById("dss-message");
 
-	// 	const errorEl = document.getElementById("em-error");
-	// 	setAlert(errorEl, "");
+		setAlert(errorEl, "");
+		msgEl.textContent = "Are you sure you want to delete this study session?";
 
-	// 	form.querySelector("#em-id").value = m.id;
-	// 	form.querySelector("#em-name").value = m.name ?? "";
-	// 	form.querySelector("#em-credits").value = m.credits ?? "";
-	// 	form.querySelector("#em-colour").value = m.colour ?? "#3b82f6";
-	// 	form.querySelector("#em-colour-hex").value = (m.colour ?? "#3b82f6").toUpperCase();
+		form.querySelector("#dss-id").value = studySessionId;
 
-	// 	modal.classList.add("is-open");
-	// 	document.body.classList.add("modal-open");
-	// }
-
-	function openDeleteStudySessionModal() {
-		console.log("to be implemented");
+		modal.classList.add("is-open");
+		document.body.classList.add("modal-open");
 	}
-
-	// async function openDeleteModuleModal(moduleId) {
-	// 	const modal = document.getElementById("delete-module-modal");
-	// 	const form = document.getElementById("delete-module-form");
-
-	// 	const errorEl = document.getElementById("dm-error");
-	// 	const msgEl = document.getElementById("dm-message");
-	// 	const countsEl = document.getElementById("dm-counts");
-
-	// 	setAlert(errorEl, "");
-	// 	countsEl.textContent = "";
-	// 	msgEl.textContent = "Are you sure you want to delete this module?";
-
-	// 	form.querySelector("#dm-id").value = moduleId;
-
-	// 	modal.classList.add("is-open");
-	// 	document.body.classList.add("modal-open");
-
-	// 	const m = appState.moduleById.get(Number(moduleId));
-	// 	const moduleName = m?.name || "this module";
-
-	// 	const aCount = (appState.assignments || []).reduce((acc, a) => {
-	// 		const aModuleId = a.moduleId ?? a.module_id;
-	// 		return acc + (Number(aModuleId) === Number(moduleId) ? 1 : 0);
-	// 	}, 0);
-
-	// 	msgEl.textContent = `Are you sure you want to delete “${moduleName}”?`;
-
-	// 	if (aCount > 0) {
-	// 		countsEl.textContent = `${aCount} assignment${aCount === 1 ? "" : "s"} will be deleted.`;
-	// 	} else {
-	// 		countsEl.textContent = "This module has no assignments.";
-	// 	}
-	// }
 }
 
 function initNewStudySessionForm() {
@@ -2476,6 +2449,104 @@ function initNewStudySessionForm() {
 			document.dispatchEvent(new CustomEvent("studySession:created"));
 
 			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
+function initEditStudySessionForm() {
+	const form = document.getElementById("edit-study-session-form");
+	if (!form) return;
+
+	const daySelect = document.getElementById("ess-day");
+	const startTimeSelect = document.getElementById("ess-start");
+	const errorEl = document.getElementById("ess-error");
+
+	DAY_NAMES.forEach((name, index) => {
+		const opt = document.createElement("option");
+		opt.value = index;
+		opt.textContent = name;
+		daySelect.appendChild(opt);
+	});
+
+	for (let h = 0; h < 24; h++) {
+		for (let m = 0; m < 60; m += 15) {
+			const hh = String(h).padStart(2, "0");
+			const mm = String(m).padStart(2, "0");
+
+			const opt = document.createElement("option");
+			opt.value = `${hh}:${mm}`;
+			opt.textContent = `${hh}:${mm}`;
+
+			startTimeSelect.appendChild(opt);
+		}
+	}
+	startTimeSelect.value = "18:00";
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+
+		const id = Number(formData.get("id"));
+
+		const payload = {
+			dayOfWeek: Number(formData.get("dayOfWeek")),
+			startTime: formData.get("startTime"),
+			durationMinutes: Number(formData.get("durationMinutes"))
+		};
+
+		try {
+			const res = await patchJson(`/api/study-sessions/${id}`, payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			document.dispatchEvent(new CustomEvent("studySession:updated"));
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
+function initDeleteStudySessionForm() {
+	const form = document.getElementById("delete-study-session-form");
+	if (!form) return;
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("dss-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+		const id = Number(formData.get("id"));
+
+		try {
+			await deleteJson(`/api/study-sessions/${id}`);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			document.dispatchEvent(new CustomEvent("studySession:deleted"));
+			showToast("Study session deleted successfully.");
 		} catch (err) {
 			setAlert(errorEl, err.message);
 			const dialog = form.closest(".modal-dialog");
@@ -2609,4 +2680,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	await initStudySessions();
 	initNewStudySessionForm();
+	initEditStudySessionForm();
+	initDeleteStudySessionForm();
 });
