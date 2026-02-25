@@ -6,6 +6,7 @@ const asyncHandler = require('../../utils/asyncHandler');
 const semesterController = require("./semester.controller");
 const moduleController = require("../modules/module.controller");
 const assignmentController = require("../assignments/assignment.controller");
+const studySessionController = require("../studySessions/studySession.controller");
 
 router.get("/", requireApiAuth, asyncHandler(semesterController.findAll));
 router.post("/", requireApiAuth, asyncHandler(semesterController.create));
@@ -17,5 +18,8 @@ router.get("/:semesterId/modules", requireApiAuth, asyncHandler(moduleController
 router.post("/:semesterId/modules", requireApiAuth, asyncHandler(moduleController.createInSemester));
 
 router.get("/:semesterId/assignments", requireApiAuth, asyncHandler(assignmentController.findAllBySemester));
+
+router.get("/:semesterId/study-sessions", requireApiAuth, asyncHandler(studySessionController.findAllBySemester));
+router.post("/:semesterId/study-sessions", requireApiAuth, asyncHandler(studySessionController.createInSemester));
 
 module.exports = router;
