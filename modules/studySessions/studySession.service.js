@@ -13,6 +13,13 @@ function mapStudySessionRow(ss) {
 	};
 }
 
+function spilloverCheckStudySession(startTime, durationMinutes) {
+	const [hh, mm] = startTime.split(":").map(Number);
+	if (hh * 60 + mm + durationMinutes > 1440) {
+		throw new AppError("Study session cannot spill into the next day.", 400);
+	}
+}
+
 async function overlapCheckStudySession(userId, semesterId, dayOfWeek, startTime, durationMinutes, { excludeStudySessionId = null } = {}) {
 	const params = [
 		userId,
@@ -89,6 +96,7 @@ async function createInSemester(userId, semesterId, { dayOfWeek, startTime, dura
 		throw new AppError("Semester not found.", 404);
 	}
 
+	spilloverCheckStudySession(startTime, durationMinutes);
 	await overlapCheckStudySession(userId, semesterId, dayOfWeek, startTime, durationMinutes);
 
 	try {
@@ -134,6 +142,7 @@ async function update(userId, studySessionId, updates) {
 	const nextStartTime = updates.startTime !== undefined ? updates.startTime : current.startTime;
 	const nextDurationMinutes = updates.durationMinutes !== undefined ? updates.durationMinutes : current.durationMinutes;
 
+	spilloverCheckStudySession(nextStartTime, nextDurationMinutes);
 	await overlapCheckStudySession(
 		userId,
 		current.semesterId,
