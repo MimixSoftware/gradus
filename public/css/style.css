@@ -633,6 +633,12 @@ input:focus {
 	gap: 1.25rem;
 }
 
+.ui-grid--single {
+	grid-template-columns: 1fr;
+	max-width: 900px;
+	margin: 0 auto;
+}
+
 .ui-card {
 	height: 420px;
 	display: flex;
@@ -1086,4 +1092,12 @@ body.modal-open {
 .toast-error {
 	border-color: var(--danger-border);
 	background: var(--danger-bg);
+}
+
+.ss-day-label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--text-muted);
+	margin-bottom: 0.4rem;
+	letter-spacing: 0.03em;
 }

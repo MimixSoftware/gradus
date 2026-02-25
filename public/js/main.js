@@ -14,7 +14,10 @@ const appState = {
 	assignment: null,
 	module: null,
 	tasks: [],
-	taskById: new Map()
+	taskById: new Map(),
+	// Study Sessions
+	studySessions: [],
+	studySessionById: new Map()
 };
 
 // Variables
@@ -29,6 +32,16 @@ const MODULE_COLOUR_PRESETS = [
   "#6366F1",
   "#EC4899",
   "#84CC16",
+];
+
+const DAY_NAMES = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday"
 ];
 
 let showCompletedAssignments = false;
@@ -102,6 +115,7 @@ function getRouteContext(name) {
 
 	if (name === "dashboard") return { scope: "dashboard" };
 	if (name === "assignment") return { scope: "assignment", assignmentId: Number(main.dataset.assignmentId) };
+	if (name === "studySessions") return { scope: "studySessions" };
 
 	return { scope: "settings" };
 }
@@ -117,6 +131,11 @@ async function loadAppState({ scope, assignmentId } = {}) {
 
 	if (scope === "assignment") {
 		await loadAssignmentData(assignmentId);
+		return settings;
+	}
+
+	if (scope === "studySessions") {
+		await loadStudySessionsData(settings.activeSemesterId);
 		return settings;
 	}
 
@@ -162,6 +181,9 @@ async function loadDashboardData(activeSemesterId) {
 	appState.module = null;
 	appState.tasks = null;
 	appState.taskById = new Map();
+
+	appState.studySessions = [];
+	appState.studySessionById = new Map();
 }
 
 async function loadAssignmentData(assignmentId) {
@@ -193,6 +215,40 @@ async function loadAssignmentData(assignmentId) {
 	appState.semesterById = new Map();
 	appState.moduleById = new Map();
 	appState.assignmentById = new Map();
+
+	appState.studySessions = [];
+	appState.studySessionById = new Map();
+}
+
+async function loadStudySessionsData(activeSemesterId) {
+	const semestersPayload = await getJson("/api/semesters");
+	const semesters = semestersPayload.semesters;
+
+	semesters.sort((a, b) => a.name.localeCompare(b.name));
+	appState.semesters = semesters;
+	appState.semesterById = new Map(semesters.map(s => [s.id, s]));
+
+	if (!activeSemesterId) {
+		appState.studySessions = [];
+		appState.studySessionById = new Map();
+		return;
+	}
+
+	const studySessionsPayload = await getJson(`/api/semesters/${activeSemesterId}/study-sessions`);
+	const studySessions = studySessionsPayload.studySessions;
+
+	appState.studySessions = studySessions;
+	appState.studySessionById = new Map(studySessions.map(ss => [ss.id, ss]));
+
+	appState.modules = [];
+	appState.assignments = [];
+	appState.moduleById = new Map();
+	appState.assignmentById = new Map();
+
+	appState.assignment = null;
+	appState.module = null;
+	appState.tasks = null;
+	appState.taskById = new Map();
 }
 
 // Global Helpers
@@ -327,6 +383,20 @@ function pickRandomPresetModuleColour() {
 	const pool = available.length ? available : MODULE_COLOUR_PRESETS;
 
 	return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function formatTime(timeStr) {
+	return timeStr.slice(0, 5);
+}
+
+function getEndTime(startTime, durationMinutes) {
+	const [h, m] = startTime.split(":").map(Number);
+	const total = h * 60 + m + durationMinutes;
+
+	const endH = Math.floor(total / 60) % 24;
+	const endM = total % 60;
+
+	return `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 }
 
 // Modals
@@ -2145,6 +2215,276 @@ function initTaskDragAndDrop() {
 	}
 }
 
+// Study Sessions
+async function initStudySessions() {
+	if (getRouteName() !== "studySessions") return;
+
+	const semesterNameEl = document.getElementById("active-semester-name");
+	const studySessionsListEl = document.querySelector('[data-list="studySessions"]');
+	const newStudySessionBtnEl = document.querySelector('[data-modal-open="new-study-session-modal"]');
+
+	document.addEventListener("activeSemester:changed", async () => {
+		await loadSettings();
+		await refreshStudySessions();
+	});
+	document.addEventListener("semester:created", refreshStudySessions);
+	document.addEventListener("semester:updated", refreshStudySessions);
+	document.addEventListener("semester:deleted", async () => {
+		await loadSettings();
+		await refreshStudySessions();
+	});
+	document.addEventListener("studySession:created", refreshStudySessions);
+	document.addEventListener("studySession:updated", refreshStudySessions);
+	document.addEventListener("studySession:deleted", refreshStudySessions);
+
+	studySessionsListEl.addEventListener("click", (e) => {
+		const btn = e.target.closest("button[data-study-session-id][data-action]");
+		if (!btn) return;
+
+		const studySessionId = Number(btn.dataset.studySessionId);
+
+		if (btn.dataset.action === "edit") {
+			openEditStudySessionModal(studySessionId);
+		} else if (btn.dataset.action === "delete") {
+			openDeleteStudySessionModal(studySessionId);
+		}
+	});
+
+	await refreshStudySessions();
+
+	async function refreshStudySessions() {
+		await loadStudySessionsData(appState.activeSemesterId);
+
+		renderStudySessionsList();
+		renderSemesterNameAndUpdateButton();
+	}
+
+	function renderStudySessionsList() {
+		if (!appState.studySessions.length) {
+			renderEmptyListState(studySessionsListEl, "No study sessions yet.");
+			return;
+		}
+
+		studySessionsListEl.innerHTML = "";
+
+		const grouped = new Map();
+		for (const ss of appState.studySessions) {
+			if (!grouped.has(ss.dayOfWeek)) {
+				grouped.set(ss.dayOfWeek, []);
+			}
+			grouped.get(ss.dayOfWeek).push(ss);
+		}
+
+		for (let day = 0; day <= 6; day++) {
+			const daySessions = grouped.get(day);
+			if (!daySessions) continue;
+
+			daySessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+			const groupDiv = document.createElement("div");
+			groupDiv.className = "ss-day-group";
+
+			const heading = document.createElement("h3");
+			heading.className = "ss-day-label";
+			heading.textContent = DAY_NAMES[day];
+
+			const list = document.createElement("ul");
+			list.className = "ui-list ui-list--editable";
+
+			for (const ss of daySessions) {
+				const li = document.createElement("li");
+				li.className = "ui-item";
+
+				const inner = document.createElement("div");
+				inner.className = "ui-item-inner";
+
+				const row = document.createElement("div");
+				row.className = "ui-item-row";
+
+				const title = document.createElement("div");
+				title.className = "ui-item-main";
+
+				const start = formatTime(ss.startTime);
+				const end = getEndTime(ss.startTime, ss.durationMinutes);
+
+				title.textContent = `${start} – ${end}`;
+
+				row.appendChild(title);
+
+				const actions = document.createElement("div");
+				actions.className = "ui-item-actions";
+
+				const editBtn = document.createElement("button");
+				editBtn.className = "icon-btn";
+				editBtn.textContent = "✎";
+				editBtn.dataset.studySessionId = ss.id;
+				editBtn.dataset.action = "edit";
+
+				const deleteBtn = document.createElement("button");
+				deleteBtn.className = "icon-btn icon-btn-danger";
+				deleteBtn.textContent = "✖";
+				deleteBtn.dataset.studySessionId = ss.id;
+				deleteBtn.dataset.action = "delete";
+
+				actions.appendChild(editBtn);
+				actions.appendChild(deleteBtn);
+
+				inner.appendChild(row);
+				inner.appendChild(actions);
+				li.appendChild(inner);
+				list.appendChild(li);
+			}
+
+			groupDiv.appendChild(heading);
+			groupDiv.appendChild(list);
+			studySessionsListEl.appendChild(groupDiv);
+		}
+	}
+
+	function renderSemesterNameAndUpdateButton() {
+		const hasActiveSemesterId = !!appState.activeSemesterId;
+
+		if (!hasActiveSemesterId) {
+			semesterNameEl.textContent = "No semester selected";
+			semesterNameEl.classList.add("warning-text");
+		} else {
+			const semester = appState.semesterById.get(appState.activeSemesterId);
+			semesterNameEl.textContent = semester?.name ?? "";
+			semesterNameEl.classList.remove("warning-text");
+		}
+
+		if (newStudySessionBtnEl) {
+			newStudySessionBtnEl.disabled = !hasActiveSemesterId;
+		}
+	}
+
+	function openEditStudySessionModal() {
+		console.log("to be implemented");
+	}
+
+	// function openEditModuleModal(moduleId) {
+	// 	const m = appState.moduleById.get(moduleId);
+	// 	if (!m) return;
+
+	// 	const form = document.getElementById("edit-module-form");
+	// 	const modal = document.getElementById("edit-module-modal");
+	// 	if (!form || !modal) return;
+
+	// 	const errorEl = document.getElementById("em-error");
+	// 	setAlert(errorEl, "");
+
+	// 	form.querySelector("#em-id").value = m.id;
+	// 	form.querySelector("#em-name").value = m.name ?? "";
+	// 	form.querySelector("#em-credits").value = m.credits ?? "";
+	// 	form.querySelector("#em-colour").value = m.colour ?? "#3b82f6";
+	// 	form.querySelector("#em-colour-hex").value = (m.colour ?? "#3b82f6").toUpperCase();
+
+	// 	modal.classList.add("is-open");
+	// 	document.body.classList.add("modal-open");
+	// }
+
+	function openDeleteStudySessionModal() {
+		console.log("to be implemented");
+	}
+
+	// async function openDeleteModuleModal(moduleId) {
+	// 	const modal = document.getElementById("delete-module-modal");
+	// 	const form = document.getElementById("delete-module-form");
+
+	// 	const errorEl = document.getElementById("dm-error");
+	// 	const msgEl = document.getElementById("dm-message");
+	// 	const countsEl = document.getElementById("dm-counts");
+
+	// 	setAlert(errorEl, "");
+	// 	countsEl.textContent = "";
+	// 	msgEl.textContent = "Are you sure you want to delete this module?";
+
+	// 	form.querySelector("#dm-id").value = moduleId;
+
+	// 	modal.classList.add("is-open");
+	// 	document.body.classList.add("modal-open");
+
+	// 	const m = appState.moduleById.get(Number(moduleId));
+	// 	const moduleName = m?.name || "this module";
+
+	// 	const aCount = (appState.assignments || []).reduce((acc, a) => {
+	// 		const aModuleId = a.moduleId ?? a.module_id;
+	// 		return acc + (Number(aModuleId) === Number(moduleId) ? 1 : 0);
+	// 	}, 0);
+
+	// 	msgEl.textContent = `Are you sure you want to delete “${moduleName}”?`;
+
+	// 	if (aCount > 0) {
+	// 		countsEl.textContent = `${aCount} assignment${aCount === 1 ? "" : "s"} will be deleted.`;
+	// 	} else {
+	// 		countsEl.textContent = "This module has no assignments.";
+	// 	}
+	// }
+}
+
+function initNewStudySessionForm() {
+	const form = document.getElementById("new-study-session-form");
+	if (!form) return;
+
+	const daySelect = document.getElementById("nss-day");
+	const startTimeSelect = document.getElementById("nss-start");
+	const errorEl = document.getElementById("nss-error");
+
+	DAY_NAMES.forEach((name, index) => {
+		const opt = document.createElement("option");
+		opt.value = index;
+		opt.textContent = name;
+		daySelect.appendChild(opt);
+	});
+
+	for (let h = 0; h < 24; h++) {
+		for (let m = 0; m < 60; m += 15) {
+			const hh = String(h).padStart(2, "0");
+			const mm = String(m).padStart(2, "0");
+
+			const opt = document.createElement("option");
+			opt.value = `${hh}:${mm}`;
+			opt.textContent = `${hh}:${mm}`;
+
+			startTimeSelect.appendChild(opt);
+		}
+	}
+	startTimeSelect.value = "18:00";
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+
+		const payload = {
+			dayOfWeek: Number(formData.get("dayOfWeek")),
+			startTime: formData.get("startTime"),
+			durationMinutes: Number(formData.get("durationMinutes"))
+		};
+
+		try {
+			const res = await postJson(`/api/semesters/${appState.activeSemesterId}/study-sessions`, payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			document.dispatchEvent(new CustomEvent("studySession:created"));
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
 // Global Inits
 function initAuthForms() {
 	const loginForm = document.getElementById("login-form");
@@ -2266,4 +2606,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initEditTaskForm();
 	initDeleteTaskForm();
 	initTaskDragAndDrop();
+
+	await initStudySessions();
+	initNewStudySessionForm();
 });

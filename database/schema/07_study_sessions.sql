@@ -10,7 +10,7 @@ CREATE TABLE study_sessions (
 
 	CONSTRAINT fk_study_sessions_semester FOREIGN KEY (semester_id) REFERENCES semesters(id) ON DELETE CASCADE,
 	CONSTRAINT chk_study_sessions_day_of_week CHECK (day_of_week BETWEEN 0 AND 6),
-	CONSTRAINT chk_study_sessions_duration_minutes CHECK (duration_minutes BETWEEN 1 AND 1440),
+	CONSTRAINT chk_study_sessions_duration_minutes CHECK (duration_minutes BETWEEN 15 AND 240),
 	CONSTRAINT uq_study_sessions_unique_slot UNIQUE (semester_id, day_of_week, start_time),
 	CONSTRAINT chk_study_sessions_no_spillover
 	CHECK (

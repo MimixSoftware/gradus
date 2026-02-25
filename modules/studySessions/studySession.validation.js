@@ -3,8 +3,8 @@ const AppError = require("../../utils/AppError");
 
 function validateCreateInSemesterInput({ dayOfWeek, startTime, durationMinutes } = {}) {
 	dayOfWeek = v.validateRequiredInt(dayOfWeek, "Day of Week", { min: 0, max: 6 });
-	startTime = v.validateRequiredUtcDatetime(startTime, "Start Time");
-	durationMinutes = v.validateRequiredInt(durationMinutes, "Duration", { min: 1, max: 1440 });
+	startTime = v.validateRequiredTime(startTime, "Start Time");
+	durationMinutes = v.validateRequiredInt(durationMinutes, "Duration", { min: 15, max: 240, step: 15 });
 
 	const date = new Date(startTime);
 	const startMinutes = date.getUTCHours() * 60 + date.getUTCMinutes();
@@ -31,10 +31,10 @@ function validateUpdateInput({ dayOfWeek, startTime, durationMinutes } = {}) {
 		updates.dayOfWeek = v.validateRequiredInt(dayOfWeek, "Day of Week", { min: 0, max: 6 });
 	}
 	if (hasStartTime) {
-		updates.startTime = v.validateRequiredUtcDatetime(startTime, "Start Time");
+		updates.startTime = v.validateRequiredTime(startTime, "Start Time");
 	}
 	if (hasDurationMinutes) {
-		updates.durationMinutes = v.validateRequiredInt(durationMinutes, "Duration", { min: 1, max: 1440 });
+		updates.durationMinutes = v.validateRequiredInt(durationMinutes, "Duration", { min: 15, max: 240, step: 15 });
 	}
 
 	if (hasStartTime && hasDurationMinutes) {

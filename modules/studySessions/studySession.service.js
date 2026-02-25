@@ -13,9 +13,10 @@ function mapStudySessionRow(ss) {
 	};
 }
 
-async function overlapCheckStudySession(userId, dayOfWeek, startTime, durationMinutes, { excludeStudySessionId = null } = {}) {
+async function overlapCheckStudySession(userId, semesterId, dayOfWeek, startTime, durationMinutes, { excludeStudySessionId = null } = {}) {
 	const params = [
 		userId,
+		semesterId,
 		dayOfWeek,
 		startTime,
 		startTime,
@@ -88,7 +89,7 @@ async function createInSemester(userId, semesterId, { dayOfWeek, startTime, dura
 		throw new AppError("Semester not found.", 404);
 	}
 
-	await overlapCheckStudySession(userId, dayOfWeek, startTime, durationMinutes);
+	await overlapCheckStudySession(userId, semesterId, dayOfWeek, startTime, durationMinutes);
 
 	try {
 		const [result] = await db.query(

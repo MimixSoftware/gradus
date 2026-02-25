@@ -35,7 +35,7 @@ function validateOptionalString(value, label, options = {}) {
 	return validateRequiredString(value, label, options);
 }
 
-function validateRequiredInt(value, label, { min, max } = {}) {
+function validateRequiredInt(value, label, { min, max, step } = {}) {
 	if (value === undefined || value === null || value === "") {
 		throw new AppError(`${label} is required.`, 400);
 	}
@@ -58,6 +58,10 @@ function validateRequiredInt(value, label, { min, max } = {}) {
 			throw new AppError(`${label} must be between ${min} and ${max}.`, 400);
 		}
 		throw new AppError(`${label} must be at most ${max}.`, 400);
+	}
+
+	if (step !== undefined && num % step !== 0) {
+		throw new AppError(`${label} must be in increments of ${step}.`, 400);
 	}
 
 	return num;
@@ -136,6 +140,35 @@ function validateOptionalUtcDatetime(value, label) {
 	return validateRequiredUtcDatetime(value, label);
 }
 
+function validateRequiredTime(value, label, { stepMinutes = null } = {}) {
+	if (value === undefined || value === null || value === "") {
+		throw new AppError(`${label} is required.`, 400);
+	}
+	if (typeof value !== "string") {
+		throw new AppError(`${label} must be a string.`, 400);
+	}
+
+	const v = value.trim();
+	const m = /^(\d{2}):(\d{2})$/.exec(v);
+	if (!m) {
+		throw new AppError(`${label} must be in HH:mm format.`, 400);
+	}
+
+	const hours = Number(m[1]);
+	const minutes = Number(m[2]);
+	if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+		throw new AppError(`${label} must be a valid time.`, 400);
+	}
+
+	if (stepMinutes !== null && minutes % stepMinutes !== 0) {
+		throw new AppError(`${label} must be in ${stepMinutes}-minute increments.`, 400);
+	}
+
+	const pad = (n) => String(n).padStart(2, "0");
+
+	return `${pad(hours)}:${pad(minutes)}:00`;
+}
+
 module.exports = {
 	validateRequiredString,
 	validateOptionalString,
@@ -144,5 +177,6 @@ module.exports = {
 	validateRequiredEnum,
 	validateRequiredDate,
 	validateRequiredUtcDatetime,
-	validateOptionalUtcDatetime
+	validateOptionalUtcDatetime,
+	validateRequiredTime
 };
