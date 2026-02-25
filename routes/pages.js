@@ -44,6 +44,11 @@ router.get('/assignments/:assignmentId', requireAuth, async (req, res) => {
 	res.render('assignment', { title: assignment.name, assignmentId: assignment.id });
 });
 
+// Availability page
+router.get('/study-sessions', requireAuth, (req, res) => {
+	res.render('studySessions', { title: 'Study Sessions' });
+});
+
 // 404 page
 router.get(/.*/, (req, res) => {
 	res.status(404).render('error', { 
