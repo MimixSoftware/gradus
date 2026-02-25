@@ -20,35 +20,31 @@ VALUES
 );
 
 -- semesters
-INSERT INTO semesters (user_id, name, start_date, end_date, availability)
+INSERT INTO semesters (user_id, name, start_date, end_date)
 VALUES
 (
 	1,
 	'Year 3 Semester 1',
 	'2025-09-01',
-	'2025-12-20',
-	UNHEX('A1F3B5C7D9E1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6')
+	'2025-12-20'
 ),
 (
 	1,
 	'Year 3 Semester 2',
 	'2026-01-15',
-	'2026-05-30',
-	UNHEX('0F1E2D3C4B5A69788796A5B4C3D2E1F0A9B8C7D6E5')
+	'2026-05-30'
 ),
 (
 	2,
 	'Year 1 Semester 1',
 	'2025-09-01',
-	'2025-12-20',
-	UNHEX('11223344556677889900AABBCCDDEEFF0102030405')
+	'2025-12-20'
 ),
 (
 	2,
 	'Year 1 Semester 2',
 	'2026-01-15',
-	'2026-05-30',
-	UNHEX('FFEEDDCCBBAA009988776655443322110A0B0C0D0E')
+	'2026-05-30'
 );
 
 -- settings

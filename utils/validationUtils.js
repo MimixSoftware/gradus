@@ -136,25 +136,6 @@ function validateOptionalUtcDatetime(value, label) {
 	return validateRequiredUtcDatetime(value, label);
 }
 
-function validateBinaryIntArray(value, label, expectedLength) {
-	if (value === undefined || value === null) {
-		throw new AppError(`${label} is required.`, 400);
-	}
-
-	if (!Array.isArray(value)) {
-		throw new AppError(`${label} must be an array.`, 400);
-	}
-
-	if (value.length !== expectedLength) {
-		throw new AppError(`${label} must contain exactly ${expectedLength} items.`, 400);
-	}
-
-	return value.map((x, i) => {
-		if (x === 0 || x === 1) return x;
-		throw new AppError(`${label} slot ${i} must be 0 or 1.`, 400);
-	});
-}
-
 module.exports = {
 	validateRequiredString,
 	validateOptionalString,
@@ -163,6 +144,5 @@ module.exports = {
 	validateRequiredEnum,
 	validateRequiredDate,
 	validateRequiredUtcDatetime,
-	validateOptionalUtcDatetime,
-	validateBinaryIntArray
+	validateOptionalUtcDatetime
 };

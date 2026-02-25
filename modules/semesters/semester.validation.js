@@ -1,7 +1,7 @@
 const v = require("../../utils/validationUtils");
 const AppError = require("../../utils/AppError");
 
-function validateCreateInput({ name, startDate, endDate, availability } = {}) {
+function validateCreateInput({ name, startDate, endDate } = {}) {
 	name = v.validateRequiredString(name, "Name", { max: 100 });
 	startDate = v.validateRequiredDate(startDate, "Start Date");
 	endDate = v.validateRequiredDate(endDate, "End Date");
@@ -10,19 +10,16 @@ function validateCreateInput({ name, startDate, endDate, availability } = {}) {
 		throw new AppError("Start date cannot be after end date.", 400);
 	}
 
-	availability = v.validateBinaryIntArray(availability, "Availability", 168);
-
-	return { name, startDate, endDate, availability };
+	return { name, startDate, endDate };
 }
 
-function validateUpdateInput({ name, startDate, endDate, availability } = {}) {
+function validateUpdateInput({ name, startDate, endDate } = {}) {
 	const hasName = name !== undefined;
 	const hasStart = startDate !== undefined;
 	const hasEnd = endDate !== undefined;
-	const hasAvailability = availability !== undefined;
 
 	
-	if (!hasName && !hasStart && !hasEnd && !hasAvailability) {
+	if (!hasName && !hasStart && !hasEnd) {
 		throw new AppError("At least one field is required.", 400);
 	}
 
@@ -38,9 +35,6 @@ function validateUpdateInput({ name, startDate, endDate, availability } = {}) {
 
 		updates.startDate = v.validateRequiredDate(startDate, "Start Date");
 		updates.endDate = v.validateRequiredDate(endDate, "End Date");
-	}
-	if (hasAvailability) {
-		updates.availability = v.validateBinaryIntArray(availability, "Availability", 168);
 	}
 
 	return updates;

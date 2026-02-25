@@ -799,11 +799,10 @@ function initSemesterModal() {
 		const name = nameEl.value;
 		const startDate = startEl.value;
 		const endDate = endEl.value;
-		const availability = new Array(168).fill(0);
 
 		try {
 			if (!id) {
-				const res = await postJson("/api/semesters", { name, startDate, endDate, availability });
+				const res = await postJson("/api/semesters", { name, startDate, endDate });
 				showToast(res.message);
 				document.dispatchEvent(new CustomEvent("semester:created"));
 			} else {

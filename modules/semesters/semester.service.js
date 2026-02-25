@@ -8,40 +8,9 @@ function mapSemesterRow(s) {
 		name: s.name,
 		startDate: s.start_date,
 		endDate: s.end_date,
-		availability: unpackAvailability(s.availability),
 		createdAt: s.created_at,
 		updatedAt: s.updated_at
 	};
-}
-
-function packAvailability(slots) {
-	const buf = Buffer.alloc(21, 0);
-
-	for (let i = 0; i < 168; i++) {
-		if (slots[i] === 1) {
-			const byteIndex = Math.floor(i / 8);
-			const bitIndex = i % 8;
-			buf[byteIndex] |= 1 << bitIndex;
-		}
-	}
-
-	return buf;
-}
-
-function unpackAvailability(buf) {
-	if (!Buffer.isBuffer(buf) || buf.length !== 21) {
-		throw new AppError("Invalid availability data.", 500);
-	}
-
-	const slots = new Array(168);
-
-	for (let i = 0; i < 168; i++) {
-		const byteIndex = Math.floor(i / 8);
-		const bitIndex = i % 8;
-		slots[i] = (buf[byteIndex] >> bitIndex) & 1;
-	}
-
-	return slots;
 }
 
 async function overlapCheck(userId, startDate, endDate, { excludeSemesterId = null } = {}) {
@@ -71,7 +40,7 @@ async function overlapCheck(userId, startDate, endDate, { excludeSemesterId = nu
 
 async function findAll(userId) {
 	const [rows] = await db.query(
-		`SELECT id, user_id, name, start_date, end_date, availability, created_at, updated_at
+		`SELECT id, user_id, name, start_date, end_date, created_at, updated_at
 		FROM semesters
 		WHERE user_id = ?
 		ORDER BY start_date DESC, id DESC`,
@@ -81,16 +50,14 @@ async function findAll(userId) {
 	return rows.map(mapSemesterRow);
 }
 
-async function create(userId, { name, startDate, endDate, availability }) {
+async function create(userId, { name, startDate, endDate }) {
 	await overlapCheck(userId, endDate, startDate);
 
 	try {
-		const availabilityBin = packAvailability(availability);
-
 		const [result] = await db.query(
-			`INSERT INTO semesters (user_id, name, start_date, end_date, availability)
-			VALUES (?, ?, ?, ?, ?)`,
-			[userId, name, startDate, endDate, availabilityBin]
+			`INSERT INTO semesters (user_id, name, start_date, end_date)
+			VALUES (?, ?, ?, ?)`,
+			[userId, name, startDate, endDate]
 		);
 
 		return await findById(userId, result.insertId);
@@ -104,7 +71,7 @@ async function create(userId, { name, startDate, endDate, availability }) {
 
 async function findById(userId, semesterId) {
 	const [rows] = await db.query(
-		`SELECT id, user_id, name, start_date, end_date, availability, created_at, updated_at
+		`SELECT id, user_id, name, start_date, end_date, created_at, updated_at
 		FROM semesters
 		WHERE id = ? AND user_id = ?
 		LIMIT 1`,
@@ -118,7 +85,7 @@ async function findById(userId, semesterId) {
 	return mapSemesterRow(rows[0]);
 }
 
-async function update(userId, semesterId, { name, startDate, endDate, availability }) {
+async function update(userId, semesterId, { name, startDate, endDate }) {
 	const setParts = [];
 	const values = [];
 
@@ -137,12 +104,6 @@ async function update(userId, semesterId, { name, startDate, endDate, availabili
 
 		setParts.push("end_date = ?");
 		values.push(endDate);
-	}
-
-	if (availability !== undefined) {
-		const availabilityBin = packAvailability(availability);
-		setParts.push("availability = ?");
-		values.push(availabilityBin);
 	}
 
 	values.push(semesterId, userId);

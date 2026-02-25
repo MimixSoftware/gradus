@@ -33,40 +33,11 @@ function buildRequestPayload(req) {
 		payload.body = {
 			...req.body,
 			password: req.body.password && "[redacted]",
-			confirmPassword: req.body.confirmPassword && "[redacted]",
-			...(Array.isArray(req.body.availability) && {
-				availability: `[${req.body.availability.length} slots]`,
-			})
+			confirmPassword: req.body.confirmPassword && "[redacted]"
 		};
 	}
 
 	return payload;
-}
-
-function sanitiseJsonBody(body) {
-	if (body) {
-		if (body.semester?.availability) {
-			return {
-				...body,
-				semester: {
-					...body.semester,
-					availability: `[${body.semester.availability.length} slots]`
-				}
-			};
-		}
-
-		if (Array.isArray(body.semesters)) {
-			return {
-				...body,
-				semesters: body.semesters.map(s => ({
-					...s,
-					availability: `[${s.availability.length} slots]`
-				}))
-			};
-		}
-	}
-
-	return body;
 }
 
 module.exports = function requestLogger(req, res, next) {
@@ -104,7 +75,7 @@ module.exports = function requestLogger(req, res, next) {
 		} else if (captured?.type === "json") {
 			response = {
 				statusCode,
-				body: sanitiseJsonBody(captured.body)
+				body: captured.body
 			};
 		} else {
 			response = { statusCode };
