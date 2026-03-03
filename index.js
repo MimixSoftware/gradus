@@ -52,6 +52,9 @@ app.use("/api/tasks", taskRoutes);
 const studySessionRoutes = require("./modules/studySessions/studySession.routes");
 app.use("/api/study-sessions", studySessionRoutes);
 
+const scheduledTaskRoutes = require("./modules/scheduledTasks/scheduledTask.routes");
+app.use("/api/scheduled-tasks", scheduledTaskRoutes);
+
 const pageRoutes = require("./routes/pages");
 app.use(pageRoutes);
 
