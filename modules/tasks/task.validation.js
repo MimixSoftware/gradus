@@ -7,7 +7,7 @@ function validateCreateInAssignmentInput({ name, description, deadline, etcMinut
 	name = v.validateRequiredString(name, "Name", { max: 100 });
 	description = v.validateOptionalString(description, "Description", { max: 500 }) ?? null;
 	deadline = v.validateOptionalUtcDatetime(deadline, "Deadline") ?? null;
-	etcMinutes = v.validateOptionalInt(etcMinutes, "Estimated Completion Time", { min: 1, max: 1440 }) ?? null;
+	etcMinutes = v.validateOptionalInt(etcMinutes, "Estimated Completion Time", { min: 15, max: 1440, step: 15 }) ?? null;
 
 	return { name, description, deadline, etcMinutes };
 }
@@ -40,7 +40,7 @@ function validateUpdateInput({ name, description, status, deadline, etcMinutes, 
 		updates.deadline = v.validateOptionalUtcDatetime(deadline, "Deadline");
 	}
 	if (hasEtcMinutes) {
-		updates.etcMinutes = v.validateOptionalInt(etcMinutes, "Estimated Completion Time", { min: 1, max: 1440 });
+		updates.etcMinutes = v.validateOptionalInt(etcMinutes, "Estimated Completion Time", { min: 15, max: 1440, step: 15 });
 	}
 	if (hasAtcMinutes) {
 		updates.atcMinutes = v.validateOptionalInt(atcMinutes, "Actual Completion Time", { min: 1, max: 1440 });
