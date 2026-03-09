@@ -11,7 +11,7 @@ function validateCreateInStudySessionInput({ taskId, sessionDate, startMinute, d
 		throw new AppError("Task does not fit into this study session.", 400);
 	}
 
-	return { dayOfWeek, startTime, durationMinutes };
+	return { taskId, sessionDate, startMinute, durationMinutes };
 }
 
 function validateUpdateInput({ sessionDate, startMinute, durationMinutes } = {}) {

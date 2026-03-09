@@ -23,6 +23,6 @@ router.get("/:semesterId/assignments", requireApiAuth, asyncHandler(assignmentCo
 router.get("/:semesterId/study-sessions", requireApiAuth, asyncHandler(studySessionController.findAllBySemester));
 router.post("/:semesterId/study-sessions", requireApiAuth, asyncHandler(studySessionController.createInSemester));
 
-router.get("/:semesterId/scheduled-tasks", requireApiAuth, asyncHandler(studySessionController.findAllBySemester));
+router.get("/:semesterId/scheduled-tasks", requireApiAuth, asyncHandler(scheduledTaskController.findAllBySemester));
 
 module.exports = router;
