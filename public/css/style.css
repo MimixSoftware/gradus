@@ -1106,15 +1106,3 @@ body.modal-open {
 	margin-bottom: 0.4rem;
 	letter-spacing: 0.03em;
 }
-
-.ui-week-nav {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-}
-
-.ui-week-label {
-	min-width: 180px;
-	text-align: center;
-	font-weight: 500;
-}
