@@ -7,53 +7,42 @@ function mapScheduledTaskRow(st) {
 		taskId: st.task_id,
 		studySessionId: st.study_session_id,
 		sessionDate: st.session_date,
-        startMinute: st.start_minute,
+		position: st.position,
 		durationMinutes: st.duration_minutes,
 		createdAt: st.created_at,
 		updatedAt: st.updated_at
 	};
 }
 
-function spilloverCheckScheduledTask(startMinute, durationMinutes, sessionDurationMinutes) {
-	if (startMinute + durationMinutes > sessionDurationMinutes) {
+async function spilloverCheckScheduledTask(studySessionId, sessionDate, newDuration, { excludeTaskId = null } = {}) {
+	let params = [studySessionId, sessionDate];
+	let excludeSql = "";
+
+	if (excludeTaskId !== null) {
+		excludeSql = "AND id <> ?";
+		params.push(excludeTaskId);
+	}
+
+	const [[sessionRow]] = await db.query(
+		`SELECT duration_minutes AS session_duration_minutes
+		FROM study_sessions
+		WHERE id = ?`,
+		[studySessionId]
+	);
+	if (!sessionRow) {
+		throw new AppError("Study session not found.", 404);
+	}
+
+	const [tasks] = await db.query(`
+		SELECT duration_minutes
+		FROM scheduled_tasks
+		WHERE study_session_id = ? AND session_date = ? ${excludeSql}`,
+		params
+	);
+
+	const totalMinutes = tasks.reduce((sum, t) => sum + t.duration_minutes, 0);
+	if (totalMinutes + newDuration > sessionRow.session_duration_minutes) {
 		throw new AppError("Task does not fit into this study session.", 400);
-	}
-}
-
-async function overlapCheckScheduledTask(userId, studySessionId, sessionDate, startMinute, durationMinutes, { excludeScheduledTaskId = null } = {}) {
-	const params = [
-		studySessionId,
-		sessionDate,
-		startMinute,
-		startMinute,
-		durationMinutes
-	];
-
-	let sql = `
-		SELECT 1
-		FROM scheduled_tasks st
-		INNER JOIN study_sessions ss ON ss.id = st.study_session_id
-		INNER JOIN semesters s ON s.id = ss.semester_id
-		WHERE s.user_id = ?
-		  AND st.study_session_id = ?
-		  AND st.session_date = ?
-		  AND ? < (st.start_minute + st.duration_minutes)
-		  AND (? + ?) > st.start_minute
-	`;
-
-	params.unshift(userId);
-
-	if (excludeScheduledTaskId != null) {
-		sql += ` AND st.id <> ?`;
-		params.push(excludeScheduledTaskId);
-	}
-
-	sql += ` LIMIT 1`;
-
-	const [rows] = await db.query(sql, params);
-
-	if (rows.length > 0) {
-		throw new AppError("Scheduled task overlaps with an existing scheduled task.", 409);
 	}
 }
 
@@ -81,24 +70,20 @@ async function sessionDateCheckScheduledTask(userId, studySessionId, sessionDate
 		throw new AppError("Session date is outside the semester date range.", 400);
 	}
 
-	const [[wdRow]] = await db.query(`SELECT WEEKDAY(?) AS wd`, [sessionDate]);
-	if (wdRow.wd !== info.day_of_week) {
+	const jsWeekday = new Date(sessionDate).getDay();
+	const mysqlWeekday = (jsWeekday + 6) % 7;
+
+	if (mysqlWeekday !== info.day_of_week) {
 		throw new AppError("Session date does not match the study session's day of week.", 400);
 	}
-
-	return {
-		sessionDurationMinutes: info.session_duration_minutes
-	};
 }
 
 async function etcOverflowCheckScheduledTask(userId, taskId, durationMinutes, { excludeScheduledTaskId = null } = {}) {
-
 	const params = [taskId];
 	let sql = `
 		SELECT COALESCE(SUM(st.duration_minutes), 0) AS total
 		FROM scheduled_tasks st
-		WHERE st.task_id = ?
-	`;
+		WHERE st.task_id = ?`;
 
 	if (excludeScheduledTaskId !== null) {
 		sql += ` AND st.id <> ?`;
@@ -122,28 +107,25 @@ async function etcOverflowCheckScheduledTask(userId, taskId, durationMinutes, { 
 		throw new AppError("Task not found.", 404);
 	}
 
-    const totalScheduled = Number(sumRow.total);
-    const newDuration = Number(durationMinutes);
-    const etc = taskRow.etc_minutes !== null ? Number(taskRow.etc_minutes) : null;
+	const totalScheduled = Number(sumRow.total);
+	const newDuration = Number(durationMinutes);
+	const etc = taskRow.etc_minutes !== null ? Number(taskRow.etc_minutes) : null;
 
-    if (etc !== null && totalScheduled + newDuration > etc) {
-        throw new AppError(
-            "Scheduled time exceeds the task's estimated time.",
-            400
-        );
-    }
+	if (etc !== null && totalScheduled + newDuration > etc) {
+		throw new AppError("Scheduled time exceeds the task's estimated time.", 400);
+	}
 }
 
 async function findAll(userId) {
 	const [rows] = await db.query(
 		`SELECT
-			st.id, st.task_id, st.study_session_id, st.session_date, st.start_minute, st.duration_minutes,
+			st.id, st.task_id, st.study_session_id, st.session_date, st.position, st.duration_minutes,
 			st.created_at, st.updated_at
 		FROM scheduled_tasks st
 		INNER JOIN study_sessions ss ON ss.id = st.study_session_id
 		INNER JOIN semesters s ON s.id = ss.semester_id
 		WHERE s.user_id = ?
-		ORDER BY st.session_date DESC, st.start_minute ASC, st.id DESC`,
+		ORDER BY st.session_date DESC, st.position ASC, st.id DESC`,
 		[userId]
 	);
 
@@ -153,13 +135,13 @@ async function findAll(userId) {
 async function findAllByStudySession(userId, studySessionId) {
 	const [rows] = await db.query(
 		`SELECT
-			st.id, st.task_id, st.study_session_id, st.session_date, st.start_minute, st.duration_minutes,
+			st.id, st.task_id, st.study_session_id, st.session_date, st.position, st.duration_minutes,
 			st.created_at, st.updated_at
 		FROM scheduled_tasks st
 		INNER JOIN study_sessions ss ON ss.id = st.study_session_id
 		INNER JOIN semesters s ON s.id = ss.semester_id
 		WHERE s.user_id = ? AND ss.id = ?
-		ORDER BY st.session_date DESC, st.start_minute ASC, st.id DESC`,
+		ORDER BY st.session_date DESC, st.position ASC, st.id DESC`,
 		[userId, studySessionId]
 	);
 
@@ -169,67 +151,79 @@ async function findAllByStudySession(userId, studySessionId) {
 async function findAllBySemester(userId, semesterId) {
 	const [rows] = await db.query(
 		`SELECT
-			st.id, st.task_id, st.study_session_id, st.session_date, st.start_minute, st.duration_minutes,
+			st.id, st.task_id, st.study_session_id, st.session_date, st.position, st.duration_minutes,
 			st.created_at, st.updated_at
 		FROM scheduled_tasks st
 		INNER JOIN study_sessions ss ON ss.id = st.study_session_id
 		INNER JOIN semesters s ON s.id = ss.semester_id
 		WHERE s.user_id = ? AND s.id = ?
-		ORDER BY st.session_date DESC, st.start_minute ASC, st.id DESC`,
+		ORDER BY st.session_date DESC, st.position ASC, st.id DESC`,
 		[userId, semesterId]
 	);
 
 	return rows.map(mapScheduledTaskRow);
 }
 
-async function createInStudySession(userId, studySessionId, { taskId, sessionDate, startMinute, durationMinutes }) {
-	const [sessionRows] = await db.query(
-		`SELECT 1
-		 FROM study_sessions ss
-		 INNER JOIN semesters s ON s.id = ss.semester_id
-		 WHERE ss.id = ? AND s.user_id = ?
-		 LIMIT 1`,
-		[studySessionId, userId]
-	);
+async function createInStudySession(userId, studySessionId, { taskId, sessionDate, position, durationMinutes }) {
+	await sessionDateCheckScheduledTask(userId, studySessionId, sessionDate);
 
-	if (sessionRows.length === 0) {
-		throw new AppError("Study session not found.", 404);
-	}
-
-    const [taskRows] = await db.query(
-		`SELECT 1
-		 FROM tasks t
-		 INNER JOIN assignments a ON a.id = t.assignment_id
-		 INNER JOIN modules m ON m.id = a.module_id
-		 INNER JOIN semesters s ON s.id = m.semester_id
-		 WHERE t.id = ? AND s.user_id = ?
-		 LIMIT 1`,
+	const [[taskRow]] = await db.query(`
+		SELECT t.etc_minutes
+		FROM tasks t
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE t.id = ? AND s.user_id = ?
+		LIMIT 1`,
 		[taskId, userId]
 	);
-
-	if (taskRows.length === 0) {
+	
+	if (!taskRow) {
 		throw new AppError("Task not found.", 404);
 	}
 
-    await etcOverflowCheckScheduledTask(userId, taskId, durationMinutes);
+	await etcOverflowCheckScheduledTask(userId, taskId, durationMinutes);
 
-    const { sessionDurationMinutes } = await sessionDateCheckScheduledTask(userId, studySessionId, sessionDate);
+	await spilloverCheckScheduledTask(studySessionId, sessionDate, durationMinutes);
 
-	spilloverCheckScheduledTask(startMinute, durationMinutes, sessionDurationMinutes);
-	await overlapCheckScheduledTask(userId, studySessionId, sessionDate, startMinute, durationMinutes);
+	const [[maxPosRow]] = await db.query(`
+		SELECT MAX(position) AS maxPos
+		FROM scheduled_tasks
+		WHERE study_session_id = ? AND session_date = ?`,
+		[studySessionId, sessionDate]
+	);
+	const insertPosition = position != null ? position : (maxPosRow.maxPos != null ? maxPosRow.maxPos + 1 : 0);
 
+	const connection = await db.getConnection();
 	try {
-		const [result] = await db.query(
-			`INSERT INTO scheduled_tasks
-				(task_id, study_session_id, session_date, start_minute, duration_minutes)
-			 VALUES (?, ?, ?, ?, ?)`,
-			[taskId, studySessionId, sessionDate, startMinute, durationMinutes]
+		await connection.beginTransaction();
+		if (position != null) {
+			await connection.query(`
+				UPDATE scheduled_tasks
+				SET position = position + 1
+				WHERE study_session_id = ? AND session_date = ? AND position >= ?`, 
+				[studySessionId, sessionDate, position]
+			);
+		}
+
+		const [result] = await connection.query(`
+			INSERT INTO scheduled_tasks
+			(task_id, study_session_id, session_date, position, duration_minutes)
+			VALUES (?, ?, ?, ?, ?)`, 
+			[taskId, studySessionId, sessionDate, insertPosition, durationMinutes]
 		);
 
+		await connection.commit();
 		return await findById(userId, result.insertId);
+
 	} catch (err) {
+		await connection.rollback();
 		if (err.code === "ER_DUP_ENTRY") {
-			throw new AppError("Task already scheduled for this session on this date.", 409);
+			if (err.sqlMessage.includes("uq_scheduled_tasks_unique_slot")) {
+				throw new AppError("Another task already occupies this position in the session.", 409);
+			} else if (err.sqlMessage.includes("uq_scheduled_tasks_unique_task_per_session")) {
+				throw new AppError("This task is already scheduled in this session on this date.", 409);
+			}
 		}
 		throw err;
 	}
@@ -238,7 +232,7 @@ async function createInStudySession(userId, studySessionId, { taskId, sessionDat
 async function findById(userId, scheduledTaskId) {
 	const [rows] = await db.query(
 		`SELECT
-			st.id, st.task_id, st.study_session_id, st.session_date, st.start_minute, st.duration_minutes,
+			st.id, st.task_id, st.study_session_id, st.session_date, st.position, st.duration_minutes,
 			st.created_at, st.updated_at
 		FROM scheduled_tasks st
 		INNER JOIN study_sessions ss ON ss.id = st.study_session_id
@@ -258,98 +252,104 @@ async function findById(userId, scheduledTaskId) {
 async function update(userId, scheduledTaskId, updates) {
 	const current = await findById(userId, scheduledTaskId);
 
-	const nextSessionDate = updates.sessionDate !== undefined ? updates.sessionDate : current.sessionDate;
-	const nextStartMinute = updates.startMinute !== undefined ? updates.startMinute : current.startMinute;
-	const nextDurationMinutes = updates.durationMinutes !== undefined ? updates.durationMinutes : current.durationMinutes;
+	const nextPosition = updates.position ?? current.position;
+	const nextDuration = updates.durationMinutes ?? current.durationMinutes;
 
-    const [sessionRows] = await db.query(
-		`SELECT 1
-		 FROM study_sessions ss
-		 INNER JOIN semesters s ON s.id = ss.semester_id
-		 WHERE ss.id = ? AND s.user_id = ?
-		 LIMIT 1`,
+	const [[sessionRow]] = await db.query(`
+		SELECT ss.duration_minutes AS session_duration_minutes
+		FROM study_sessions ss
+		INNER JOIN semesters s ON s.id = ss.semester_id
+		WHERE ss.id = ? AND s.user_id = ?
+		LIMIT 1`,
 		[current.studySessionId, userId]
 	);
-
-	if (sessionRows.length === 0) {
+	if (!sessionRow) {
 		throw new AppError("Study session not found.", 404);
 	}
 
-    await etcOverflowCheckScheduledTask(
-        userId,
-        current.taskId,
-        nextDurationMinutes,
-        { excludeScheduledTaskId: scheduledTaskId }
-    );
+	await etcOverflowCheckScheduledTask(userId, current.taskId, nextDuration, { excludeScheduledTaskId: scheduledTaskId });
 
-    const { sessionDurationMinutes } = await sessionDateCheckScheduledTask(userId, current.studySessionId, nextSessionDate);
-	spilloverCheckScheduledTask(nextStartMinute, nextDurationMinutes, sessionDurationMinutes);
-	await overlapCheckScheduledTask(
-		userId,
+	await spilloverCheckScheduledTask(
 		current.studySessionId,
-		nextSessionDate,
-		nextStartMinute,
-		nextDurationMinutes,
-		{ excludeScheduledTaskId: scheduledTaskId }
+		current.sessionDate,
+		nextDuration,
+		{ excludeTaskId: scheduledTaskId }
 	);
 
-	const setParts = [];
-	const values = [];
-
-	if (updates.sessionDate !== undefined) {
-		setParts.push("st.session_date = ?");
-		values.push(updates.sessionDate);
-	}
-	if (updates.startMinute !== undefined) {
-		setParts.push("st.start_minute = ?");
-		values.push(updates.startMinute);
-	}
-	if (updates.durationMinutes !== undefined) {
-		setParts.push("st.duration_minutes = ?");
-		values.push(updates.durationMinutes);
-	}
-
-	if (setParts.length === 0) {
-		throw new AppError("At least one field is required.", 400);
-	}
-
-	values.push(scheduledTaskId, userId);
-
+	const connection = await db.getConnection();
 	try {
-		const [result] = await db.query(
-			`UPDATE scheduled_tasks st
-			 INNER JOIN study_sessions ss ON ss.id = st.study_session_id
-			 INNER JOIN semesters s ON s.id = ss.semester_id
-			 SET ${setParts.join(", ")}
-			 WHERE st.id = ? AND s.user_id = ?`,
-			values
+		await connection.beginTransaction();
+		if (current.position !== nextPosition) {
+			if (nextPosition < current.position) {
+				await connection.query(`
+					UPDATE scheduled_tasks
+					SET position = position + 1
+					WHERE study_session_id = ? AND session_date = ? AND position >= ? AND position < ?`,
+					[current.studySessionId, current.sessionDate, nextPosition, current.position]
+				);
+			} else {
+				await connection.query(`
+					UPDATE scheduled_tasks
+					SET position = position - 1
+					WHERE study_session_id = ? AND session_date = ? AND position > ? AND position <= ?`,
+					[current.studySessionId, current.sessionDate, current.position, nextPosition]
+				);
+			}
+		}
+
+		const [result] = await connection.query(`
+			UPDATE scheduled_tasks
+			SET position = ?, duration_minutes = ?
+			WHERE id = ?`,
+			[nextPosition, nextDuration, scheduledTaskId]
 		);
 
-		if (result.affectedRows === 0) {
-			throw new AppError("Scheduled task not found.", 404);
-		}
+		await connection.commit();
 
 		return await findById(userId, scheduledTaskId);
 	} catch (err) {
+		await connection.rollback();
 		if (err.code === "ER_DUP_ENTRY") {
-			throw new AppError("Task already scheduled for this session on this date.", 409);
+			if (err.sqlMessage.includes("uq_scheduled_tasks_unique_slot")) {
+				throw new AppError("Another task already occupies this position in the session.", 409);
+			} else if (err.sqlMessage.includes("uq_scheduled_tasks_unique_task_per_session")) {
+				throw new AppError("This task is already scheduled in this session on this date.", 409);
+			}
 		}
 		throw err;
 	}
 }
 
 async function remove(userId, scheduledTaskId) {
-	const [result] = await db.query(
-		`DELETE st
-		 FROM scheduled_tasks st
-		 INNER JOIN study_sessions ss ON ss.id = st.study_session_id
-		 INNER JOIN semesters s ON s.id = ss.semester_id
-		 WHERE st.id = ? AND s.user_id = ?`,
-		[scheduledTaskId, userId]
-	);
+	const task = await findById(userId, scheduledTaskId);
 
-	if (result.affectedRows === 0) {
-		throw new AppError("Scheduled task not found.", 404);
+	const connection = await db.getConnection();
+	try {
+		await connection.beginTransaction();
+		const [result] = await connection.query(`
+			DELETE st
+			FROM scheduled_tasks st
+			INNER JOIN study_sessions ss ON ss.id = st.study_session_id
+			INNER JOIN semesters s ON s.id = ss.semester_id
+			WHERE st.id = ? AND s.user_id = ?`,
+			[scheduledTaskId, userId]
+		);
+
+		if (result.affectedRows === 0) {
+			throw new AppError("Scheduled task not found.", 404);
+		}
+
+		await connection.query(`
+			UPDATE scheduled_tasks
+			SET position = position - 1
+			WHERE study_session_id = ? AND session_date = ? AND position > ?`,
+			[task.studySessionId, task.sessionDate, task.position]
+		);
+
+		await connection.commit();
+	} catch (err) {
+		await connection.rollback();
+		throw err;
 	}
 }
 

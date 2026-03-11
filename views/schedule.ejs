@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %> - Gradus</title>
+	<link rel="icon" href="/images/favicon.ico">
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+	<%- include('partials/header') %>
+
+	<main class="page" data-page="schedule">
+		<div class="container">
+
+			<header class="ui-header">
+				<div class="ui-title">
+					<h1>My Schedule</h1>
+					<div class="ui-subline">
+						<a class="ui-link" href="#" data-modal-open="semester-modal">← Prev</a>
+						<span id="active-semester-name">Week of 10 Mar 2026</span>
+						<a class="ui-link" href="#" data-modal-open="semester-modal">Next →</a>
+					</div>
+				</div>
+			</header>
+
+			<section class="ui-grid ui-grid--two">
+				<article class="ui-card">
+					<h2 class="ui-card-title">Schedule</h2>
+
+					<div class="ui-list" data-list="schedule"></div>
+
+					<div class="ui-actions">
+						<button type="button" class="btn btn-small" data-modal-open="new-study-session-modal">Save</button>
+						<button type="button" class="btn btn-small" data-modal-open="new-study-session-modal">Reset</button>
+					</div>
+				</article>
+
+				<article class="ui-card">
+					<h2 class="ui-card-title">Unscheduled Tasks</h2>
+
+					<div class="ui-list" data-list="unscheduledTasks"></div>
+
+					<div class="ui-actions">
+						<button type="button" class="btn btn-small" data-modal-open="new-study-session-modal">Auto-schedule</button>
+					</div>
+				</article>
+			</section>
+		</div>
+	</main>
+
+	<%- include('partials/footer') %>
+
+	<script src="/js/main.js"></script>
+</body>
+</html>

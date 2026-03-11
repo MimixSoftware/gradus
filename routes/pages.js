@@ -49,6 +49,11 @@ router.get('/study-sessions', requireAuth, (req, res) => {
 	res.render('studySessions', { title: 'Study Sessions' });
 });
 
+// Schedule page
+router.get('/schedule', requireAuth, (req, res) => {
+	res.render('schedule', { title: 'Schedule' });
+});
+
 // 404 page
 router.get(/.*/, (req, res) => {
 	res.status(404).render('error', { 
