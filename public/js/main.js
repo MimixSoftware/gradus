@@ -685,6 +685,7 @@ async function initDashboard() {
 			editBtn.className = "icon-btn";
 			editBtn.type = "button";
 			editBtn.textContent = "✎";
+			editBtn.title = "Edit module";
 			editBtn.dataset.moduleId = m.id;
 			editBtn.dataset.action = "edit";
 
@@ -692,6 +693,7 @@ async function initDashboard() {
 			deleteBtn.className = "icon-btn icon-btn-danger";
 			deleteBtn.type = "button";
 			deleteBtn.textContent = "✖";
+			deleteBtn.title = "Delete module";
 			deleteBtn.dataset.moduleId = m.id;
 			deleteBtn.dataset.action = "delete";
 
@@ -1031,6 +1033,7 @@ function initSemesterModal() {
 			editBtn.className = "icon-btn";
 			editBtn.type = "button";
 			editBtn.textContent = "✎";
+			editBtn.title = "Edit semester";
 			editBtn.dataset.semesterId = s.id;
 			editBtn.dataset.action = "edit";
 
@@ -1038,6 +1041,7 @@ function initSemesterModal() {
 			deleteBtn.className = "icon-btn icon-btn-danger";
 			deleteBtn.type = "button";
 			deleteBtn.textContent = "✖";
+			deleteBtn.title = "Delete semester";
 			deleteBtn.dataset.semesterId = s.id;
 			deleteBtn.dataset.action = "delete";
 
@@ -1561,10 +1565,12 @@ async function initAssignment() {
 			const content = document.createElement("div");
 			content.className = "ui-item-content";
 
-			const meta1 = document.createElement("div");
-			meta1.className = "ui-item-meta";
-			meta1.textContent = `Due: ${formatDueDate(t.deadline)}`;
-			content.appendChild(meta1);
+			if (t.deadline){
+				const meta1 = document.createElement("div");
+				meta1.className = "ui-item-meta";
+				meta1.textContent = `Due: ${formatDueDate(t.deadline)}`;
+				content.appendChild(meta1);
+			}
 
 			const meta2 = document.createElement("div");
 			meta2.className = "ui-item-meta";
@@ -1599,6 +1605,7 @@ async function initAssignment() {
 			editBtn.className = "icon-btn";
 			editBtn.type = "button";
 			editBtn.textContent = "✎";
+			editBtn.title = "Edit task";
 			editBtn.dataset.taskId = t.id;
 			editBtn.dataset.action = "edit";
 
@@ -1606,6 +1613,7 @@ async function initAssignment() {
 			deleteBtn.className = "icon-btn icon-btn-danger";
 			deleteBtn.type = "button";
 			deleteBtn.textContent = "✖";
+			deleteBtn.title = "Delete task";
 			deleteBtn.dataset.taskId = t.id;
 			deleteBtn.dataset.action = "delete";
 
@@ -2429,12 +2437,14 @@ async function initStudySessions() {
 				const editBtn = document.createElement("button");
 				editBtn.className = "icon-btn";
 				editBtn.textContent = "✎";
+				editBtn.title = "Edit study session";
 				editBtn.dataset.studySessionId = ss.id;
 				editBtn.dataset.action = "edit";
 
 				const deleteBtn = document.createElement("button");
 				deleteBtn.className = "icon-btn icon-btn-danger";
 				deleteBtn.textContent = "✖";
+				deleteBtn.title = "Delete study session";
 				deleteBtn.dataset.studySessionId = ss.id;
 				deleteBtn.dataset.action = "delete";
 
@@ -2904,8 +2914,7 @@ async function initSchedule() {
 			const li = document.createElement("li");
 			li.className = "ui-item";
 			li.dataset.taskId = t.id;
-			if (assignmentOverdue) li.classList.add("ui-item--overdue");
-			else if (taskOverdue) li.classList.add("ui-item--overdue-warn");
+			if (taskOverdue) li.classList.add("ui-item--overdue-warn");
 			if (appState.assignmentById.get(t.assignmentId).status !== "completed") {
 				li.classList.add("ui-item--draggable");
 			}
@@ -2935,11 +2944,19 @@ async function initSchedule() {
 
 			const content = document.createElement("div");
 			content.className = "ui-item-content";
+			
+			const meta0 = document.createElement("div");
+			meta0.className = "ui-item-meta";
+			meta0.textContent = appState.assignmentById.get(t.assignmentId).name;
+			meta0.classList.toggle("danger-text", assignmentOverdue);
+			content.appendChild(meta0);
 
-			const meta1 = document.createElement("div");
-			meta1.className = "ui-item-meta";
-			meta1.textContent = `Due: ${formatDueDate(t.deadline)}`;
-			content.appendChild(meta1);
+			if (t.deadline) {
+				const meta1 = document.createElement("div");
+				meta1.className = "ui-item-meta";
+				meta1.textContent = `Due: ${formatDueDate(t.deadline)}`;
+				content.appendChild(meta1);
+			}
 
 			const meta2 = document.createElement("div");
 			meta2.className = "ui-item-meta";
@@ -2959,6 +2976,9 @@ async function initSchedule() {
 				parts.push(`ATC ${formatMinutes(t.atcMinutes)}`);
 			}
 
+			if (assignmentOverdue) parts.push("Assignment overdue");
+			else if (taskOverdue) parts.push("Task overdue");
+
 			if (parts.length) {
 				meta2.textContent = parts.join(" • ");
 				content.appendChild(meta2);
@@ -2967,10 +2987,13 @@ async function initSchedule() {
 			const actions = document.createElement("div");
 			actions.className = "ui-item-actions";
 
-			const assignmentBtn = document.createElement("a");
+			const assignmentBtn = document.createElement("button");
 			assignmentBtn.className = "icon-btn";
-			assignmentBtn.href = `/assignments/${t.assignmentId}`;
 			assignmentBtn.textContent = "🔗";
+			assignmentBtn.title = "Open assignment";
+			assignmentBtn.addEventListener("click", () => {
+				window.location.href = `/assignments/${t.assignmentId}`;
+			});
 
 			actions.appendChild(assignmentBtn);
 
@@ -3076,6 +3099,14 @@ function initLogoutLink() {
 	});
 }
 
+function initLinkButtons() {
+	document.querySelectorAll('[data-link]').forEach(btn => {
+	btn.addEventListener('click', () => {
+		window.location.href = btn.dataset.link;
+	});
+});
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
 	initAuthForms();
 	initMobileNav();
@@ -3089,6 +3120,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	initLogoutLink();
 	initModals();
+	initLinkButtons();
 
 	await initDashboard();
 	initSemesterModal();
