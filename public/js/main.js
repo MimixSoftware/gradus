@@ -17,7 +17,11 @@ const appState = {
 	taskById: new Map(),
 	// Study Sessions
 	studySessions: [],
-	studySessionById: new Map()
+	studySessionById: new Map(),
+	// Schedule
+	selectedWeekStart: null,
+	scheduledTasks: [],
+	scheduledTaskById: new Map()
 };
 
 // Variables
@@ -116,6 +120,7 @@ function getRouteContext(name) {
 	if (name === "dashboard") return { scope: "dashboard" };
 	if (name === "assignment") return { scope: "assignment", assignmentId: Number(main.dataset.assignmentId) };
 	if (name === "studySessions") return { scope: "studySessions" };
+	if (name === "schedule") return { scope: "schedule" };
 
 	return { scope: "settings" };
 }
@@ -136,6 +141,11 @@ async function loadAppState({ scope, assignmentId } = {}) {
 
 	if (scope === "studySessions") {
 		await loadStudySessionsData(settings.activeSemesterId);
+		return settings;
+	}
+
+	if (scope === "schedule") {
+		await loadScheduleData(settings.activeSemesterId);
 		return settings;
 	}
 
@@ -184,18 +194,24 @@ async function loadDashboardData(activeSemesterId) {
 
 	appState.studySessions = [];
 	appState.studySessionById = new Map();
+
+	appState.selectedWeekStart = null;
+	appState.scheduledTasks = null;
+	appState.scheduledTaskById = new Map();
 }
 
 async function loadAssignmentData(assignmentId) {
 	const assignmentPayload = await getJson(`/api/assignments/${assignmentId}`);
 	const assignment = assignmentPayload.assignment;
 
-	const [tasksPayload, modulePayload] = await Promise.all([
+	const [tasksPayload, scheduledTasksPayload, modulePayload] = await Promise.all([
 		getJson(`/api/assignments/${assignment.id}/tasks`),
+		getJson(`/api/assignments/${assignment.id}/scheduled-tasks`),
 		getJson(`/api/modules/${assignment.moduleId}`)
 	]);
 
 	const tasks = tasksPayload.tasks;
+	const scheduledTasks = scheduledTasksPayload.scheduledTasks;
 	const module = modulePayload.module;
 
 	tasks.sort((a, b) => {
@@ -208,6 +224,8 @@ async function loadAssignmentData(assignmentId) {
 	appState.module = module;
 	appState.tasks = tasks;
 	appState.taskById = new Map(tasks.map(t => [t.id, t]));
+	appState.scheduledTasks = scheduledTasks;
+	appState.scheduledTaskById = new Map(scheduledTasks.map(st => [st.id, st]));
 
 	appState.semesters = [];
 	appState.modules = [];
@@ -218,6 +236,8 @@ async function loadAssignmentData(assignmentId) {
 
 	appState.studySessions = [];
 	appState.studySessionById = new Map();
+
+	appState.selectedWeekStart = null;
 }
 
 async function loadStudySessionsData(activeSemesterId) {
@@ -249,6 +269,84 @@ async function loadStudySessionsData(activeSemesterId) {
 	appState.module = null;
 	appState.tasks = null;
 	appState.taskById = new Map();
+
+	appState.selectedWeekStart = null;
+	appState.scheduledTasks = null;
+	appState.scheduledTaskById = new Map();
+}
+
+async function loadScheduleData(activeSemesterId) {
+	const semestersPayload = await getJson("/api/semesters");
+	const semesters = semestersPayload.semesters;
+
+	semesters.sort((a, b) => a.name.localeCompare(b.name));
+	appState.semesters = semesters;
+	appState.semesterById = new Map(semesters.map(s => [s.id, s]));
+
+	if (!activeSemesterId) {
+		appState.modules = [];
+		appState.assignments = [];
+		appState.tasks = [];
+		appState.studySessions = [];
+		appState.scheduledTasks = [];
+		appState.moduleById = new Map();
+		appState.assignmentById = new Map();
+		appState.taskById = new Map();
+		appState.studySessionById = new Map();
+		appState.scheduledTaskById = new Map();
+		return;
+	}
+
+	const [modulesPayload, assignmentsPayload, tasksPayload, studySessionsPayload, scheduledTasksPayload] = await Promise.all([
+		getJson(`/api/semesters/${activeSemesterId}/modules`),
+		getJson(`/api/semesters/${activeSemesterId}/assignments`),
+		getJson(`/api/semesters/${activeSemesterId}/tasks`),
+		getJson(`/api/semesters/${activeSemesterId}/study-sessions`),
+		getJson(`/api/semesters/${activeSemesterId}/scheduled-tasks`)
+	]);
+
+	const modules = modulesPayload.modules;
+	const assignments = assignmentsPayload.assignments;
+	const tasks = tasksPayload.tasks;
+	const studySessions = studySessionsPayload.studySessions;
+	const scheduledTasks = scheduledTasksPayload.scheduledTasks;
+
+	modules.sort((a, b) => a.name.localeCompare(b.name));
+	assignments.sort((a, b) => {
+		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+		return aTime - bTime;
+	});
+	tasks.sort((a, b) => {
+		const aAssignment = appState.assignmentById.get(a.assignmentId);
+		const bAssignment = appState.assignmentById.get(b.assignmentId);
+
+		const aAssignmentTime = aAssignment?.deadline ? new Date(aAssignment.deadline).getTime() : Infinity;
+		const bAssignmentTime = bAssignment?.deadline ? new Date(bAssignment.deadline).getTime() : Infinity;
+
+		if (aAssignmentTime !== bAssignmentTime) {
+			return aAssignmentTime - bAssignmentTime;
+		}
+
+		const aTaskTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+		const bTaskTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+
+		return aTaskTime - bTaskTime;
+	});
+
+	appState.modules = modules;
+	appState.assignments = assignments;
+	appState.tasks = tasks;
+	appState.studySessions = studySessions;
+	appState.scheduledTasks = scheduledTasks;
+	appState.moduleById = new Map(modules.map(m => [m.id, m]));
+	appState.assignmentById = new Map(assignments.map(a => [a.id, a]));
+	appState.taskById = new Map(tasks.map(t => [t.id, t]));
+	appState.studySessionById = new Map(studySessions.map(ss => [ss.id, ss]));
+	appState.scheduledTaskById = new Map(scheduledTasks.map(st => [st.id, st]));
+
+	appState.assignment = null;
+	appState.module = null;
 }
 
 // Global Helpers
@@ -1420,11 +1518,17 @@ async function initAssignment() {
 
 		for (const t of appState.tasks) {
 			const overdue = t.status !== "done" && isOverdue(t.deadline);
+			let totalScheduledMinutes = 0;
+			for (const st of appState.scheduledTaskById.values()) {
+				if (st.taskId === t.id) {
+					totalScheduledMinutes += st.durationMinutes;
+				}
+			}
 
 			const li = document.createElement("li");
 			li.className = "ui-item";
 			li.dataset.taskId = t.id;
-			if (overdue) li.classList.add("ui-item--overdue");
+			if (overdue) li.classList.add("ui-item--overdue-warn");
 			if (appState.assignment.status !== "completed") {
 				li.classList.add("ui-item--draggable");
 			}
@@ -1469,6 +1573,14 @@ async function initAssignment() {
 
 			if (t.etcMinutes != null) {
 				parts.push(`ETC ${formatMinutes(t.etcMinutes)}`);
+
+				if (totalScheduledMinutes > 0) {
+					if (totalScheduledMinutes == t.etcMinutes && t.status !== "done") {
+						parts.push("scheduled");
+					} else {
+						parts.push(`${formatMinutes(totalScheduledMinutes)} sched.`);
+					}
+				}
 			}
 
 			if (t.atcMinutes != null) {
@@ -2556,6 +2668,322 @@ function initDeleteStudySessionForm() {
 	});
 }
 
+// Schedule
+async function initSchedule() {
+	if (getRouteName() !== "schedule") return;
+
+	const prevWeekBtnEl = document.getElementById("prev-week-btn");
+	const selectedWeekNameEl = document.getElementById("selected-week-name");
+	const nextWeekBtnEl = document.getElementById("next-week-btn");
+	const scheduleListEl = document.querySelector('[data-list="schedule"]');
+	const unscheduledTasksListEl = document.querySelector('[data-list="unscheduledTasks"]');
+
+	// document.addEventListener("activeSemester:changed", async () => {
+	// 	await loadSettings();
+	// 	await refreshStudySessions();
+	// });
+	// document.addEventListener("semester:created", refreshStudySessions);
+	// document.addEventListener("semester:updated", refreshStudySessions);
+	// document.addEventListener("semester:deleted", async () => {
+	// 	await loadSettings();
+	// 	await refreshStudySessions();
+	// });
+	// document.addEventListener("studySession:created", refreshStudySessions);
+	// document.addEventListener("studySession:updated", refreshStudySessions);
+	// document.addEventListener("studySession:deleted", refreshStudySessions);
+
+	// studySessionsListEl.addEventListener("click", (e) => {
+	// 	const btn = e.target.closest("button[data-study-session-id][data-action]");
+	// 	if (!btn) return;
+
+	// 	const studySessionId = Number(btn.dataset.studySessionId);
+
+	// 	if (btn.dataset.action === "edit") {
+	// 		openEditStudySessionModal(studySessionId);
+	// 	} else if (btn.dataset.action === "delete") {
+	// 		openDeleteStudySessionModal(studySessionId);
+	// 	}
+	// });
+
+	prevWeekBtnEl.addEventListener("click", () => changeWeek(-1));
+	nextWeekBtnEl.addEventListener("click", () => changeWeek(1));
+
+	await refreshSchedule();
+
+	async function refreshSchedule() {
+		await loadScheduleData(appState.activeSemesterId);
+
+		// renderScheduleList();
+		renderUnscheduledTasksList();
+		renderWeekNameAndUpdateButtons();
+	}
+
+	// function renderScheduleList() {
+	// 	if (!appState.studySessions.length) {
+	// 		renderEmptyListState(studySessionsListEl, "No study sessions yet.");
+	// 		return;
+	// 	}
+
+	// 	studySessionsListEl.innerHTML = "";
+
+	// 	const grouped = new Map();
+	// 	for (const ss of appState.studySessions) {
+	// 		if (!grouped.has(ss.dayOfWeek)) {
+	// 			grouped.set(ss.dayOfWeek, []);
+	// 		}
+	// 		grouped.get(ss.dayOfWeek).push(ss);
+	// 	}
+
+	// 	for (let day = 0; day <= 6; day++) {
+	// 		const daySessions = grouped.get(day);
+	// 		if (!daySessions) continue;
+
+	// 		daySessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+	// 		const groupDiv = document.createElement("div");
+	// 		groupDiv.className = "ss-day-group";
+
+	// 		const heading = document.createElement("h3");
+	// 		heading.className = "ss-day-label";
+	// 		heading.textContent = DAY_NAMES[day];
+
+	// 		const list = document.createElement("ul");
+	// 		list.className = "ui-list ui-list--editable";
+
+	// 		for (const ss of daySessions) {
+	// 			const li = document.createElement("li");
+	// 			li.className = "ui-item";
+
+	// 			const inner = document.createElement("div");
+	// 			inner.className = "ui-item-inner";
+
+	// 			const row = document.createElement("div");
+	// 			row.className = "ui-item-row";
+
+	// 			const title = document.createElement("div");
+	// 			title.className = "ui-item-main";
+
+	// 			const start = formatTime(ss.startTime);
+	// 			const end = getEndTime(ss.startTime, ss.durationMinutes);
+
+	// 			title.textContent = `${start} – ${end}`;
+
+	// 			row.appendChild(title);
+
+	// 			const actions = document.createElement("div");
+	// 			actions.className = "ui-item-actions";
+
+	// 			const editBtn = document.createElement("button");
+	// 			editBtn.className = "icon-btn";
+	// 			editBtn.textContent = "✎";
+	// 			editBtn.dataset.studySessionId = ss.id;
+	// 			editBtn.dataset.action = "edit";
+
+	// 			const deleteBtn = document.createElement("button");
+	// 			deleteBtn.className = "icon-btn icon-btn-danger";
+	// 			deleteBtn.textContent = "✖";
+	// 			deleteBtn.dataset.studySessionId = ss.id;
+	// 			deleteBtn.dataset.action = "delete";
+
+	// 			actions.appendChild(editBtn);
+	// 			actions.appendChild(deleteBtn);
+
+	// 			inner.appendChild(row);
+	// 			inner.appendChild(actions);
+	// 			li.appendChild(inner);
+	// 			list.appendChild(li);
+	// 		}
+
+	// 		groupDiv.appendChild(heading);
+	// 		groupDiv.appendChild(list);
+	// 		studySessionsListEl.appendChild(groupDiv);
+	// 	}
+	// }
+
+	function renderWeekNameAndUpdateButtons() {
+		const hasActiveSemesterId = !!appState.activeSemesterId;
+
+		if (!hasActiveSemesterId) {
+			selectedWeekNameEl.textContent = "No semester selected";
+			selectedWeekNameEl.classList.add("warning-text");
+			prevWeekBtnEl.classList.add("disabled");
+			nextWeekBtnEl.classList.add("disabled");
+		} else {
+			const semester = appState.semesterById.get(appState.activeSemesterId);
+			const semesterStart = new Date(semester.startDate);
+			const semesterEnd = new Date(semester.endDate);
+
+			if (!appState.selectedWeekStart) {
+				const today = new Date();
+				let currentMonday = new Date(today);
+				const jsWeekday = currentMonday.getDay();
+				currentMonday.setDate(currentMonday.getDate() - ((jsWeekday + 6) % 7));
+
+				if (currentMonday < semesterStart) {
+					currentMonday = new Date(semesterStart);
+					const startWeekday = currentMonday.getDay();
+					currentMonday.setDate(currentMonday.getDate() - ((startWeekday + 6) % 7));
+				}
+
+				if (currentMonday > semesterEnd) {
+					currentMonday = new Date(semesterEnd);
+					const endWeekday = currentMonday.getDay();
+					currentMonday.setDate(currentMonday.getDate() - ((endWeekday + 6) % 7));
+				}
+
+				appState.selectedWeekStart = currentMonday;
+			}
+
+			const selectedDate = appState.selectedWeekStart;
+
+			const mondayOfWeek = new Date(selectedDate);
+			mondayOfWeek.setDate(selectedDate.getDate() - ((selectedDate.getDay() + 6) % 7));
+			selectedWeekNameEl.textContent = `Week of ${mondayOfWeek.toLocaleDateString("en-GB", {
+				day: "numeric",
+				month: "short",
+				year: "numeric"
+			})}`;
+
+			const prevWeekStart = new Date(mondayOfWeek);
+			prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+			const prevWeekEnd = new Date(prevWeekStart);
+			prevWeekEnd.setDate(prevWeekEnd.getDate() + 6);
+
+			const nextWeekStart = new Date(mondayOfWeek);
+			nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+			const nextWeekEnd = new Date(nextWeekStart);
+			nextWeekEnd.setDate(nextWeekEnd.getDate() + 6);
+
+			prevWeekBtnEl.classList.toggle("disabled", prevWeekEnd < semesterStart);
+			nextWeekBtnEl.classList.toggle("disabled", nextWeekStart > semesterEnd);
+		}
+	}
+
+	function changeWeek(delta) {
+		const semester = appState.semesterById.get(appState.activeSemesterId);
+		const semesterStart = new Date(semester.startDate);
+		const semesterEnd = new Date(semester.endDate);
+
+		const newMonday = new Date(appState.selectedWeekStart);
+		newMonday.setDate(newMonday.getDate() + delta * 7);
+
+		const newWeekEnd = new Date(newMonday);
+		newWeekEnd.setDate(newMonday.getDate() + 6);
+
+		if (newWeekEnd < semesterStart || newMonday > semesterEnd) return;
+
+		appState.selectedWeekStart = newMonday;
+		refreshSchedule();
+	}
+
+	function renderUnscheduledTasksList() {
+		unscheduledTasksListEl.innerHTML = "";
+
+		// if (!appState.tasks.length) {
+		// 	renderEmptyListState(todoListEl, "Create a task to get started.");
+		// 	return;
+		// }
+
+		for (const t of appState.tasks) {
+			if (t.status === "done" || t.etcMinutes == null) continue;
+
+			let totalScheduledMinutes = 0;
+
+			for (const st of appState.scheduledTaskById.values()) {
+				if (st.taskId === t.id) {
+					totalScheduledMinutes += st.durationMinutes;
+				}
+			}
+
+			const remainingMinutes = t.etcMinutes - totalScheduledMinutes;
+			if (remainingMinutes == 0) continue;
+
+			const assignmentOverdue = isOverdue(appState.assignmentById.get(t.assignmentId).deadline);
+			const taskOverdue = isOverdue(t.deadline);
+
+			const li = document.createElement("li");
+			li.className = "ui-item";
+			li.dataset.taskId = t.id;
+			if (assignmentOverdue) li.classList.add("ui-item--overdue");
+			else if (taskOverdue) li.classList.add("ui-item--overdue-warn");
+			if (appState.assignmentById.get(t.assignmentId).status !== "completed") {
+				li.classList.add("ui-item--draggable");
+			}
+
+			const inner = document.createElement("div");
+			inner.className = "ui-item-inner";
+
+			const row = document.createElement("div");
+			row.className = "ui-item-row";
+
+			const dot = document.createElement("span");
+			dot.className = "ui-dot";
+			dot.style.backgroundColor = appState.moduleById.get(appState.assignmentById.get(t.assignmentId).moduleId).colour;
+
+			const title = document.createElement("div");
+			title.className = "ui-item-main";
+			title.textContent = t.name;
+
+			row.appendChild(dot);
+			row.appendChild(title);
+
+			const badge = document.createElement("span");
+			badge.className = "ui-item-status";
+			badge.textContent = t.status;
+			inner.classList.add("ui-item-inner--has-badge");
+			inner.appendChild(badge);
+
+			const content = document.createElement("div");
+			content.className = "ui-item-content";
+
+			const meta1 = document.createElement("div");
+			meta1.className = "ui-item-meta";
+			meta1.textContent = `Due: ${formatDueDate(t.deadline)}`;
+			content.appendChild(meta1);
+
+			const meta2 = document.createElement("div");
+			meta2.className = "ui-item-meta";
+
+			const parts = [];
+
+			if (t.etcMinutes != null) {
+				parts.push(`ETC ${formatMinutes(t.etcMinutes)}`);
+
+				unscheduledMinutes = t.etcMinutes - totalScheduledMinutes;
+				if (unscheduledMinutes > 0) {
+					parts.push(`${formatMinutes(unscheduledMinutes)} unsched.`);
+				}
+			}
+
+			if (t.atcMinutes != null) {
+				parts.push(`ATC ${formatMinutes(t.atcMinutes)}`);
+			}
+
+			if (parts.length) {
+				meta2.textContent = parts.join(" • ");
+				content.appendChild(meta2);
+			}
+
+			const actions = document.createElement("div");
+			actions.className = "ui-item-actions";
+
+			const assignmentBtn = document.createElement("a");
+			assignmentBtn.className = "icon-btn";
+			assignmentBtn.href = `/assignments/${t.assignmentId}`;
+			assignmentBtn.textContent = "🔗";
+
+			actions.appendChild(assignmentBtn);
+
+			inner.appendChild(row);
+			inner.appendChild(content);
+			inner.appendChild(actions);
+			li.appendChild(inner);
+
+			unscheduledTasksListEl.appendChild(li);
+		}
+	}
+}
+
 // Global Inits
 function initAuthForms() {
 	const loginForm = document.getElementById("login-form");
@@ -2682,4 +3110,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initNewStudySessionForm();
 	initEditStudySessionForm();
 	initDeleteStudySessionForm();
+
+	await initSchedule();
 });

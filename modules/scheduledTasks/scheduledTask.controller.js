@@ -16,6 +16,14 @@ async function findAllByStudySession(req, res) {
 	return res.status(200).json({ scheduledTasks });
 }
 
+async function findAllByAssignment(req, res) {
+	const assignmentId = validateRequiredInt(req.params.assignmentId, "Assignment ID", { min: 1 });
+
+	const scheduledTasks = await scheduledTaskService.findAllByAssignment(req.user.id, assignmentId);
+
+	return res.status(200).json({ scheduledTasks });
+}
+
 async function findAllBySemester(req, res) {
 	const semesterId = validateRequiredInt(req.params.semesterId, "Semester ID", { min: 1 });
 
@@ -58,4 +66,4 @@ async function remove(req, res) {
 	return res.status(204).json({ message: "Scheduled task deleted successfully." });
 }
 
-module.exports = { findAll, findAllByStudySession, findAllBySemester, createInStudySession, findById, update, remove };
+module.exports = { findAll, findAllByStudySession, findAllByAssignment, findAllBySemester, createInStudySession, findById, update, remove };

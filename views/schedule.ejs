@@ -18,29 +18,30 @@
 				<div class="ui-title">
 					<h1>My Schedule</h1>
 					<div class="ui-subline">
-						<a class="ui-link" href="#" data-modal-open="semester-modal">← Prev</a>
-						<span id="active-semester-name">Week of 10 Mar 2026</span>
-						<a class="ui-link" href="#" data-modal-open="semester-modal">Next →</a>
+						<a class="ui-link" href="#" id="prev-week-btn">← Prev</a>
+						<span id="selected-week-name"></span>
+						<a class="ui-link" href="#" id="next-week-btn">Next →</a>
 					</div>
 				</div>
 			</header>
 
-			<section class="ui-grid ui-grid--two">
+			<section class="ui-grid ui-grid--double">
 				<article class="ui-card">
 					<h2 class="ui-card-title">Schedule</h2>
 
 					<div class="ui-list" data-list="schedule"></div>
 
 					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-modal-open="new-study-session-modal">Save</button>
-						<button type="button" class="btn btn-small" data-modal-open="new-study-session-modal">Reset</button>
+						<button type="button" class="btn btn-small" data-modal-open="">Save</button>
+						<button type="button" class="btn btn-small" data-modal-open="">Reset</button>
+						<a class="btn btn-small" href="/study-sessions">Study Sessions</a>
 					</div>
 				</article>
 
 				<article class="ui-card">
 					<h2 class="ui-card-title">Unscheduled Tasks</h2>
 
-					<div class="ui-list" data-list="unscheduledTasks"></div>
+					<div class="ui-list ui-list--editable" data-list="unscheduledTasks"></div>
 
 					<div class="ui-actions">
 						<button type="button" class="btn btn-small" data-modal-open="new-study-session-modal">Auto-schedule</button>

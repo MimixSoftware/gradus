@@ -362,6 +362,7 @@ body {
 
 /* Icon Buttons */
 .icon-btn {
+	text-decoration: none;
 	border: 1px solid var(--border);
 	background: var(--surface);
 	border-radius: 8px;
@@ -610,6 +611,15 @@ input:focus {
 	opacity: 0.8;
 }
 
+.ui-link.disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	color: var(--text-muted);
+	pointer-events: none;
+	user-select: none;
+	text-decoration: none;
+}
+
 .ui-meta {
 	margin-top: 0.2rem;
 }
@@ -639,9 +649,9 @@ input:focus {
 	margin: 0 auto;
 }
 
-.ui-grid--two {
-	grid-template-columns: 70% 30%;
-	margin: 0 auto;
+.ui-grid--double {
+  grid-template-columns: 2fr 1fr;
+  margin: 0 auto;
 }
 
 .ui-card {
@@ -816,6 +826,21 @@ input:focus {
 	border-color: var(--danger-border);
 	background: var(--danger-bg);
 	color: var(--danger);
+}
+
+.ui-item--overdue-warn .ui-item-inner {
+	border: 1px solid var(--warning-border);
+	background: var(--warning-bg);
+}
+
+.ui-item--overdue-warn .ui-item-main {
+	color: var(--warning);
+}
+
+.ui-item--overdue-warn .ui-item-status {
+	border-color: var(--warning-border);
+	background: var(--warning-bg);
+	color: var(--warning);
 }
 
 .ui-item.is-dragging { opacity: 0.25; }

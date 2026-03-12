@@ -148,6 +148,24 @@ async function findAllByStudySession(userId, studySessionId) {
 	return rows.map(mapScheduledTaskRow);
 }
 
+async function findAllByAssignment(userId, assignmentId) {
+	const [rows] = await db.query(
+		`SELECT
+			st.id, st.task_id, st.study_session_id, st.session_date, st.position, st.duration_minutes,
+			st.created_at, st.updated_at
+		FROM scheduled_tasks st
+		INNER JOIN tasks t ON t.id = st.task_id
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE s.user_id = ? AND a.id = ?
+		ORDER BY st.session_date DESC, st.position ASC, st.id DESC`,
+		[userId, assignmentId]
+	);
+
+	return rows.map(mapScheduledTaskRow);
+}
+
 async function findAllBySemester(userId, semesterId) {
 	const [rows] = await db.query(
 		`SELECT
@@ -353,4 +371,4 @@ async function remove(userId, scheduledTaskId) {
 	}
 }
 
-module.exports = { findAll, findAllByStudySession, findAllBySemester, createInStudySession, findById, update, remove };
+module.exports = { findAll, findAllByStudySession, findAllByAssignment, findAllBySemester, createInStudySession, findById, update, remove };
