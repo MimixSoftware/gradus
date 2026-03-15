@@ -29,12 +29,10 @@
 				<article class="ui-card">
 					<h2 class="ui-card-title">Schedule</h2>
 
-					<div class="ui-list" data-list="schedule"></div>
+					<div class="ui-list scroll-container" data-list="schedule"></div>
 
 					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-modal-open="">Save</button>
-						<button type="button" class="btn btn-small" data-modal-open="">Reset</button>
-						<button type="button" class="btn btn-small" data-link="/study-sessions">Study Sessions</a>
+						<button type="button" class="btn btn-small" data-link="/study-sessions">Manage Study Sessions</button>
 					</div>
 				</article>
 
@@ -52,6 +50,74 @@
 	</main>
 
 	<%- include('partials/footer') %>
+
+	<!-- Schedule Task Modal -->
+	<div class="modal" id="schedule-task-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title">Schedule Task</div>
+					<div class="field-hint">Assign this task to a study session.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="schedule-task-form">
+
+				<div id="st-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+				<div class="form-row">
+					<label for="st-task-name">Task</label>
+					<input id="st-task-name" type="text" readonly />
+				</div>
+
+				<div class="form-row">
+					<label for="st-date">Date</label>
+					<input id="st-date" name="date" type="date" required />
+					<div class="field-hint">Select the day you want to study this task.</div>
+				</div>
+
+				<div class="form-row">
+					<label for="st-session">Study Session</label>
+					<select id="st-session" name="studySessionId" required>
+						<option value="" disabled selected>Select a study session…</option>
+						<!-- populated by JS -->
+					</select>
+
+					<div class="field-hint">Available study sessions for the selected day.</div>
+				</div>
+
+				<div class="form-row">
+					<label for="st-duration">Duration (minutes)</label>
+
+					<input
+						id="st-duration"
+						name="durationMinutes"
+						type="number"
+						min="15"
+						max="480"
+						step="15"
+						required
+					/>
+
+					<div class="field-hint">How much time from this session should be used for the task.</div>
+				</div>
+
+				<div class="form-row">
+					<div class="field-hint" id="st-remaining-info">Remaining task time: —</div>
+				</div>
+
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="schedule-task-form">Schedule</button>
+			</footer>
+		</div>
+	</div>
 
 	<script src="/js/main.js"></script>
 </body>

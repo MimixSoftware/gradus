@@ -38,7 +38,7 @@ async function createInStudySession(req, res) {
 
 	const scheduledTask = await scheduledTaskService.createInStudySession(req.user.id, studySessionId, validated);
 
-	return res.status(201).json({ message: "Scheduled task created successfully.", scheduledTask });
+	return res.status(201).json({ message: "Task scheduled successfully.", scheduledTask });
 }
 
 async function findById(req, res) {
@@ -63,7 +63,7 @@ async function remove(req, res) {
 
 	await scheduledTaskService.remove(req.user.id, scheduledTaskId);
 
-	return res.status(204).json({ message: "Scheduled task deleted successfully." });
+	return res.status(204).json({ message: "Task unscheduled successfully." });
 }
 
 module.exports = { findAll, findAllByStudySession, findAllByAssignment, findAllBySemester, createInStudySession, findById, update, remove };

@@ -2688,19 +2688,10 @@ async function initSchedule() {
 	const scheduleListEl = document.querySelector('[data-list="schedule"]');
 	const unscheduledTasksListEl = document.querySelector('[data-list="unscheduledTasks"]');
 
-	// document.addEventListener("activeSemester:changed", async () => {
-	// 	await loadSettings();
-	// 	await refreshStudySessions();
-	// });
-	// document.addEventListener("semester:created", refreshStudySessions);
-	// document.addEventListener("semester:updated", refreshStudySessions);
-	// document.addEventListener("semester:deleted", async () => {
-	// 	await loadSettings();
-	// 	await refreshStudySessions();
-	// });
-	// document.addEventListener("studySession:created", refreshStudySessions);
-	// document.addEventListener("studySession:updated", refreshStudySessions);
-	// document.addEventListener("studySession:deleted", refreshStudySessions);
+	document.addEventListener("selectedWeek:changed", refreshSchedule);
+	document.addEventListener("scheduledTask:created", refreshSchedule);
+	// document.addEventListener("scheduledTask:updated", refreshSchedule);
+	document.addEventListener("scheduledTask:deleted", refreshSchedule);
 
 	// studySessionsListEl.addEventListener("click", (e) => {
 	// 	const btn = e.target.closest("button[data-study-session-id][data-action]");
@@ -2723,92 +2714,231 @@ async function initSchedule() {
 	async function refreshSchedule() {
 		await loadScheduleData(appState.activeSemesterId);
 
-		// renderScheduleList();
-		renderUnscheduledTasksList();
 		renderWeekNameAndUpdateButtons();
+		renderScheduleList();
+		renderUnscheduledTasksList();
 	}
 
-	// function renderScheduleList() {
-	// 	if (!appState.studySessions.length) {
-	// 		renderEmptyListState(studySessionsListEl, "No study sessions yet.");
-	// 		return;
-	// 	}
+	function startOfDay(date) {
+		const d = new Date(date);
+		d.setHours(0, 0, 0, 0);
+		return d;
+	}
 
-	// 	studySessionsListEl.innerHTML = "";
+	function renderScheduleList() {
+		if (!appState.studySessions.length) {
+			renderEmptyListState(scheduleListEl, "No study sessions yet.");
+			return;
+		}
 
-	// 	const grouped = new Map();
-	// 	for (const ss of appState.studySessions) {
-	// 		if (!grouped.has(ss.dayOfWeek)) {
-	// 			grouped.set(ss.dayOfWeek, []);
-	// 		}
-	// 		grouped.get(ss.dayOfWeek).push(ss);
-	// 	}
+		scheduleListEl.innerHTML = "";
 
-	// 	for (let day = 0; day <= 6; day++) {
-	// 		const daySessions = grouped.get(day);
-	// 		if (!daySessions) continue;
+		const groupedSessions = new Map();
 
-	// 		daySessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
+		for (const ss of appState.studySessions) {
+			if (!groupedSessions.has(ss.dayOfWeek)) {
+				groupedSessions.set(ss.dayOfWeek, []);
+			}
+			groupedSessions.get(ss.dayOfWeek).push(ss);
+		}
 
-	// 		const groupDiv = document.createElement("div");
-	// 		groupDiv.className = "ss-day-group";
+		const scheduledTasksBySessionId = new Map();
 
-	// 		const heading = document.createElement("h3");
-	// 		heading.className = "ss-day-label";
-	// 		heading.textContent = DAY_NAMES[day];
+		for (const st of appState.scheduledTasks) {
+			if (!scheduledTasksBySessionId.has(st.studySessionId)) {
+				scheduledTasksBySessionId.set(st.studySessionId, []);
+			}
+			scheduledTasksBySessionId.get(st.studySessionId).push(st);
+		}
 
-	// 		const list = document.createElement("ul");
-	// 		list.className = "ui-list ui-list--editable";
+		const semester = appState.semesterById.get(appState.activeSemesterId);
+		const semesterStart = startOfDay(semester.startDate);
+		const semesterEnd = startOfDay(semester.endDate);
 
-	// 		for (const ss of daySessions) {
-	// 			const li = document.createElement("li");
-	// 			li.className = "ui-item";
+		const board = document.createElement("div");
+		board.className = "schedule-board";
 
-	// 			const inner = document.createElement("div");
-	// 			inner.className = "ui-item-inner";
+		const weekStart = new Date(appState.selectedWeekStart);
 
-	// 			const row = document.createElement("div");
-	// 			row.className = "ui-item-row";
+		for (let day = 0; day <= 6; day++) {
+			const dayDate = new Date(weekStart);
+			dayDate.setDate(weekStart.getDate() + day);
 
-	// 			const title = document.createElement("div");
-	// 			title.className = "ui-item-main";
+			const dayDateOnly = startOfDay(dayDate);
 
-	// 			const start = formatTime(ss.startTime);
-	// 			const end = getEndTime(ss.startTime, ss.durationMinutes);
+			if (dayDateOnly < semesterStart || dayDateOnly > semesterEnd) {
+				continue;
+			}
 
-	// 			title.textContent = `${start} – ${end}`;
+			const daySessions = groupedSessions.get(day);
+			if (!daySessions || !daySessions.length) continue;
 
-	// 			row.appendChild(title);
+			daySessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-	// 			const actions = document.createElement("div");
-	// 			actions.className = "ui-item-actions";
+			const dayColumn = document.createElement("div");
+			dayColumn.className = "schedule-day-column";
 
-	// 			const editBtn = document.createElement("button");
-	// 			editBtn.className = "icon-btn";
-	// 			editBtn.textContent = "✎";
-	// 			editBtn.dataset.studySessionId = ss.id;
-	// 			editBtn.dataset.action = "edit";
+			const dayHeading = document.createElement("h3");
+			dayHeading.className = "schedule-day-label";
+			dayHeading.textContent = `${DAY_NAMES[day]} ${dayDate.toLocaleDateString("en-GB", {
+				day: "numeric",
+				month: "short"
+			})}`;
 
-	// 			const deleteBtn = document.createElement("button");
-	// 			deleteBtn.className = "icon-btn icon-btn-danger";
-	// 			deleteBtn.textContent = "✖";
-	// 			deleteBtn.dataset.studySessionId = ss.id;
-	// 			deleteBtn.dataset.action = "delete";
+			dayColumn.appendChild(dayHeading);
 
-	// 			actions.appendChild(editBtn);
-	// 			actions.appendChild(deleteBtn);
+			for (const ss of daySessions) {
+				const sessionWrap = document.createElement("div");
+				sessionWrap.className = "schedule-session";
 
-	// 			inner.appendChild(row);
-	// 			inner.appendChild(actions);
-	// 			li.appendChild(inner);
-	// 			list.appendChild(li);
-	// 		}
+				const sessionHeading = document.createElement("div");
+				sessionHeading.className = "schedule-session-label";
 
-	// 		groupDiv.appendChild(heading);
-	// 		groupDiv.appendChild(list);
-	// 		studySessionsListEl.appendChild(groupDiv);
-	// 	}
-	// }
+				const start = formatTime(ss.startTime);
+				const end = getEndTime(ss.startTime, ss.durationMinutes);
+				sessionHeading.textContent = `${start} – ${end}`;
+
+				const sessionList = document.createElement("ul");
+				sessionList.className = "ui-list ui-list--editable";
+				sessionList.innerHTML = "";
+
+				const sessionDate = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
+
+				const sessionScheduledTasks = (scheduledTasksBySessionId.get(ss.id) || [])
+					.filter((st) => st.sessionDate === sessionDate)
+					.sort((a, b) => a.position - b.position);
+
+				if (!sessionScheduledTasks.length) {
+					renderEmptyListState(sessionList, "No tasks scheduled");
+				} else {
+					for (const scheduledTask of sessionScheduledTasks) {
+						const task =
+							appState.taskById?.get(scheduledTask.taskId) ||
+							appState.tasks.find((t) => t.id === scheduledTask.taskId);
+
+						if (!task) continue;
+
+						const li = createScheduleTaskItem(task, scheduledTask, sessionScheduledTasks, ss.startTime);
+						sessionList.appendChild(li);
+					}
+				}
+
+				sessionWrap.appendChild(sessionHeading);
+				sessionWrap.appendChild(sessionList);
+				dayColumn.appendChild(sessionWrap);
+			}
+
+			board.appendChild(dayColumn);
+		}
+
+		scheduleListEl.appendChild(board);
+	}
+
+	function createScheduleTaskItem(task, scheduledTask, sessionScheduledTasks, sessionStartTime) {
+		const li = document.createElement("li");
+		li.className = "ui-item schedule-task-item";
+
+		const assignment = appState.assignmentById.get(task.assignmentId);
+		const module = assignment ? appState.moduleById.get(assignment.moduleId) : null;
+
+		const assignmentOverdue = isOverdue(assignment.deadline);
+		const taskOverdue = isOverdue(task.deadline);
+
+		if (taskOverdue) li.classList.add("ui-item--overdue-warn");
+		if (task.status !== "done") {
+			li.classList.add("ui-item--draggable");
+		}
+
+		let offsetMinutes = 0;
+
+		for (const st of sessionScheduledTasks) {
+			if (st.position >= scheduledTask.position) break;
+			offsetMinutes += st.durationMinutes;
+		}
+
+		const taskStart = addMinutesToTime(sessionStartTime, offsetMinutes);
+		const taskEnd = addMinutesToTime(taskStart, scheduledTask.durationMinutes);
+
+		const inner = document.createElement("div");
+		inner.className = "ui-item-inner";
+
+		const time = document.createElement("div");
+		time.className = "schedule-task-time";
+		time.textContent = `${formatTime(taskStart)} – ${formatTime(taskEnd)}`;
+
+		const row = document.createElement("div");
+		row.className = "ui-item-row";
+
+		const dot = document.createElement("span");
+		dot.className = "ui-dot";
+		if (module?.colour) {
+			dot.style.backgroundColor = module.colour;
+		}
+
+		const title = document.createElement("div");
+		title.className = "ui-item-main";
+		title.textContent = task.name;
+
+		row.appendChild(dot);
+		row.appendChild(title);
+
+		const assignmentMeta = document.createElement("div");
+		assignmentMeta.className = "ui-item-meta ui-item-meta--assignment";
+		assignmentMeta.textContent = assignment?.name || "Unknown assignment";
+		assignmentMeta.classList.toggle("danger-text", assignmentOverdue);
+
+		const meta = document.createElement("div");
+		meta.className = "ui-item-meta";
+
+		const parts = [];
+		parts.push(`${scheduledTask.durationMinutes} min`);
+		if (assignmentOverdue) parts.push("Assignment overdue");
+		else if (taskOverdue) parts.push("Task overdue");
+		meta.textContent = parts.join(" • ");
+
+		const actions = document.createElement("div");
+		actions.className = "ui-item-actions";
+
+		const unscheduleBtn = document.createElement("button");
+		unscheduleBtn.className = "icon-btn";
+		unscheduleBtn.textContent = "✖";
+		unscheduleBtn.title = "Unschedule task";
+		unscheduleBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			unscheduleTask(scheduledTask.id);
+		});
+
+		const assignmentBtn = document.createElement("button");
+		assignmentBtn.className = "icon-btn";
+		assignmentBtn.textContent = "🔗";
+		assignmentBtn.title = "Open assignment";
+		assignmentBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			window.location.href = `/assignments/${task.assignmentId}`;
+		});
+
+		actions.appendChild(unscheduleBtn);
+		actions.appendChild(assignmentBtn);
+
+		inner.appendChild(time);
+		inner.appendChild(row);
+		inner.appendChild(assignmentMeta);
+		inner.appendChild(meta);
+		inner.appendChild(actions);
+		li.appendChild(inner);
+
+		return li;
+	}
+
+	function addMinutesToTime(timeString, minutesToAdd) {
+		const [hours, minutes] = timeString.split(":").map(Number);
+		const totalMinutes = (hours * 60) + minutes + minutesToAdd;
+
+		const newHours = Math.floor(totalMinutes / 60);
+		const newMinutes = totalMinutes % 60;
+
+		return `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
+	}
 
 	function renderWeekNameAndUpdateButtons() {
 		const hasActiveSemesterId = !!appState.activeSemesterId;
@@ -2883,16 +3013,13 @@ async function initSchedule() {
 		if (newWeekEnd < semesterStart || newMonday > semesterEnd) return;
 
 		appState.selectedWeekStart = newMonday;
-		refreshSchedule();
+		document.dispatchEvent(new CustomEvent("selectedWeek:changed"));
 	}
 
 	function renderUnscheduledTasksList() {
 		unscheduledTasksListEl.innerHTML = "";
 
-		// if (!appState.tasks.length) {
-		// 	renderEmptyListState(todoListEl, "Create a task to get started.");
-		// 	return;
-		// }
+		let hasRenderableTasks = false;
 
 		for (const t of appState.tasks) {
 			if (t.status === "done" || t.etcMinutes == null) continue;
@@ -2945,21 +3072,21 @@ async function initSchedule() {
 			const content = document.createElement("div");
 			content.className = "ui-item-content";
 			
-			const meta0 = document.createElement("div");
-			meta0.className = "ui-item-meta";
-			meta0.textContent = appState.assignmentById.get(t.assignmentId).name;
-			meta0.classList.toggle("danger-text", assignmentOverdue);
-			content.appendChild(meta0);
+			const meta1 = document.createElement("div");
+			meta1.className = "ui-item-meta";
+			meta1.textContent = appState.assignmentById.get(t.assignmentId).name;
+			meta1.classList.toggle("danger-text", assignmentOverdue);
+			content.appendChild(meta1);
 
 			if (t.deadline) {
-				const meta1 = document.createElement("div");
-				meta1.className = "ui-item-meta";
-				meta1.textContent = `Due: ${formatDueDate(t.deadline)}`;
-				content.appendChild(meta1);
+				const meta2 = document.createElement("div");
+				meta2.className = "ui-item-meta";
+				meta2.textContent = `Due: ${formatDueDate(t.deadline)}`;
+				content.appendChild(meta2);
 			}
 
-			const meta2 = document.createElement("div");
-			meta2.className = "ui-item-meta";
+			const meta3 = document.createElement("div");
+			meta3.className = "ui-item-meta";
 
 			const parts = [];
 
@@ -2980,12 +3107,20 @@ async function initSchedule() {
 			else if (taskOverdue) parts.push("Task overdue");
 
 			if (parts.length) {
-				meta2.textContent = parts.join(" • ");
-				content.appendChild(meta2);
+				meta3.textContent = parts.join(" • ");
+				content.appendChild(meta3);
 			}
 
 			const actions = document.createElement("div");
 			actions.className = "ui-item-actions";
+
+			const scheduleBtn = document.createElement("button");
+			scheduleBtn.className = "icon-btn";
+			scheduleBtn.textContent = "🗓";
+			scheduleBtn.title = "Schedule task";
+			scheduleBtn.addEventListener("click", () => {
+				openScheduleTaskModal(t);
+			});
 
 			const assignmentBtn = document.createElement("button");
 			assignmentBtn.className = "icon-btn";
@@ -2995,6 +3130,7 @@ async function initSchedule() {
 				window.location.href = `/assignments/${t.assignmentId}`;
 			});
 
+			actions.appendChild(scheduleBtn);
 			actions.appendChild(assignmentBtn);
 
 			inner.appendChild(row);
@@ -3002,9 +3138,303 @@ async function initSchedule() {
 			inner.appendChild(actions);
 			li.appendChild(inner);
 
+			hasRenderableTasks = true;
 			unscheduledTasksListEl.appendChild(li);
 		}
+
+		if (!hasRenderableTasks) {
+			renderEmptyListState(unscheduledTasksListEl, "No suitable tasks. An active task needs an ETC to be schedulable.");
+		}
 	}
+
+	function getTaskRemainingMinutes(taskId) {
+		const task = appState.taskById.get(taskId);
+		if (!task || task.etcMinutes == null) return 0;
+
+		let totalScheduledMinutes = 0;
+
+		for (const st of appState.scheduledTaskById.values()) {
+			if (st.taskId === taskId) {
+				totalScheduledMinutes += st.durationMinutes;
+			}
+		}
+
+		return Math.max(0, task.etcMinutes - totalScheduledMinutes);
+	}
+
+	function openScheduleTaskModal(task) {
+		const form = document.getElementById("schedule-task-form");
+		const modal = document.getElementById("schedule-task-modal");
+		if (!form || !modal) return;
+
+		const errorEl = document.getElementById("st-error");
+		setAlert(errorEl, "");
+
+		const remainingMinutes = getTaskRemainingMinutes(task.id);
+		if (remainingMinutes <= 0) {
+			showToast("This task has no unscheduled time remaining.", { type: "error" });
+			return;
+		}
+
+		form.dataset.taskId = task.id;
+		form.dataset.remainingMinutes = remainingMinutes;
+
+		form.querySelector("#st-task-name").value = task.name ?? "";
+
+		const dateInput = form.querySelector("#st-date");
+		const today = new Date();
+		const todayStr = today.toISOString().split("T")[0];
+		dateInput.value = todayStr;
+
+		const durationInput = form.querySelector("#st-duration");
+		durationInput.value = remainingMinutes;
+		durationInput.max = String(remainingMinutes);
+
+		populateScheduleStudySessionsSelect(dateInput.value);
+		updateScheduleDurationState();
+
+		modal.classList.add("is-open");
+		document.body.classList.add("modal-open");
+	}
+
+	async function unscheduleTask(scheduledTaskId) {
+		try {
+			await deleteJson(`/api/scheduled-tasks/${scheduledTaskId}`);
+
+			document.dispatchEvent(new CustomEvent("scheduledTask:deleted"));
+			showToast("Task unscheduled successfully.");
+		} catch (err) {
+			showToast(err.message, { type: "error" });
+		}
+	}
+}
+
+function isDateWithinActiveSemester(dateStr) {
+	if (!dateStr) return false;
+	if (appState.activeSemesterId == null) return false;
+
+	const semester = appState.semesterById.get(appState.activeSemesterId);
+	if (!semester) return false;
+
+	const selected = new Date(dateStr);
+	const start = new Date(semester.startDate);
+	const end = new Date(semester.endDate);
+
+	selected.setHours(0, 0, 0, 0);
+	start.setHours(0, 0, 0, 0);
+	end.setHours(0, 0, 0, 0);
+
+	return selected >= start && selected <= end;
+}
+
+function formatStudySessionOption(ss) {
+	const start = formatTime(ss.startTime);
+	const end = getEndTime(ss.startTime, ss.durationMinutes);
+	return `${start}–${end}`;
+}
+
+function getAppDayOfWeek(dateStr) {
+	const [y, m, d] = dateStr.split("-").map(Number);
+	const jsDay = new Date(y, m - 1, d).getDay();
+	return (jsDay + 6) % 7;
+}
+
+function getScheduledMinutesForSessionOnDate(studySessionId, dateStr) {
+	let total = 0;
+
+	for (const st of appState.scheduledTaskById.values()) {
+		if (st.studySessionId === studySessionId && st.sessionDate === dateStr) {
+			total += st.durationMinutes;
+		}
+	}
+
+	return total;
+}
+
+function getRemainingMinutesForSessionOnDate(studySessionId, dateStr) {
+	const ss = appState.studySessionById.get(studySessionId);
+	if (!ss) return 0;
+
+	let scheduled = 0;
+
+	for (const st of appState.scheduledTaskById.values()) {
+		if (st.studySessionId === studySessionId && st.sessionDate === dateStr) {
+			scheduled += st.durationMinutes;
+		}
+	}
+
+	return ss.durationMinutes - scheduled;
+}
+
+function populateScheduleStudySessionsSelect(dateStr) {
+	const form = document.getElementById("schedule-task-form");
+	if (!form) return;
+
+	const sessionSelect = form.querySelector("#st-session");
+	if (!sessionSelect) return;
+
+	const placeholder = sessionSelect.querySelector('option[value=""]');
+	sessionSelect.innerHTML = "";
+
+	if (placeholder) {
+		placeholder.textContent = "Select a study session…";
+		sessionSelect.appendChild(placeholder);
+	}
+	else {
+		const opt = document.createElement("option");
+		opt.value = "";
+		opt.disabled = true;
+		opt.selected = true;
+		opt.textContent = "Select a study session…";
+		sessionSelect.appendChild(opt);
+	}
+
+	if (!isDateWithinActiveSemester(dateStr)) {
+		sessionSelect.value = "";
+		return;
+	}
+
+	const dayOfWeek = getAppDayOfWeek(dateStr);
+
+	const sessions = appState.studySessions
+		.filter((ss) => ss.dayOfWeek === dayOfWeek)
+		.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+	let hasAvailableSession = false;
+
+	for (const ss of sessions) {
+		const option = document.createElement("option");
+		option.value = String(ss.id);
+
+		const scheduledMinutes = getScheduledMinutesForSessionOnDate(ss.id, dateStr);
+		const remainingMinutes = ss.durationMinutes - scheduledMinutes;
+		const isFull = remainingMinutes <= 0;
+
+		option.textContent = isFull
+			? `${formatStudySessionOption(ss)} (Full)`
+			: `${formatStudySessionOption(ss)} (${formatMinutes(remainingMinutes)} free)`;
+		option.disabled = isFull;
+
+		if (!isFull) {
+			hasAvailableSession = true;
+		}
+
+		sessionSelect.appendChild(option);
+	}
+
+	if (!sessions.length) {
+		sessionSelect.firstElementChild.textContent = "No study sessions available";
+	}
+	else if (!hasAvailableSession) {
+		sessionSelect.firstElementChild.textContent = "No available study sessions";
+	}
+
+	sessionSelect.value = "";
+}
+
+function updateScheduleDurationState() {
+	const form = document.getElementById("schedule-task-form");
+	if (!form) return;
+
+	const durationInput = form.querySelector("#st-duration");
+	const sessionSelect = form.querySelector("#st-session");
+	const dateInput = form.querySelector("#st-date");
+	const infoEl = document.getElementById("st-remaining-info");
+
+	if (!durationInput || !infoEl || !sessionSelect || !dateInput) return;
+
+	const taskRemaining = Number(form.dataset.remainingMinutes || 0);
+
+	let sessionRemaining = Infinity;
+
+	const sessionId = Number(sessionSelect.value);
+	const dateStr = dateInput.value;
+
+	if (sessionId && dateStr) {
+		sessionRemaining = getRemainingMinutesForSessionOnDate(sessionId, dateStr);
+	}
+
+	const maxDuration = Math.min(taskRemaining, sessionRemaining);
+
+	durationInput.max = String(maxDuration);
+
+	let duration = Number(durationInput.value) || 0;
+
+	if (duration > maxDuration) {
+		duration = maxDuration;
+		durationInput.value = String(maxDuration);
+	}
+
+	const remainingAfter = taskRemaining - duration;
+
+	infoEl.textContent = `Remaining after scheduling: ${remainingAfter} minutes`;
+}
+
+function initScheduleTaskForm() {
+	const form = document.getElementById("schedule-task-form");
+	if (!form) return;
+
+	const dateInput = form.querySelector("#st-date");
+	const durationInput = form.querySelector("#st-duration");
+	const sessionSelect = form.querySelector("#st-session");
+
+	const semester = appState.semesterById.get(appState.activeSemesterId);
+
+	dateInput.min =semester.startDate;
+	dateInput.max = semester.endDate;
+
+	dateInput.onchange = () => {
+		populateScheduleStudySessionsSelect(dateInput.value);
+	};
+
+	durationInput.oninput = () => {
+		updateScheduleDurationState();
+	};
+
+	sessionSelect.onchange = () => {
+		updateScheduleDurationState();
+	};
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("st-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+		const studySessionId = Number(formData.get("studySessionId"));
+
+		const payload = {
+			taskId: Number(form.dataset.taskId),
+			sessionDate: formData.get("date"),
+			durationMinutes: Number(formData.get("durationMinutes"))
+		};
+
+		try {
+			const res = await postJson(
+				`/api/study-sessions/${studySessionId}/scheduled-tasks`,
+				payload
+			);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+			delete form.dataset.taskId;
+			delete form.dataset.remainingMinutes;
+
+			document.dispatchEvent(new CustomEvent("scheduledTask:created"));
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
 }
 
 // Global Inits
@@ -3144,4 +3574,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initDeleteStudySessionForm();
 
 	await initSchedule();
+	initScheduleTaskForm();
 });
