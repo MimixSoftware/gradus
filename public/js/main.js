@@ -2693,19 +2693,6 @@ async function initSchedule() {
 	document.addEventListener("scheduledTask:updated", refreshSchedule);
 	document.addEventListener("scheduledTask:deleted", refreshSchedule);
 
-	// studySessionsListEl.addEventListener("click", (e) => {
-	// 	const btn = e.target.closest("button[data-study-session-id][data-action]");
-	// 	if (!btn) return;
-
-	// 	const studySessionId = Number(btn.dataset.studySessionId);
-
-	// 	if (btn.dataset.action === "edit") {
-	// 		openEditStudySessionModal(studySessionId);
-	// 	} else if (btn.dataset.action === "delete") {
-	// 		openDeleteStudySessionModal(studySessionId);
-	// 	}
-	// });
-
 	prevWeekBtnEl.addEventListener("click", () => changeWeek(-1));
 	nextWeekBtnEl.addEventListener("click", () => changeWeek(1));
 
@@ -3444,19 +3431,19 @@ function initAuthForms() {
 		const errorEl = document.getElementById("auth-error");
 
 		loginForm.addEventListener("submit", async (e) => {
-		e.preventDefault();
-		setAlert(errorEl, "");
+			e.preventDefault();
+			setAlert(errorEl, "");
 
-		const formData = new FormData(loginForm);
-		const email = formData.get("email");
-		const password = formData.get("password");
-		try {
-			await postJson("/api/auth/login", { email, password });
-			window.location.href = "/dashboard";
-		} catch (err) {
-			setAlert(errorEl, err.message);
-		}
-	});
+			const formData = new FormData(loginForm);
+			const email = formData.get("email");
+			const password = formData.get("password");
+			try {
+				await postJson("/api/auth/login", { email, password });
+				window.location.href = "/dashboard";
+			} catch (err) {
+				setAlert(errorEl, err.message);
+			}
+		});
 	}
 
 	const registerForm = document.getElementById("register-form");
