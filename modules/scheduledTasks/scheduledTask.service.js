@@ -195,39 +195,55 @@ async function createInStudySession(userId, studySessionId, { taskId, sessionDat
 		LIMIT 1`,
 		[taskId, userId]
 	);
-	
+
 	if (!taskRow) {
 		throw new AppError("Task not found.", 404);
 	}
 
 	await etcOverflowCheckScheduledTask(userId, taskId, durationMinutes);
-
 	await spilloverCheckScheduledTask(studySessionId, sessionDate, durationMinutes);
 
-	const [[maxPosRow]] = await db.query(`
-		SELECT MAX(position) AS maxPos
-		FROM scheduled_tasks
-		WHERE study_session_id = ? AND session_date = ?`,
-		[studySessionId, sessionDate]
-	);
-	const insertPosition = position != null ? position : (maxPosRow.maxPos != null ? maxPosRow.maxPos + 1 : 0);
-
 	const connection = await db.getConnection();
+
 	try {
 		await connection.beginTransaction();
+
+		const [[countRow]] = await connection.query(`
+			SELECT COUNT(*) AS count
+			FROM scheduled_tasks
+			WHERE study_session_id = ? AND session_date = ?`,
+			[studySessionId, sessionDate]
+		);
+
+		let insertPosition = position != null ? position : countRow.count;
+		insertPosition = Math.max(0, Math.min(insertPosition, countRow.count));
+
+		const TEMP_OFFSET = 1000000;
+
 		if (position != null) {
 			await connection.query(`
 				UPDATE scheduled_tasks
-				SET position = position + 1
-				WHERE study_session_id = ? AND session_date = ? AND position >= ?`, 
-				[studySessionId, sessionDate, position]
+				SET position = position + ?
+				WHERE study_session_id = ?
+				  AND session_date = ?
+				  AND position >= ?`,
+				[TEMP_OFFSET, studySessionId, sessionDate, insertPosition]
+			);
+
+			await connection.query(`
+				UPDATE scheduled_tasks
+				SET position = position - ? + 1
+				WHERE study_session_id = ?
+				  AND session_date = ?
+				  AND position >= ?`,
+				[TEMP_OFFSET, studySessionId, sessionDate, TEMP_OFFSET]
 			);
 		}
 
 		const [result] = await connection.query(`
 			INSERT INTO scheduled_tasks
-			(task_id, study_session_id, session_date, position, duration_minutes)
-			VALUES (?, ?, ?, ?, ?)`, 
+				(task_id, study_session_id, session_date, position, duration_minutes)
+			VALUES (?, ?, ?, ?, ?)`,
 			[taskId, studySessionId, sessionDate, insertPosition, durationMinutes]
 		);
 
@@ -236,6 +252,7 @@ async function createInStudySession(userId, studySessionId, { taskId, sessionDat
 
 	} catch (err) {
 		await connection.rollback();
+
 		if (err.code === "ER_DUP_ENTRY") {
 			if (err.sqlMessage.includes("uq_scheduled_tasks_unique_slot")) {
 				throw new AppError("Another task already occupies this position in the session.", 409);
@@ -243,7 +260,10 @@ async function createInStudySession(userId, studySessionId, { taskId, sessionDat
 				throw new AppError("This task is already scheduled in this session on this date.", 409);
 			}
 		}
+
 		throw err;
+	} finally {
+		connection.release();
 	}
 }
 
@@ -270,7 +290,7 @@ async function findById(userId, scheduledTaskId) {
 async function update(userId, scheduledTaskId, updates) {
 	const current = await findById(userId, scheduledTaskId);
 
-	const nextPosition = updates.position ?? current.position;
+	let nextPosition = updates.position ?? current.position;
 	const nextDuration = updates.durationMinutes ?? current.durationMinutes;
 
 	const [[sessionRow]] = await db.query(`
@@ -285,7 +305,9 @@ async function update(userId, scheduledTaskId, updates) {
 		throw new AppError("Study session not found.", 404);
 	}
 
-	await etcOverflowCheckScheduledTask(userId, current.taskId, nextDuration, { excludeScheduledTaskId: scheduledTaskId });
+	await etcOverflowCheckScheduledTask(userId, current.taskId, nextDuration, {
+		excludeScheduledTaskId: scheduledTaskId
+	});
 
 	await spilloverCheckScheduledTask(
 		current.studySessionId,
@@ -295,27 +317,51 @@ async function update(userId, scheduledTaskId, updates) {
 	);
 
 	const connection = await db.getConnection();
+
 	try {
 		await connection.beginTransaction();
+
+		const [[countRow]] = await connection.query(`
+			SELECT COUNT(*) AS count
+			FROM scheduled_tasks
+			WHERE study_session_id = ? AND session_date = ? AND id <> ?`,
+			[current.studySessionId, current.sessionDate, scheduledTaskId]
+		);
+
+		nextPosition = Math.max(0, Math.min(nextPosition, countRow.count));
+
 		if (current.position !== nextPosition) {
+			await connection.query(`
+				UPDATE scheduled_tasks
+				SET position = 1000000
+				WHERE id = ?`,
+				[scheduledTaskId]
+			);
+
 			if (nextPosition < current.position) {
 				await connection.query(`
 					UPDATE scheduled_tasks
 					SET position = position + 1
-					WHERE study_session_id = ? AND session_date = ? AND position >= ? AND position < ?`,
+					WHERE study_session_id = ?
+					  AND session_date = ?
+					  AND position >= ?
+					  AND position < ?`,
 					[current.studySessionId, current.sessionDate, nextPosition, current.position]
 				);
 			} else {
 				await connection.query(`
 					UPDATE scheduled_tasks
 					SET position = position - 1
-					WHERE study_session_id = ? AND session_date = ? AND position > ? AND position <= ?`,
+					WHERE study_session_id = ?
+					  AND session_date = ?
+					  AND position > ?
+					  AND position <= ?`,
 					[current.studySessionId, current.sessionDate, current.position, nextPosition]
 				);
 			}
 		}
 
-		const [result] = await connection.query(`
+		await connection.query(`
 			UPDATE scheduled_tasks
 			SET position = ?, duration_minutes = ?
 			WHERE id = ?`,
@@ -327,14 +373,19 @@ async function update(userId, scheduledTaskId, updates) {
 		return await findById(userId, scheduledTaskId);
 	} catch (err) {
 		await connection.rollback();
+
 		if (err.code === "ER_DUP_ENTRY") {
 			if (err.sqlMessage.includes("uq_scheduled_tasks_unique_slot")) {
 				throw new AppError("Another task already occupies this position in the session.", 409);
-			} else if (err.sqlMessage.includes("uq_scheduled_tasks_unique_task_per_session")) {
+			}
+			if (err.sqlMessage.includes("uq_scheduled_tasks_unique_task_per_session")) {
 				throw new AppError("This task is already scheduled in this session on this date.", 409);
 			}
 		}
+
 		throw err;
+	} finally {
+		connection.release();
 	}
 }
 

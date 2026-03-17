@@ -2690,7 +2690,7 @@ async function initSchedule() {
 
 	document.addEventListener("selectedWeek:changed", refreshSchedule);
 	document.addEventListener("scheduledTask:created", refreshSchedule);
-	// document.addEventListener("scheduledTask:updated", refreshSchedule);
+	document.addEventListener("scheduledTask:updated", refreshSchedule);
 	document.addEventListener("scheduledTask:deleted", refreshSchedule);
 
 	// studySessionsListEl.addEventListener("click", (e) => {
@@ -3531,10 +3531,10 @@ function initLogoutLink() {
 
 function initLinkButtons() {
 	document.querySelectorAll('[data-link]').forEach(btn => {
-	btn.addEventListener('click', () => {
-		window.location.href = btn.dataset.link;
+		btn.addEventListener('click', () => {
+			window.location.href = btn.dataset.link;
+		});
 	});
-});
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

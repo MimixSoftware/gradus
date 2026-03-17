@@ -22,7 +22,7 @@ function validateUpdateInput({ position, durationMinutes } = {}) {
 	const updates = {};
 
 	if (hasPosition) {
-		updates.position = v.validateOptionalInt(startMinute, "Position", { min: 0 });
+		updates.position = v.validateOptionalInt(position, "Position", { min: 0 });
 	}
 	if (hasDurationMinutes) {
 		updates.durationMinutes = v.validateRequiredInt(durationMinutes, "Duration", { min: 15, max: 240, step: 15 });
