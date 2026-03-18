@@ -119,6 +119,51 @@
 		</div>
 	</div>
 
+	<!-- Schedule Duration Modal -->
+	<div class="modal" id="schedule-duration-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title">Schedule Task</div>
+					<div class="field-hint">How much of the task to schedule for this study session?</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="schedule-duration-form">
+				<input type="hidden" id="sd-id" name="id" />
+
+				<div class="form-row">
+					<label for="sd-duration">Duration (minutes)</label>
+
+					<input
+						id="sd-duration"
+						name="durationMinutes"
+						type="number"
+						min="15"
+						max="480"
+						step="15"
+						required
+					/>
+
+					<div class="field-hint">How much time from this session should be used for the task.</div>
+				</div>
+
+				<div class="form-row">
+					<div class="field-hint" id="sd-remaining-info">Remaining task time: —</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="schedule-duration-form">Schedule</button>
+			</footer>
+		</div>
+	</div>
+
 	<script src="/js/main.js"></script>
 </body>
 </html>

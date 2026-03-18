@@ -2795,6 +2795,14 @@ async function initSchedule() {
 					.filter((st) => st.sessionDate === sessionDate)
 					.sort((a, b) => a.position - b.position);
 
+				const usedMinutes = sessionScheduledTasks.reduce((sum, st) => sum + st.durationMinutes, 0);
+				const freeMinutes = Math.max(0, ss.durationMinutes - usedMinutes);
+
+				sessionList.dataset.studySessionId = ss.id;
+				sessionList.dataset.sessionDate = sessionDate;
+				sessionList.dataset.sessionDurationMinutes = ss.durationMinutes;
+				sessionList.dataset.freeMinutes = freeMinutes;
+
 				if (!sessionScheduledTasks.length) {
 					renderEmptyListState(sessionList, "No tasks scheduled");
 				} else {
@@ -2878,7 +2886,7 @@ async function initSchedule() {
 		meta.className = "ui-item-meta";
 
 		const parts = [];
-		parts.push(`${scheduledTask.durationMinutes} min`);
+		parts.push(formatMinutes(scheduledTask.durationMinutes));
 		if (assignmentOverdue) parts.push("Assignment overdue");
 		else if (taskOverdue) parts.push("Task overdue");
 		meta.textContent = parts.join(" • ");
@@ -3134,21 +3142,6 @@ async function initSchedule() {
 		}
 	}
 
-	function getTaskRemainingMinutes(taskId) {
-		const task = appState.taskById.get(taskId);
-		if (!task || task.etcMinutes == null) return 0;
-
-		let totalScheduledMinutes = 0;
-
-		for (const st of appState.scheduledTaskById.values()) {
-			if (st.taskId === taskId) {
-				totalScheduledMinutes += st.durationMinutes;
-			}
-		}
-
-		return Math.max(0, task.etcMinutes - totalScheduledMinutes);
-	}
-
 	function openScheduleTaskModal(task) {
 		const form = document.getElementById("schedule-task-form");
 		const modal = document.getElementById("schedule-task-modal");
@@ -3251,6 +3244,21 @@ function getRemainingMinutesForSessionOnDate(studySessionId, dateStr) {
 	}
 
 	return ss.durationMinutes - scheduled;
+}
+
+function getTaskRemainingMinutes(taskId) {
+	const task = appState.taskById.get(taskId);
+	if (!task || task.etcMinutes == null) return 0;
+
+	let totalScheduledMinutes = 0;
+
+	for (const st of appState.scheduledTaskById.values()) {
+		if (st.taskId === taskId) {
+			totalScheduledMinutes += st.durationMinutes;
+		}
+	}
+
+	return Math.max(0, task.etcMinutes - totalScheduledMinutes);
 }
 
 function populateScheduleStudySessionsSelect(dateStr) {
@@ -3424,6 +3432,373 @@ function initScheduleTaskForm() {
 	});
 }
 
+function openScheduleDurationModal(task) {
+	const modal = document.getElementById("schedule-duration-modal");
+	const form = document.getElementById("schedule-duration-form");
+
+	const idEl = document.getElementById("sd-id");
+	const durationEl = document.getElementById("sd-duration");
+	const infoEl = document.getElementById("sd-remaining-info");
+
+	if (!modal || !form || !idEl || !durationEl || !infoEl) {
+		return Promise.resolve(null);
+	}
+
+	const remainingMinutes = getTaskRemainingMinutes(task.id);
+	if (remainingMinutes <= 0) {
+		showToast("This task has no unscheduled time remaining.", { type: "error" });
+		return Promise.resolve(null);
+	}
+
+	idEl.value = task.id;
+	form.dataset.remainingMinutes = remainingMinutes;
+
+	durationEl.value = remainingMinutes;
+	durationEl.max = String(remainingMinutes);
+
+	updateScheduleDurationModalState();
+
+	modal.classList.add("is-open");
+	document.body.classList.add("modal-open");
+
+	durationEl.focus();
+
+	return new Promise((resolve) => {
+		const close = (result) => {
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.removeEventListener("submit", onSubmit);
+			modal.removeEventListener("click", onCancel);
+			durationEl.removeEventListener("input", onInput);
+
+			resolve(result);
+		};
+
+		const onSubmit = (e) => {
+			e.preventDefault();
+
+			const val = durationEl.value.trim();
+			if (!val) {
+				close(null);
+				return;
+			}
+
+			const n = Number(val);
+			close(n);
+		};
+
+		const onCancel = (e) => {
+			if (!e.target.closest("[data-modal-close]")) return;
+			close(null);
+		};
+
+		const onInput = () => {
+			updateScheduleDurationModalState();
+		};
+
+		form.addEventListener("submit", onSubmit);
+		modal.addEventListener("click", onCancel);
+		durationEl.addEventListener("input", onInput);
+	});
+}
+
+function updateScheduleDurationModalState() {
+	const form = document.getElementById("schedule-duration-form");
+	if (!form) return;
+
+	const durationInput = form.querySelector("#sd-duration");
+	const infoEl = document.getElementById("sd-remaining-info");
+
+	if (!durationInput || !infoEl) return;
+
+	const taskRemaining = Number(form.dataset.remainingMinutes || 0);
+
+	durationInput.max = String(taskRemaining);
+
+	let duration = Number(durationInput.value) || 0;
+
+	if (duration > taskRemaining) {
+		duration = taskRemaining;
+		durationInput.value = String(taskRemaining);
+	}
+
+	const remainingAfter = taskRemaining - duration;
+
+	infoEl.textContent = `Remaining after scheduling: ${remainingAfter} minutes`;
+}
+
+function initScheduleTaskDragAndDrop() {
+	if (getRouteName() !== "schedule") return;
+
+	const pageEl = document.querySelector('.page[data-page="schedule"]');
+	if (!pageEl) return;
+
+	let drag = null;
+
+	let pressTimer = null;
+	let press = null;
+	let pressReady = false;
+
+	const HOLD_MS = 180;
+	const MOVE_PX = 8;
+
+	const EDGE_PX = 60;
+	const SCROLL_PX = 12;
+	let autoScrollRaf = null;
+	let lastPointerY = 0;
+
+	const startAutoScroll = () => {
+		if (autoScrollRaf) return;
+
+		const tick = () => {
+			if (!drag) {
+				autoScrollRaf = null;
+				return;
+			}
+
+			const y = lastPointerY;
+			const vh = window.innerHeight;
+
+			if (y < EDGE_PX) {
+				window.scrollBy(0, -SCROLL_PX);
+			} else if (y > vh - EDGE_PX) {
+				window.scrollBy(0, SCROLL_PX);
+			}
+
+			autoScrollRaf = requestAnimationFrame(tick);
+		};
+
+		autoScrollRaf = requestAnimationFrame(tick);
+	};
+
+	const stopAutoScroll = () => {
+		if (!autoScrollRaf) return;
+		cancelAnimationFrame(autoScrollRaf);
+		autoScrollRaf = null;
+	};
+
+	const clearDropHighlights = () => {
+		document
+			.querySelectorAll('.ui-list.is-drop-target')
+			.forEach(el => el.classList.remove("is-drop-target"));
+	};
+
+	const isValidSessionDropTarget = (listEl) => {
+		if (!listEl) return false;
+
+		const studySessionId = Number(listEl.dataset.studySessionId);
+		const freeMinutes = Number(listEl.dataset.freeMinutes);
+
+		return Number.isFinite(studySessionId) && freeMinutes > 0;
+	};
+
+	const getSessionListFromPoint = (x, y) => {
+		const el = document.elementFromPoint(x, y);
+		const listEl = el?.closest?.('.ui-list[data-study-session-id]');
+		return isValidSessionDropTarget(listEl) ? listEl : null;
+	};
+
+	const moveGhost = (e) => {
+		if (!drag) return;
+
+		drag.ghost.style.transform =
+			`translate3d(${e.clientX - drag.offsetX}px, ${e.clientY - drag.offsetY}px, 0)`;
+	};
+
+	const cleanupPress = () => {
+		clearTimeout(pressTimer);
+		pressTimer = null;
+		press = null;
+		pressReady = false;
+	};
+
+	const cleanupDrag = () => {
+		if (!drag) return;
+
+		drag.card.classList.remove("is-dragging");
+		drag.ghost?.remove();
+
+		pageEl.style.touchAction = drag.prevTouchAction ?? "";
+
+		stopAutoScroll();
+		clearDropHighlights();
+		drag = null;
+	};
+
+	const cleanupAll = () => {
+		cleanupPress();
+		cleanupDrag();
+	};
+
+	const startDragFromMoveEvent = (e) => {
+		if (!press || drag) return;
+
+		const card = press.card;
+		const rect = card.getBoundingClientRect();
+
+		const ghost = card.cloneNode(true);
+		ghost.classList.add("ui-drag-ghost");
+		ghost.style.width = `${rect.width}px`;
+		ghost.style.height = `${rect.height}px`;
+		document.body.appendChild(ghost);
+
+		card.classList.add("is-dragging");
+
+		const prevTouchAction = pageEl.style.touchAction;
+		pageEl.style.touchAction = "none";
+
+		drag = {
+			taskId: Number(card.dataset.taskId),
+			card,
+			ghost,
+			offsetX: e.clientX - rect.left,
+			offsetY: e.clientY - rect.top,
+			prevTouchAction
+		};
+
+		card.setPointerCapture(e.pointerId);
+
+		e.preventDefault();
+
+		moveGhost(e);
+
+		const overList = getSessionListFromPoint(e.clientX, e.clientY);
+		clearDropHighlights();
+		if (overList) overList.classList.add("is-drop-target");
+
+		lastPointerY = e.clientY;
+		startAutoScroll();
+
+		cleanupPress();
+	};
+
+	pageEl.addEventListener(
+		"touchmove",
+		(e) => {
+			if (drag) e.preventDefault();
+		},
+		{ passive: false }
+	);
+
+	pageEl.addEventListener("pointerdown", (e) => {
+		const card = e.target.closest('.ui-list[data-list="unscheduledTasks"] .ui-item[data-task-id]');
+		if (!card) return;
+
+		if (e.target.closest("button, a, input, textarea, select")) return;
+
+		cleanupAll();
+
+		if (e.pointerType === "mouse") {
+			press = {
+				card,
+				pointerId: e.pointerId,
+				x: e.clientX,
+				y: e.clientY
+			};
+			pressReady = true;
+			startDragFromMoveEvent(e);
+			return;
+		}
+
+		press = {
+			card,
+			pointerId: e.pointerId,
+			x: e.clientX,
+			y: e.clientY
+		};
+
+		pressReady = false;
+
+		pressTimer = setTimeout(() => {
+			pressReady = true;
+		}, HOLD_MS);
+	});
+
+	pageEl.addEventListener("pointermove", (e) => {
+		if (drag) {
+			lastPointerY = e.clientY;
+			startAutoScroll();
+		}
+
+		if (!drag && press && e.pointerId === press.pointerId) {
+			const dx = e.clientX - press.x;
+			const dy = e.clientY - press.y;
+
+			if (!pressReady && Math.hypot(dx, dy) > MOVE_PX) {
+				cleanupPress();
+				return;
+			}
+
+			if (pressReady) {
+				startDragFromMoveEvent(e);
+				return;
+			}
+
+			return;
+		}
+
+		if (!drag) return;
+
+		moveGhost(e);
+
+		const overList = getSessionListFromPoint(e.clientX, e.clientY);
+		clearDropHighlights();
+		if (overList) overList.classList.add("is-drop-target");
+	});
+
+	pageEl.addEventListener("pointerup", async (e) => {
+		if (!drag) {
+			cleanupPress();
+			return;
+		}
+
+		stopAutoScroll();
+
+		const overList = getSessionListFromPoint(e.clientX, e.clientY);
+
+		if (!overList) {
+			cleanupDrag();
+			return;
+		}
+
+		const taskId = drag.taskId;
+		const studySessionId = Number(overList.dataset.studySessionId);
+		const sessionDate = overList.dataset.sessionDate;
+		const freeMinutes = Number(overList.dataset.freeMinutes);
+
+		cleanupDrag();
+
+		if (!studySessionId || !sessionDate || freeMinutes <= 0) {
+			return;
+		}
+
+		const remainingMinutes = getTaskRemainingMinutes(taskId);
+		if (remainingMinutes <= 0) {
+			showToast("This task has no unscheduled time remaining.", { type: "error" });
+			return;
+		}
+
+		const durationMinutes = await openScheduleDurationModal(appState.taskById.get(taskId));
+		if (durationMinutes == null) return;
+
+		try {
+			await postJson(`/api/study-sessions/${studySessionId}/scheduled-tasks`, {
+				taskId,
+				sessionDate,
+				durationMinutes
+			});
+
+			document.dispatchEvent(new CustomEvent("scheduledTask:created"));
+			showToast("Task scheduled successfully.");
+		} catch (err) {
+			showToast(err.message, { type: "error" });
+		}
+	});
+
+	pageEl.addEventListener("pointercancel", cleanupAll);
+}
+
 // Global Inits
 function initAuthForms() {
 	const loginForm = document.getElementById("login-form");
@@ -3562,4 +3937,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	await initSchedule();
 	initScheduleTaskForm();
+	initScheduleTaskDragAndDrop();
 });
