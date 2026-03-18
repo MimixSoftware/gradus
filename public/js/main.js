@@ -2894,6 +2894,37 @@ async function initSchedule() {
 		const actions = document.createElement("div");
 		actions.className = "ui-item-actions";
 
+
+
+		const moveControls = document.createElement("div");
+		moveControls.className = "schedule-move-controls";
+
+		const moveUpBtn = document.createElement("button");
+		moveUpBtn.type = "button";
+		moveUpBtn.className = "icon-btn";
+		moveUpBtn.textContent = "▲";
+		moveUpBtn.title = "Move up";
+		moveUpBtn.disabled = scheduledTask.position === 0;
+		moveUpBtn.addEventListener("click", async (e) => {
+			e.stopPropagation();
+			await moveScheduledTask(scheduledTask, sessionScheduledTasks, "up");
+		});
+
+		const moveDownBtn = document.createElement("button");
+		moveDownBtn.type = "button";
+		moveDownBtn.className = "icon-btn";
+		moveDownBtn.textContent = "▼";
+		moveDownBtn.title = "Move down";
+		moveDownBtn.disabled = scheduledTask.position === sessionScheduledTasks.length - 1;
+		moveDownBtn.addEventListener("click", async (e) => {
+			e.stopPropagation();
+			await moveScheduledTask(scheduledTask, sessionScheduledTasks, "down");
+		});
+
+		moveControls.appendChild(moveUpBtn);
+		moveControls.appendChild(moveDownBtn);
+		
+
 		const unscheduleBtn = document.createElement("button");
 		unscheduleBtn.className = "icon-btn";
 		unscheduleBtn.textContent = "✖";
@@ -2912,6 +2943,7 @@ async function initSchedule() {
 			window.location.href = `/assignments/${task.assignmentId}`;
 		});
 
+		actions.appendChild(moveControls);
 		actions.appendChild(unscheduleBtn);
 		actions.appendChild(assignmentBtn);
 
@@ -3187,6 +3219,36 @@ async function initSchedule() {
 			showToast(err.message, { type: "error" });
 		}
 	}
+
+	async function moveScheduledTask(scheduledTask, sessionScheduledTasks, direction) {
+		const currentIndex = scheduledTask.position;
+
+		let targetIndex = currentIndex;
+
+		if (direction === "up") {
+			targetIndex = currentIndex - 1;
+		} else if (direction === "down") {
+			targetIndex = currentIndex + 1;
+		}
+
+		if (targetIndex < 0 || targetIndex >= sessionScheduledTasks.length) {
+			return;
+		}
+
+		try {
+			const res = await patchJson(`/api/scheduled-tasks/${scheduledTask.id}`, {
+				position: targetIndex
+			});
+
+			await refreshSchedule();
+
+			showToast("Task order updated.", { type: "success" });
+
+			document.dispatchEvent(new CustomEvent("scheduledTask:updated"));
+		} catch (err) {
+			showToast(err.message, { type: "error" });
+		}
+	}
 }
 
 function isDateWithinActiveSemester(dateStr) {
@@ -3432,7 +3494,7 @@ function initScheduleTaskForm() {
 	});
 }
 
-function openScheduleDurationModal(task) {
+function openScheduleDurationModal(task, studySessionId, dateStr) {
 	const modal = document.getElementById("schedule-duration-modal");
 	const form = document.getElementById("schedule-duration-form");
 
@@ -3444,17 +3506,26 @@ function openScheduleDurationModal(task) {
 		return Promise.resolve(null);
 	}
 
-	const remainingMinutes = getTaskRemainingMinutes(task.id);
-	if (remainingMinutes <= 0) {
+	const taskRemainingMinutes = getTaskRemainingMinutes(task.id);
+	if (taskRemainingMinutes <= 0) {
 		showToast("This task has no unscheduled time remaining.", { type: "error" });
 		return Promise.resolve(null);
 	}
 
-	idEl.value = task.id;
-	form.dataset.remainingMinutes = remainingMinutes;
+	const sessionRemainingMinutes = getRemainingMinutesForSessionOnDate(studySessionId, dateStr);
+	if (sessionRemainingMinutes <= 0) {
+		showToast("This study session has no time remaining.", { type: "error" });
+		return Promise.resolve(null);
+	}
 
-	durationEl.value = remainingMinutes;
-	durationEl.max = String(remainingMinutes);
+	const maxDuration = Math.min(taskRemainingMinutes, sessionRemainingMinutes);
+
+	idEl.value = task.id;
+	form.dataset.taskRemainingMinutes = taskRemainingMinutes;
+	form.dataset.sessionRemainingMinutes = sessionRemainingMinutes;
+
+	durationEl.value = maxDuration;
+	durationEl.max = String(maxDuration);
 
 	updateScheduleDurationModalState();
 
@@ -3512,15 +3583,18 @@ function updateScheduleDurationModalState() {
 
 	if (!durationInput || !infoEl) return;
 
-	const taskRemaining = Number(form.dataset.remainingMinutes || 0);
+	const taskRemaining = Number(form.dataset.taskRemainingMinutes || 0);
+	const sessionRemaining = Number(form.dataset.sessionRemainingMinutes || 0);
 
-	durationInput.max = String(taskRemaining);
+	const maxDuration = Math.min(taskRemaining, sessionRemaining);
+
+	durationInput.max = String(maxDuration);
 
 	let duration = Number(durationInput.value) || 0;
 
-	if (duration > taskRemaining) {
-		duration = taskRemaining;
-		durationInput.value = String(taskRemaining);
+	if (duration > maxDuration) {
+		duration = maxDuration;
+		durationInput.value = String(maxDuration);
 	}
 
 	const remainingAfter = taskRemaining - duration;
@@ -3779,7 +3853,7 @@ function initScheduleTaskDragAndDrop() {
 			return;
 		}
 
-		const durationMinutes = await openScheduleDurationModal(appState.taskById.get(taskId));
+		const durationMinutes = await openScheduleDurationModal(appState.taskById.get(taskId), studySessionId, sessionDate);
 		if (durationMinutes == null) return;
 
 		try {
