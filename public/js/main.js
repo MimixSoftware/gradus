@@ -3242,7 +3242,7 @@ async function initSchedule() {
 
 			await refreshSchedule();
 
-			showToast("Task order updated.", { type: "success" });
+			showToast("Scheduled order updated.", { type: "success" });
 
 			document.dispatchEvent(new CustomEvent("scheduledTask:updated"));
 		} catch (err) {
