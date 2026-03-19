@@ -163,17 +163,30 @@ async function loadDashboardData(activeSemesterId) {
 	if (!activeSemesterId) {
 		appState.modules = [];
 		appState.assignments = [];
+		appState.tasks = [];
+		appState.studySessions = [];
+		appState.scheduledTasks	= [];
 		appState.moduleById = new Map();
+		appState.assignmentById = new Map();
+		appState.taskById = new Map();
+		appState.studySessionById = new Map();
+		appState.scheduledTaskById = new Map();
 		return;
 	}
 
-	const [modulesPayload, assignmentsPayload] = await Promise.all([
+	const [modulesPayload, assignmentsPayload, tasksPayload, studySessionsPayload, scheduledTasksPayload] = await Promise.all([
 		getJson(`/api/semesters/${activeSemesterId}/modules`),
-		getJson(`/api/semesters/${activeSemesterId}/assignments`)
+		getJson(`/api/semesters/${activeSemesterId}/assignments`),
+		getJson(`/api/semesters/${activeSemesterId}/tasks`),
+		getJson(`/api/semesters/${activeSemesterId}/study-sessions`),
+		getJson(`/api/semesters/${activeSemesterId}/scheduled-tasks`)
 	]);
 
 	const modules = modulesPayload.modules;
 	const assignments = assignmentsPayload.assignments;
+	const tasks = tasksPayload.tasks;
+	const studySessions = studySessionsPayload.studySessions;
+	const scheduledTasks = scheduledTasksPayload.scheduledTasks;
 
 	modules.sort((a, b) => a.name.localeCompare(b.name));
 	assignments.sort((a, b) => {
@@ -184,20 +197,19 @@ async function loadDashboardData(activeSemesterId) {
 
 	appState.modules = modules;
 	appState.assignments = assignments;
+	appState.tasks = tasks;
+	appState.studySessions = studySessions;
+	appState.scheduledTasks = scheduledTasks;
 	appState.moduleById = new Map(modules.map(m => [m.id, m]));
 	appState.assignmentById = new Map(assignments.map(a => [a.id, a]));
+	appState.studySessionById = new Map(studySessions.map(ss => [ss.id, ss]));
+	appState.scheduledTaskById = new Map(scheduledTasks.map(st => [st.id, st]));
+	appState.taskById = new Map(tasks.map(t => [t.id, t]));
 
 	appState.assignment = null;
 	appState.module = null;
-	appState.tasks = null;
-	appState.taskById = new Map();
-
-	appState.studySessions = [];
-	appState.studySessionById = new Map();
 
 	appState.selectedWeekStart = null;
-	appState.scheduledTasks = null;
-	appState.scheduledTaskById = new Map();
 }
 
 async function loadAssignmentData(assignmentId) {
@@ -781,10 +793,183 @@ async function initDashboard() {
 	}
 
 	function renderTodayList() {
-		if (true) {
+		todayListEl.innerHTML = "";
+
+		const today = startOfDay(new Date());
+		const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+		const semester = appState.semesterById.get(appState.activeSemesterId);
+		if (!semester) {
 			renderEmptyListState(todayListEl, "Nothing is scheduled today! 🥳");
 			return;
 		}
+
+		const semesterStart = startOfDay(semester.startDate);
+		const semesterEnd = startOfDay(semester.endDate);
+
+		if (today < semesterStart || today > semesterEnd) {
+			renderEmptyListState(todayListEl, "Nothing is scheduled today! 🥳");
+			return;
+		}
+
+		const todayScheduledTasks = appState.scheduledTasks
+			.filter((st) => st.sessionDate === todayDateStr)
+			.sort((a, b) => {
+				if (a.studySessionId !== b.studySessionId) {
+					const aSession = appState.studySessionById?.get(a.studySessionId)
+						|| appState.studySessions.find((ss) => ss.id === a.studySessionId);
+					const bSession = appState.studySessionById?.get(b.studySessionId)
+						|| appState.studySessions.find((ss) => ss.id === b.studySessionId);
+
+					const aStart = aSession?.startTime || "";
+					const bStart = bSession?.startTime || "";
+
+					if (aStart !== bStart) return aStart.localeCompare(bStart);
+				}
+
+				return a.position - b.position;
+			});
+
+		if (!todayScheduledTasks.length) {
+			renderEmptyListState(todayListEl, "Nothing is scheduled today! 🥳");
+			return;
+		}
+
+		const sessionTasksMap = new Map();
+		for (const st of todayScheduledTasks) {
+			if (!sessionTasksMap.has(st.studySessionId)) {
+				sessionTasksMap.set(st.studySessionId, []);
+			}
+			sessionTasksMap.get(st.studySessionId).push(st);
+		}
+
+		for (const tasks of sessionTasksMap.values()) {
+			tasks.sort((a, b) => a.position - b.position);
+		}
+
+		for (const scheduledTask of todayScheduledTasks) {
+			const task =
+				appState.taskById?.get(scheduledTask.taskId) ||
+				appState.tasks.find((t) => t.id === scheduledTask.taskId);
+
+			if (!task) continue;
+
+			const studySession =
+				appState.studySessionById?.get(scheduledTask.studySessionId) ||
+				appState.studySessions.find((ss) => ss.id === scheduledTask.studySessionId);
+
+			if (!studySession) continue;
+
+			const sessionScheduledTasks = sessionTasksMap.get(scheduledTask.studySessionId) || [];
+
+			const li = createTodayScheduleTaskItem(
+				task,
+				scheduledTask,
+				sessionScheduledTasks,
+				studySession.startTime,
+			);
+
+			todayListEl.appendChild(li);
+		}
+	}
+
+	function createTodayScheduleTaskItem(task, scheduledTask, sessionScheduledTasks, sessionStartTime) {
+		const li = document.createElement("li");
+		li.className = "ui-item schedule-task-item";
+
+		const assignment = appState.assignmentById.get(task.assignmentId);
+		const module = assignment ? appState.moduleById.get(assignment.moduleId) : null;
+
+		const assignmentOverdue = assignment ? isOverdue(assignment.deadline) : false;
+		const taskOverdue = isOverdue(task.deadline);
+
+		if (taskOverdue) li.classList.add("ui-item--overdue-warn");
+
+		let offsetMinutes = 0;
+		for (const st of sessionScheduledTasks) {
+			if (st.position >= scheduledTask.position) break;
+			offsetMinutes += st.durationMinutes;
+		}
+
+		const taskStart = addMinutesToTime(sessionStartTime, offsetMinutes);
+		const taskEnd = addMinutesToTime(taskStart, scheduledTask.durationMinutes);
+
+		const inner = document.createElement("div");
+		inner.className = "ui-item-inner";
+
+		const time = document.createElement("div");
+		time.className = "schedule-task-time";
+		time.textContent = `${formatTime(taskStart)} – ${formatTime(taskEnd)}`;
+
+		const row = document.createElement("div");
+		row.className = "ui-item-row";
+
+		const dot = document.createElement("span");
+		dot.className = "ui-dot";
+		if (module?.colour) {
+			dot.style.backgroundColor = module.colour;
+		}
+
+		const title = document.createElement("div");
+		title.className = "ui-item-main";
+		title.textContent = task.name;
+
+		row.appendChild(dot);
+		row.appendChild(title);
+
+		const assignmentMeta = document.createElement("div");
+		assignmentMeta.className = "ui-item-meta ui-item-meta--assignment";
+		assignmentMeta.textContent = assignment?.name || "Unknown assignment";
+		assignmentMeta.classList.toggle("danger-text", assignmentOverdue);
+
+		const meta = document.createElement("div");
+		meta.className = "ui-item-meta";
+
+		const parts = [];
+		parts.push(formatMinutes(scheduledTask.durationMinutes));
+		if (assignmentOverdue) parts.push("Assignment overdue");
+		else if (taskOverdue) parts.push("Task overdue");
+		meta.textContent = parts.join(" • ");
+
+		const actions = document.createElement("div");
+		actions.className = "ui-item-actions";
+
+		const assignmentBtn = document.createElement("button");
+		assignmentBtn.className = "icon-btn";
+		assignmentBtn.textContent = "🔗";
+		assignmentBtn.title = "Open assignment";
+		assignmentBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			window.location.href = `/assignments/${task.assignmentId}`;
+		});
+
+		actions.appendChild(assignmentBtn);
+
+		inner.appendChild(time);
+		inner.appendChild(row);
+		inner.appendChild(assignmentMeta);
+		inner.appendChild(meta);
+		inner.appendChild(actions);
+
+		li.appendChild(inner);
+
+		return li;
+	}
+
+	function startOfDay(date) {
+		const d = new Date(date);
+		d.setHours(0, 0, 0, 0);
+		return d;
+	}
+
+	function addMinutesToTime(timeString, minutesToAdd) {
+		const [hours, minutes] = timeString.split(":").map(Number);
+		const totalMinutes = (hours * 60) + minutes + minutesToAdd;
+
+		const newHours = Math.floor(totalMinutes / 60);
+		const newMinutes = totalMinutes % 60;
+
+		return `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
 	}
 
 	function renderSemesterNameAndUpdateButtons() {
@@ -2706,12 +2891,6 @@ async function initSchedule() {
 		renderUnscheduledTasksList();
 	}
 
-	function startOfDay(date) {
-		const d = new Date(date);
-		d.setHours(0, 0, 0, 0);
-		return d;
-	}
-
 	function renderScheduleList() {
 		if (!appState.studySessions.length) {
 			renderEmptyListState(scheduleListEl, "No study sessions yet.");
@@ -2955,6 +3134,12 @@ async function initSchedule() {
 		li.appendChild(inner);
 
 		return li;
+	}
+
+	function startOfDay(date) {
+		const d = new Date(date);
+		d.setHours(0, 0, 0, 0);
+		return d;
 	}
 
 	function addMinutesToTime(timeString, minutesToAdd) {
