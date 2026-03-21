@@ -1,8 +1,41 @@
 const { getOpenRouterClient } = require("../../utils/openRouterClient.js");
 const AppError = require("../../utils/AppError");
 
-async function estimateTaskMinutes(taskName, taskDescription, assignmentName, assignmentDescription) {
+async function estimateTaskMinutes(
+	taskName,
+	taskDescription,
+	assignmentName,
+	assignmentDescription,
+	assignmentConfidence,
+	assignmentWeight
+) {
 	const client = getOpenRouterClient();
+
+	const promptLines = [
+		"Estimate the effort for this task.",
+		"",
+		`Task name: ${taskName}`
+	];
+
+	if (taskDescription) {
+		promptLines.push(`Task description: ${taskDescription}`);
+	}
+
+	if (assignmentName) {
+		promptLines.push(`Assignment name: ${assignmentName}`);
+	}
+
+	if (assignmentDescription) {
+		promptLines.push(`Assignment description: ${assignmentDescription}`);
+	}
+
+	if (assignmentConfidence != null && assignmentConfidence !== "") {
+		promptLines.push(`Student confidence for this assignment (1-5): ${assignmentConfidence}`);
+	}
+
+	if (assignmentWeight != null && assignmentWeight !== "") {
+		promptLines.push(`Assignment weight percentage (1-100): ${assignmentWeight}`);
+	}
 
 	const response = await client.chat.completions.create(
 		{
@@ -16,16 +49,12 @@ async function estimateTaskMinutes(taskName, taskDescription, assignmentName, as
 						"Estimate realistic focused work time in minutes. " +
 						"Use increments of 15 minutes. " +
 						"Minimum 15. Maximum 1440. " +
+						"Treat assignment confidence and assignment weight only as light supporting context, not dominant factors. " +
 						"Do not include explanation or extra fields."
 				},
 				{
 					role: "user",
-					content:
-						`Estimate the effort for this task.\n\n` +
-						`Task name: ${taskName || "(none)"}\n` +
-						`Task description: ${taskDescription || "(none)"}\n` +
-						`Assignment name: ${assignmentName || "(none)"}\n` +
-						`Assignment description: ${assignmentDescription || "(none)"}`
+					content: promptLines.join("\n")
 				}
 			],
 			response_format: { type: "json_object" },

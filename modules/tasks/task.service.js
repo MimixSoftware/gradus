@@ -269,7 +269,9 @@ async function estimate(userId, { assignmentId, taskName, taskDescription }) {
 		`
 		SELECT
 			a.name AS assignment_name,
-			a.description AS assignment_description
+			a.description AS assignment_description,
+			a.confidence AS assignment_confidence,
+			a.weight AS assignment_weight
 		FROM assignments a
 		INNER JOIN modules m ON m.id = a.module_id
 		INNER JOIN semesters s ON s.id = m.semester_id
@@ -286,7 +288,9 @@ async function estimate(userId, { assignmentId, taskName, taskDescription }) {
 		taskName,
 		taskDescription,
 		row.assignment_name,
-		row.assignment_description ?? null
+		row.assignment_description ?? null,
+		row.assignment_confidence ?? null,
+		row.assignment_weight ?? null
 	);
 
 	return estimatedMinutes;
