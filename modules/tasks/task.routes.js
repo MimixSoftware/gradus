@@ -10,4 +10,6 @@ router.get("/:taskId", requireApiAuth, asyncHandler(taskController.findById));
 router.patch("/:taskId", requireApiAuth, asyncHandler(taskController.update));
 router.delete("/:taskId", requireApiAuth, asyncHandler(taskController.remove));
 
+router.post("/estimate", requireApiAuth, asyncHandler(taskController.estimate));
+
 module.exports = router;

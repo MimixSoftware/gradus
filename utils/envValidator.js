@@ -64,6 +64,11 @@ function validateEnv() {
 	assertInt("BCRYPT_SALT_ROUNDS", bcryptSaltRounds)
 	
 	required("SESSION_SECRET");
+
+	required("OPENROUTER_API_KEY");
+	required("OPENROUTER_MODEL");
+	required("OPENROUTER_SITE_URL");
+	required("OPENROUTER_APP_NAME");
 }
 
 module.exports = { validateEnv };

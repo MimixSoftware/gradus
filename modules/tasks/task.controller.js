@@ -1,5 +1,6 @@
 const taskService = require("./task.service");
 const taskValidation = require("./task.validation");
+const taskEstimationService = require("./taskEstimation.service");
 const { validateRequiredInt } = require("../../utils/validationUtils");
 
 async function findAll(req, res) {
@@ -58,4 +59,12 @@ async function remove(req, res) {
 	return res.status(204).json({ message: "Task deleted successfully." });
 }
 
-module.exports = { findAll, findAllByAssignment, findAllBySemester, createInAssignment, findById, update, remove };
+async function estimate(req, res) {
+	const validated = taskValidation.validateEstimateInput(req.body);
+
+	const estimatedMinutes = await taskService.estimate(req.user.id, validated);
+
+	res.json({ message: "Task ETC estimated successfully.", estimatedMinutes });
+}
+
+module.exports = { findAll, findAllByAssignment, findAllBySemester, createInAssignment, findById, update, remove, estimate };

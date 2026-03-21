@@ -2058,10 +2058,51 @@ function initNewTaskForm() {
 	const form = document.getElementById("new-task-form");
 	if (!form) return;
 
+	const errorEl = document.getElementById("nt-error");
+	const estimateBtn = document.getElementById("nt-estimate-btn");
+	const etcInput = document.getElementById("nt-etc");
+
+	async function handleEstimateClick() {
+		if (!estimateBtn || !etcInput) return;
+
+		const formData = new FormData(form);
+
+		const taskName = formData.get("name")?.toString().trim();
+		if (!taskName) {
+			showToast("Enter a task name before estimating.", { type: "error" });
+			return;
+		}
+
+		const originalBtnText = estimateBtn.textContent;
+
+		estimateBtn.disabled = true;
+		estimateBtn.textContent = "Estimating...";
+
+		try {
+			const payload = {
+				assignmentId: appState.assignment.id,
+				taskName,
+				taskDescription: formData.get("description")?.toString().trim() || null
+			};
+
+			const res = await postJson("/api/tasks/estimate", payload);
+
+			etcInput.value = res.estimatedMinutes;
+
+			showToast(res.message);
+		} catch (err) {
+			showToast(err.message || "Failed to estimate task time.", { type: "error" });
+		} finally {
+			estimateBtn.disabled = false;
+			estimateBtn.textContent = originalBtnText;
+		}
+	}
+
+	estimateBtn.addEventListener("click", handleEstimateClick);
+
 	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
-		const errorEl = document.getElementById("nt-error");
 		setAlert(errorEl, "");
 
 		const formData = new FormData(form);
@@ -2099,10 +2140,51 @@ function initEditTaskForm() {
 	const form = document.getElementById("edit-task-form");
 	if (!form) return;
 
+	const errorEl = document.getElementById("et-error");
+	const estimateBtn = document.getElementById("et-estimate-btn");
+	const etcInput = document.getElementById("et-etc");
+
+	async function handleEstimateClick() {
+		if (!estimateBtn || !etcInput) return;
+
+		const formData = new FormData(form);
+
+		const taskName = formData.get("name")?.toString().trim();
+		if (!taskName) {
+			showToast("Enter a task name before estimating.", { type: "error" });
+			return;
+		}
+
+		const originalBtnText = estimateBtn.textContent;
+
+		estimateBtn.disabled = true;
+		estimateBtn.textContent = "Estimating...";
+
+		try {
+			const payload = {
+				assignmentId: appState.assignment.id,
+				taskName,
+				taskDescription: formData.get("description")?.toString().trim() || null
+			};
+
+			const res = await postJson("/api/tasks/estimate", payload);
+
+			etcInput.value = res.estimatedMinutes;
+
+			showToast(res.message);
+		} catch (err) {
+			showToast(err.message || "Failed to estimate task time.", "error");
+		} finally {
+			estimateBtn.disabled = false;
+			estimateBtn.textContent = originalBtnText;
+		}
+	}
+
+	estimateBtn.addEventListener("click", handleEstimateClick);
+
 	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
-		const errorEl = document.getElementById("et-error");
 		setAlert(errorEl, "");
 
 		const formData = new FormData(form);
@@ -2116,7 +2198,7 @@ function initEditTaskForm() {
 			description: formData.get("description") || null,
 			status,
 			deadline: toUtcIso(formData.get("deadline")),
-			etcMinutes: etcMinutes ? Number(etcMinutes) : null,
+			etcMinutes: etcMinutes ? Number(etcMinutes) : null
 		};
 
 		if (status === "done") {

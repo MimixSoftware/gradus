@@ -1,5 +1,6 @@
 const db = require("../../database/db");
 const AppError = require('../../utils/AppError');
+const taskEstimationService = require("./taskEstimation.service");
 
 function mapTaskRow(t) {
 	return {
@@ -263,4 +264,32 @@ async function remove(userId, taskId) {
 	}
 }
 
-module.exports = { findAll, findAllByAssignment, findAllBySemester, createInAssignment, findById, update, remove };
+async function estimate(userId, { assignmentId, taskName, taskDescription }) {
+	const [[row]] = await db.query(
+		`
+		SELECT
+			a.name AS assignment_name,
+			a.description AS assignment_description
+		FROM assignments a
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE a.id = ? AND s.user_id = ?
+		LIMIT 1`,
+		[assignmentId, userId]
+	);
+
+	if (!row) {
+		throw new AppError("Assignment not found.", 404);
+	}
+
+	const estimatedMinutes = await taskEstimationService.estimateTaskMinutes(
+		taskName,
+		taskDescription,
+		row.assignment_name,
+		row.assignment_description ?? null
+	);
+
+	return estimatedMinutes;
+}
+
+module.exports = { findAll, findAllByAssignment, findAllBySemester, createInAssignment, findById, update, remove, estimate };

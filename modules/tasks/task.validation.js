@@ -49,4 +49,12 @@ function validateUpdateInput({ name, description, status, deadline, etcMinutes, 
 	return updates;
 }
 
-module.exports = { validateCreateInAssignmentInput, validateUpdateInput };
+function validateEstimateInput({ assignmentId, taskName, taskDescription } = {}) {
+	assignmentId = v.validateRequiredInt(assignmentId, "Assignment ID", { min: 1 });
+	taskName = v.validateRequiredString(taskName, "Task Name", { max: 100 });
+	taskDescription = v.validateOptionalString(taskDescription, "Task Description", { max: 500 }) ?? null;
+
+	return { assignmentId, taskName, taskDescription };
+}
+
+module.exports = { validateCreateInAssignmentInput, validateUpdateInput, validateEstimateInput };
