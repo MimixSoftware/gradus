@@ -93,13 +93,13 @@
 				>Test</div>
 
 				<div class="form-row">
-					<label for="na-name">Assignment name</label>
+					<label for="na-name">Assignment name <span class="required">*</span></label>
 					<input id="na-name" name="name" type="text" maxlength="100" required placeholder="e.g. Networks Report" />
 				</div>
 
 				<div class="form-grid">
 					<div class="form-row">
-						<label for="na-module">Module</label>
+						<label for="na-module">Module <span class="required">*</span></label>
 						<select id="na-module" name="moduleId" required>
 							<option value="" disabled selected>Select a module…</option>
 							<!-- populated by JS -->
@@ -166,7 +166,7 @@
 				></div>
 
 				<div class="form-row">
-					<label for="nm-name">Module name</label>
+					<label for="nm-name">Module name <span class="required">*</span></label>
 					<input
 						id="nm-name"
 						name="name"
@@ -194,7 +194,7 @@
 					</div>
 
 					<div class="form-row">
-						<label for="nm-colour">Colour</label>
+						<label for="nm-colour">Colour <span class="required">*</span></label>
 
 						<div class="form-grid" style="grid-template-columns: auto 1fr;">
 							<input
@@ -246,7 +246,7 @@
 				<div id="em-error" class="alert alert-error" style="display:none;" role="alert"></div>
 
 				<div class="form-row">
-					<label for="em-name">Module name</label>
+					<label for="em-name">Module name <span class="required">*</span></label>
 					<input id="em-name" name="name" type="text" maxlength="100" required />
 				</div>
 
@@ -258,7 +258,7 @@
 					</div>
 
 					<div class="form-row">
-						<label for="em-colour">Colour</label>
+						<label for="em-colour">Colour <span class="required">*</span></label>
 						<div class="form-grid" style="grid-template-columns: auto 1fr;">
 							<input
 								id="em-colour"
