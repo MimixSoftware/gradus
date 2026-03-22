@@ -2989,6 +2989,8 @@ async function initSchedule() {
 	prevWeekBtnEl.addEventListener("click", () => changeWeek(-1));
 	nextWeekBtnEl.addEventListener("click", () => changeWeek(1));
 
+	let isFirstLoad = true;
+
 	await refreshSchedule();
 
 	async function refreshSchedule() {
@@ -2997,6 +2999,8 @@ async function initSchedule() {
 		renderWeekNameAndUpdateButtons();
 		renderScheduleList();
 		renderUnscheduledTasksList();
+
+		isFirstLoad = false;
 	}
 
 	function renderScheduleList() {
@@ -3052,12 +3056,22 @@ async function initSchedule() {
 			const dayColumn = document.createElement("div");
 			dayColumn.className = "schedule-day-column";
 
+			const sessionDate = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
+			dayColumn.dataset.date = sessionDate;
+
 			const dayHeading = document.createElement("h3");
 			dayHeading.className = "schedule-day-label";
 			dayHeading.textContent = `${DAY_NAMES[day]} ${dayDate.toLocaleDateString("en-GB", {
 				day: "numeric",
 				month: "short"
 			})}`;
+
+			const today = new Date();
+			const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+			if (todayStr === sessionDate) {
+				dayHeading.classList.add("is-today");
+			}
 
 			dayColumn.appendChild(dayHeading);
 
@@ -3075,8 +3089,6 @@ async function initSchedule() {
 				const sessionList = document.createElement("ul");
 				sessionList.className = "ui-list ui-list--editable";
 				sessionList.innerHTML = "";
-
-				const sessionDate = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
 
 				const sessionScheduledTasks = (scheduledTasksBySessionId.get(ss.id) || [])
 					.filter((st) => st.sessionDate === sessionDate)
@@ -3114,6 +3126,25 @@ async function initSchedule() {
 		}
 
 		scheduleListEl.appendChild(board);
+
+		scrollToToday(board);
+	}
+
+	function scrollToToday(board) {
+		if (!isFirstLoad) return;
+
+		const today = new Date();
+		const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+		const todayColumn = board.querySelector(`[data-date="${todayStr}"]`);
+
+		if (!todayColumn) return;
+
+		todayColumn.scrollIntoView({
+			behavior: "smooth",
+			inline: "center",
+			block: "nearest"
+		});
 	}
 
 	function createScheduleTaskItem(task, scheduledTask, sessionScheduledTasks, sessionStartTime) {

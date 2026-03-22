@@ -1221,3 +1221,7 @@ body.modal-open {
 .checklist-item span {
 	flex: 0 1 auto;
 }
+
+.schedule-day-label.is-today {
+	color: var(--primary);
+}
