@@ -16,6 +16,34 @@ function mapAssignmentRow(a) {
 	};
 }
 
+async function validateAssignmentDeadline(userId, moduleId, deadline) {
+	if (deadline === undefined || deadline === null) {
+		return;
+	}
+	
+	const [rows] = await db.query(
+		`SELECT s.start_date, s.end_date
+		FROM modules m
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE m.id = ? AND s.user_id = ?
+		LIMIT 1`,
+		[moduleId, userId]
+	);
+
+	if (rows.length === 0) {
+		throw new AppError("Module not found.", 404);
+	}
+
+	const semester = rows[0];
+
+	if (deadline < semester.start_date || deadline > semester.end_date) {
+		throw new AppError(
+			`Assignment deadline must be between the semester start date and end date.`,
+			400
+		);
+	}
+}
+
 async function getModuleWeightTotal(userId, moduleId, { excludeAssignmentId = null } = {}) {
 	const params = [userId, moduleId];
 	let excludeSql = "";
@@ -118,6 +146,8 @@ async function createInModule(userId, moduleId, { name, description, weight, con
 	if (moduleRows.length === 0) {
 		throw new AppError("Module not found.", 404);
 	}
+
+	await validateAssignmentDeadline(userId, moduleId, deadline);
 
 	if (weight !== undefined && weight !== null) {
 		const total = await getModuleWeightTotal(userId, moduleId);
@@ -231,6 +261,7 @@ async function update(userId, assignmentId, updates) {
 	}
 
 	if (updates.deadline !== undefined) {
+		await validateAssignmentDeadline(userId, meta.module_id, updates.deadline);
 		setParts.push("a.deadline = ?");
 		values.push(updates.deadline);
 	}

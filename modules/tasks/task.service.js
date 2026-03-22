@@ -32,9 +32,59 @@ async function getTaskAssignmentStatus(userId, taskId) {
 	return rows[0]?.assignment_status;
 }
 
-async function getTaskStatus(userId, taskId) {
+async function getScheduledMinutesForTask(userId, taskId) {
+	const [[row]] = await db.query(
+		`SELECT COALESCE(SUM(st.duration_minutes), 0) AS scheduled_minutes
+		FROM scheduled_tasks st
+		INNER JOIN tasks t ON t.id = st.task_id
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE st.task_id = ? AND s.user_id = ?`,
+		[taskId, userId]
+	);
+
+	return row?.scheduled_minutes ?? 0;
+}
+
+async function validateTaskDeadline(userId, assignmentId, deadline) {
+	if (deadline === undefined || deadline === null) {
+		return;
+	}
+
 	const [rows] = await db.query(
-		`SELECT t.status
+		`SELECT
+			s.start_date,
+			s.end_date
+		FROM assignments a
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE a.id = ? AND s.user_id = ?
+		LIMIT 1`,
+		[assignmentId, userId]
+	);
+
+	if (rows.length === 0) {
+		throw new AppError("Assignment not found.", 404);
+	}
+
+	const assignment = rows[0];
+
+	if (deadline < assignment.start_date || deadline > assignment.end_date) {
+		throw new AppError(
+			"Task deadline must be between the semester start date and end date.",
+			400
+		);
+	}
+}
+
+async function getTaskMeta(userId, taskId) {
+	const [rows] = await db.query(
+		`SELECT
+			t.id,
+			t.assignment_id,
+			t.status,
+			a.status AS assignment_status
 		FROM tasks t
 		INNER JOIN assignments a ON a.id = t.assignment_id
 		INNER JOIN modules m ON m.id = a.module_id
@@ -44,7 +94,7 @@ async function getTaskStatus(userId, taskId) {
 		[taskId, userId]
 	);
 
-	return rows[0]?.status;
+	return rows[0] ?? null;
 }
 
 async function findAll(userId) {
@@ -116,6 +166,8 @@ async function createInAssignment(userId, assignmentId, { name, description, dea
 		throw new AppError("Assignment not found.", 404);
 	}
 
+	await validateTaskDeadline(userId, assignmentId, deadline);
+
 	try {
 		const [result] = await db.query(
 			`INSERT INTO tasks
@@ -158,20 +210,18 @@ async function findById(userId, taskId) {
 async function update(userId, taskId, updates) {
 	const setParts = [];
 	const values = [];
-	
-	const assignmentStatus = await getTaskAssignmentStatus(userId, taskId);
-	if (assignmentStatus === undefined) {
+
+	const meta = await getTaskMeta(userId, taskId);
+	if (!meta) {
 		throw new AppError("Task not found.", 404);
 	}
-	if (assignmentStatus === "completed") {
+
+	if (meta.assignment_status === "completed") {
 		throw new AppError("Cannot modify tasks in a completed assignment. Reopen the assignment first.", 409);
 	}
 
-	const currentStatus = await getTaskStatus(userId, taskId);
-  	if (!currentStatus) {
-		throw new AppError("Task not found.", 404);
-	}
-	const nextStatus = updates.status !== undefined ? updates.status : currentStatus;
+	const nextStatus = updates.status !== undefined ? updates.status : meta.status;
+
 	if (updates.atcMinutes !== undefined && nextStatus !== "done") {
 		throw new AppError("ATC can only be set when the task is in Done.", 409);
 	}
@@ -192,11 +242,22 @@ async function update(userId, taskId, updates) {
 	}
 
 	if (updates.deadline !== undefined) {
+		await validateTaskDeadline(userId, meta.assignment_id, updates.deadline);
+
 		setParts.push("t.deadline = ?");
 		values.push(updates.deadline);
 	}
 
 	if (updates.etcMinutes !== undefined) {
+		const totalScheduledMinutes = await getScheduledMinutesForTask(userId, taskId);
+
+		if (updates.etcMinutes < totalScheduledMinutes) {
+			throw new AppError(
+				`ETC cannot be reduced below the currently scheduled time (${totalScheduledMinutes} minutes). Unschedule some time first.`,
+				409
+			);
+		}
+
 		setParts.push("t.etc_minutes = ?");
 		values.push(updates.etcMinutes);
 	}

@@ -13,6 +13,7 @@ const appState = {
 	// Assignment
 	assignment: null,
 	module: null,
+	semester: null,
 	tasks: [],
 	taskById: new Map(),
 	// Study Sessions
@@ -208,6 +209,7 @@ async function loadDashboardData(activeSemesterId) {
 
 	appState.assignment = null;
 	appState.module = null;
+	appState.semester = null;
 
 	appState.selectedWeekStart = null;
 }
@@ -226,6 +228,9 @@ async function loadAssignmentData(assignmentId) {
 	const scheduledTasks = scheduledTasksPayload.scheduledTasks;
 	const module = modulePayload.module;
 
+	const semesterPayload = await getJson(`/api/semesters/${module.semesterId}`);
+	const semester = semesterPayload.semester;
+
 	tasks.sort((a, b) => {
 		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
 		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
@@ -234,6 +239,7 @@ async function loadAssignmentData(assignmentId) {
 
 	appState.assignment = assignment;
 	appState.module = module;
+	appState.semester = semester;
 	appState.tasks = tasks;
 	appState.taskById = new Map(tasks.map(t => [t.id, t]));
 	appState.scheduledTasks = scheduledTasks;
@@ -279,6 +285,7 @@ async function loadStudySessionsData(activeSemesterId) {
 
 	appState.assignment = null;
 	appState.module = null;
+	appState.semester = null;
 	appState.tasks = null;
 	appState.taskById = new Map();
 
@@ -359,6 +366,7 @@ async function loadScheduleData(activeSemesterId) {
 
 	appState.assignment = null;
 	appState.module = null;
+	appState.semester = null;
 }
 
 // Global Helpers
@@ -1591,6 +1599,11 @@ function initNewAssignmentForm() {
 	const weightValEl = form.querySelector("#na-weight-val");
 	const confEl = form.querySelector("#na-confidence");
 	const confValEl = form.querySelector("#na-confidence-val");
+	const deadlineInput = form.querySelector("#na-deadline");
+
+	const semester = appState.semesterById.get(appState.activeSemesterId);
+	deadlineInput.min = `${semester.startDate}T00:00`;
+	deadlineInput.max = `${semester.endDate}T23:59`;
 
 	function syncRanges() {
 		if (weightEl && weightValEl) weightValEl.textContent = weightEl.value;
@@ -1974,6 +1987,10 @@ function initEditAssignmentForm() {
 	const weightValEl = form.querySelector("#ea-weight-val");
 	const confEl = form.querySelector("#ea-confidence");
 	const confValEl = form.querySelector("#ea-confidence-val");
+	const deadlineInput = form.querySelector("#ea-deadline");
+
+	deadlineInput.min = `${appState.semester.startDate}T00:00`;
+	deadlineInput.max = `${appState.semester.endDate}T23:59`;
 
 	function syncRanges() {
 		if (weightEl && weightValEl) weightValEl.textContent = weightEl.value;
@@ -2061,6 +2078,10 @@ function initNewTaskForm() {
 	const errorEl = document.getElementById("nt-error");
 	const estimateBtn = document.getElementById("nt-estimate-btn");
 	const etcInput = document.getElementById("nt-etc");
+	const deadlineInput = form.querySelector("#nt-deadline");
+
+	deadlineInput.min = `${appState.semester.startDate}T00:00`;
+	deadlineInput.max = `${appState.semester.endDate}T23:59`;
 
 	async function handleEstimateClick() {
 		if (!estimateBtn || !etcInput) return;
@@ -2143,6 +2164,10 @@ function initEditTaskForm() {
 	const errorEl = document.getElementById("et-error");
 	const estimateBtn = document.getElementById("et-estimate-btn");
 	const etcInput = document.getElementById("et-etc");
+	const deadlineInput = form.querySelector("#et-deadline");
+
+	deadlineInput.min = `${appState.semester.startDate}T00:00`;
+	deadlineInput.max = `${appState.semester.endDate}T23:59`;
 
 	async function handleEstimateClick() {
 		if (!estimateBtn || !etcInput) return;
@@ -3704,7 +3729,7 @@ function initScheduleTaskForm() {
 
 	const semester = appState.semesterById.get(appState.activeSemesterId);
 
-	dateInput.min =semester.startDate;
+	dateInput.min = semester.startDate;
 	dateInput.max = semester.endDate;
 
 	dateInput.onchange = () => {

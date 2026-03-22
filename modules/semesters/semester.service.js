@@ -38,6 +38,73 @@ async function overlapCheck(userId, startDate, endDate, { excludeSemesterId = nu
 	}
 }
 
+async function validateSemesterRangeChange(userId, semesterId, newStartDate, newEndDate) {
+	const [[assignmentCountRow]] = await db.query(
+		`SELECT COUNT(*) AS count
+		FROM assignments a
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE s.id = ? AND s.user_id = ?
+		  AND a.deadline IS NOT NULL
+		  AND (a.deadline < ? OR a.deadline > ?)`,
+		[semesterId, userId, newStartDate, newEndDate]
+	);
+
+	const [[taskCountRow]] = await db.query(
+		`SELECT COUNT(*) AS count
+		FROM tasks t
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE s.id = ? AND s.user_id = ?
+		  AND t.deadline IS NOT NULL
+		  AND (t.deadline < ? OR t.deadline > ?)`,
+		[semesterId, userId, newStartDate, newEndDate]
+	);
+
+	const [[scheduledCountRow]] = await db.query(
+		`SELECT COUNT(*) AS count
+		FROM scheduled_tasks st
+		INNER JOIN tasks t ON t.id = st.task_id
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE s.id = ? AND s.user_id = ?
+		  AND (st.session_date < ? OR st.session_date > ?)`,
+		[semesterId, userId, newStartDate, newEndDate]
+	);
+
+	const assignmentViolations = assignmentCountRow?.count ?? 0;
+	const taskViolations = taskCountRow?.count ?? 0;
+	const scheduledViolations = scheduledCountRow?.count ?? 0;
+
+	if (assignmentViolations || taskViolations || scheduledViolations) {
+		const parts = [];
+
+		if (assignmentViolations) {
+			parts.push(
+				`${assignmentViolations} assignment deadline${assignmentViolations === 1 ? "" : "s"}`
+			);
+		}
+
+		if (taskViolations) {
+			parts.push(
+				`${taskViolations} task deadline${taskViolations === 1 ? "" : "s"}`
+			);
+		}
+
+		if (scheduledViolations) {
+			parts.push(
+				`${scheduledViolations} scheduled task entr${scheduledViolations === 1 ? "y" : "ies"}`
+			);
+		}
+
+		const message = `Cannot change semester range. The new dates would exclude: ${parts.join(", ")}. Please update or remove these first.`;
+
+		throw new AppError(message, 409);
+	}
+}
+
 async function findAll(userId) {
 	const [rows] = await db.query(
 		`SELECT id, user_id, name, start_date, end_date, created_at, updated_at
@@ -98,6 +165,8 @@ async function update(userId, semesterId, { name, startDate, endDate }) {
 		await overlapCheck(userId, endDate, startDate, {
 			excludeSemesterId: semesterId
 		});
+
+		await validateSemesterRangeChange(userId, semesterId, startDate, endDate);
 
 		setParts.push("start_date = ?");
 		values.push(startDate);
