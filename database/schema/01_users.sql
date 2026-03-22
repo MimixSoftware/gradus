@@ -3,7 +3,7 @@ CREATE TABLE users (
 	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 	email VARCHAR(255) NOT NULL UNIQUE,
 	forename VARCHAR(100) NOT NULL,
-	surname VARCHAR(100) NOT NULL,
+	surname VARCHAR(100) NULL,
 	password_hash VARCHAR(60) NOT NULL,
 	role ENUM('user','admin') NOT NULL DEFAULT 'user',
 	status ENUM('active','suspended') NOT NULL DEFAULT 'active',

@@ -3,7 +3,7 @@ const AppError = require("../../utils/AppError");
 
 function validateRegisterInput({ email, forename, surname, password, confirmPassword } = {}) {
 	forename = v.validateRequiredString(forename, "Forename", { max: 100 });
-	surname = v.validateRequiredString(surname, "Surname", { max: 100 });
+	surname = v.validateOptionalString(surname, "Surname", { max: 100 }) ?? null;
 	email = v.validateRequiredString(email, "Email", {
 		toLowerCase: true,
 		max: 255,
