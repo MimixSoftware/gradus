@@ -196,14 +196,27 @@ body {
 	align-items: center;
 }
 
-.logo a {
+.logo-link {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 	text-decoration: none;
-	color: var(--text);
+	color: var(--color-text-primary);
 	font-weight: 600;
 	font-size: 1.1rem;
 }
 
-.logo a:hover {
+.logo-icon {
+	width: 48px;
+	height: 48px;
+	object-fit: contain;
+}
+
+.logo-text {
+	line-height: 1;
+}
+
+.logo-link:hover {
 	opacity: 0.8;
 }
 
