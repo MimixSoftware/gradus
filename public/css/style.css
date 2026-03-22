@@ -1198,3 +1198,26 @@ body.modal-open {
 	color: var(--danger);
 	font-weight: 600;
 }
+
+.checklist {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.checklist-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	cursor: pointer;
+}
+
+.checklist-item input[type="checkbox"] {
+	width: auto;
+	flex: 0 0 auto;
+	margin: 0;
+}
+
+.checklist-item span {
+	flex: 0 1 auto;
+}

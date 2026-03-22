@@ -42,7 +42,7 @@
 					<div class="ui-list ui-list--editable" data-list="unscheduledTasks"></div>
 
 					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-modal-open="new-study-session-modal">Auto-schedule</button>
+						<button type="button" class="btn btn-small" data-modal-open="auto-schedule-modal">Auto-schedule</button>
 					</div>
 				</article>
 			</section>
@@ -160,6 +160,41 @@
 			<footer class="modal-footer">
 				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
 				<button type="submit" class="btn btn-small btn-primary" form="schedule-duration-form">Schedule</button>
+			</footer>
+		</div>
+	</div>
+
+	<!-- Auto-Schedule Modal -->
+	<div class="modal" id="auto-schedule-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title">Auto-Schedule Tasks</div>
+					<div class="field-hint">Select the suggested allocations you want to apply.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="auto-schedule-form">
+				<div id="as-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+				<div class="form-row">
+					<label>Suggested Allocations</label>
+
+					<div class="checklist">
+						<!-- populated by JS -->
+					</div>
+
+					<div class="field-hint">Uncheck any suggestions you do not want to schedule.</div>
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="auto-schedule-form">Schedule Selected</button>
 			</footer>
 		</div>
 	</div>

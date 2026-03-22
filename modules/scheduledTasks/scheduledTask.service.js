@@ -267,6 +267,111 @@ async function createInStudySession(userId, studySessionId, { taskId, sessionDat
 	}
 }
 
+async function createMany(userId, allocations) {
+	const connection = await db.getConnection();
+
+	try {
+		await connection.beginTransaction();
+
+		const createdIds = [];
+
+		for (const allocation of allocations) {
+			const { taskId, studySessionId, sessionDate, position, durationMinutes } = allocation;
+
+			await sessionDateCheckScheduledTask(userId, studySessionId, sessionDate);
+
+			const [[taskRow]] = await connection.query(
+				`
+				SELECT t.etc_minutes
+				FROM tasks t
+				INNER JOIN assignments a ON a.id = t.assignment_id
+				INNER JOIN modules m ON m.id = a.module_id
+				INNER JOIN semesters s ON s.id = m.semester_id
+				WHERE t.id = ? AND s.user_id = ?
+				LIMIT 1`,
+				[taskId, userId]
+			);
+
+			if (!taskRow) {
+				throw new AppError("Task not found.", 404);
+			}
+
+			await etcOverflowCheckScheduledTask(userId, taskId, durationMinutes, connection);
+			await spilloverCheckScheduledTask(studySessionId, sessionDate, durationMinutes, connection);
+
+			const [[countRow]] = await connection.query(
+				`
+				SELECT COUNT(*) AS count
+				FROM scheduled_tasks
+				WHERE study_session_id = ? AND session_date = ?`,
+				[studySessionId, sessionDate]
+			);
+
+			let insertPosition = position != null ? position : countRow.count;
+			insertPosition = Math.max(0, Math.min(insertPosition, countRow.count));
+
+			const TEMP_OFFSET = 1000000;
+
+			if (position != null) {
+				await connection.query(
+					`
+					UPDATE scheduled_tasks
+					SET position = position + ?
+					WHERE study_session_id = ?
+					  AND session_date = ?
+					  AND position >= ?`,
+					[TEMP_OFFSET, studySessionId, sessionDate, insertPosition]
+				);
+
+				await connection.query(
+					`
+					UPDATE scheduled_tasks
+					SET position = position - ? + 1
+					WHERE study_session_id = ?
+					  AND session_date = ?
+					  AND position >= ?`,
+					[TEMP_OFFSET, studySessionId, sessionDate, TEMP_OFFSET]
+				);
+			}
+
+			const [result] = await connection.query(
+				`
+				INSERT INTO scheduled_tasks
+					(task_id, study_session_id, session_date, position, duration_minutes)
+				VALUES (?, ?, ?, ?, ?)`,
+				[taskId, studySessionId, sessionDate, insertPosition, durationMinutes]
+			);
+
+			createdIds.push(result.insertId);
+		}
+
+		await connection.commit();
+
+		const createdScheduledTasks = [];
+		for (const id of createdIds) {
+			createdScheduledTasks.push(await findById(userId, id));
+		}
+
+		return createdScheduledTasks;
+	} catch (err) {
+		await connection.rollback();
+
+		if (err.code === "ER_DUP_ENTRY") {
+			if (err.sqlMessage.includes("uq_scheduled_tasks_unique_slot")) {
+				throw new AppError("Another task already occupies this position in the session.", 409);
+			}
+
+			if (err.sqlMessage.includes("uq_scheduled_tasks_unique_task_per_session")) {
+				throw new AppError("This task is already scheduled in this session on this date.", 409);
+			}
+		}
+
+		throw err;
+	} finally {
+		connection.release();
+	}
+}
+
 async function findById(userId, scheduledTaskId) {
 	const [rows] = await db.query(
 		`SELECT
@@ -422,4 +527,4 @@ async function remove(userId, scheduledTaskId) {
 	}
 }
 
-module.exports = { findAll, findAllByStudySession, findAllByAssignment, findAllBySemester, createInStudySession, findById, update, remove };
+module.exports = { findAll, findAllByStudySession, findAllByAssignment, findAllBySemester, createInStudySession, createMany, findById, update, remove };

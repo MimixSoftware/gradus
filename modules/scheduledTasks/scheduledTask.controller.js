@@ -41,6 +41,14 @@ async function createInStudySession(req, res) {
 	return res.status(201).json({ message: "Task scheduled successfully.", scheduledTask });
 }
 
+async function createMany(req, res) {
+	const validated = scheduledTaskValidation.validateCreateManyInput(req.body);
+
+	const scheduledTasks = await scheduledTaskService.createMany(req.user.id, validated.allocations);
+
+	return res.status(201).json({ message: "Tasks scheduled successfully.", scheduledTasks });
+}
+
 async function findById(req, res) {
 	const scheduledTaskId = validateRequiredInt(req.params.scheduledTaskId, "Scheduled Task ID", { min: 1 });
 
@@ -66,4 +74,4 @@ async function remove(req, res) {
 	return res.status(204).json({ message: "Task unscheduled successfully." });
 }
 
-module.exports = { findAll, findAllByStudySession, findAllByAssignment, findAllBySemester, createInStudySession, findById, update, remove };
+module.exports = { findAll, findAllByStudySession, findAllByAssignment, findAllBySemester, createInStudySession, createMany, findById, update, remove };

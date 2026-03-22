@@ -31,4 +31,27 @@ function validateUpdateInput({ position, durationMinutes } = {}) {
 	return updates;
 }
 
-module.exports = { validateCreateInStudySessionInput, validateUpdateInput };
+function validateCreateManyInput({ allocations } = {}) {
+	if (!Array.isArray(allocations)) {
+		throw new AppError("Allocations must be an array.", 400);
+	}
+	if (allocations.length === 0) {
+		throw new AppError("At least one allocation is required.", 400);
+	}
+
+	const validatedAllocations = allocations.map((allocation) => {
+		let { taskId, studySessionId, sessionDate, position, durationMinutes } = allocation ?? {};
+
+		taskId = v.validateRequiredInt(taskId, "Task ID", { min: 1 });
+		studySessionId = v.validateRequiredInt(studySessionId, "Study Session ID", { min: 1 });
+		sessionDate = v.validateRequiredDate(sessionDate, "Session Date");
+		position = v.validateOptionalInt(position, "Position", { min: 0 });
+		durationMinutes = v.validateRequiredInt(durationMinutes, "Duration", { min: 15, max: 240, step: 15 });
+
+		return { taskId, studySessionId, sessionDate, position, durationMinutes };
+	});
+
+	return { allocations: validatedAllocations };
+}
+
+module.exports = { validateCreateInStudySessionInput, validateUpdateInput, validateCreateManyInput };

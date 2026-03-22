@@ -2979,6 +2979,7 @@ async function initSchedule() {
 	const nextWeekBtnEl = document.getElementById("next-week-btn");
 	const scheduleListEl = document.querySelector('[data-list="schedule"]');
 	const unscheduledTasksListEl = document.querySelector('[data-list="unscheduledTasks"]');
+	const autoScheduleBtnEl = document.querySelector('[data-modal-open="auto-schedule-modal"]');
 
 	document.addEventListener("selectedWeek:changed", refreshSchedule);
 	document.addEventListener("scheduledTask:created", refreshSchedule);
@@ -3267,6 +3268,7 @@ async function initSchedule() {
 			selectedWeekNameEl.classList.add("warning-text");
 			prevWeekBtnEl.classList.add("disabled");
 			nextWeekBtnEl.classList.add("disabled");
+			autoScheduleBtnEl.disabled = true;
 		} else {
 			const semester = appState.semesterById.get(appState.activeSemesterId);
 			const semesterStart = new Date(semester.startDate);
@@ -3463,6 +3465,10 @@ async function initSchedule() {
 
 		if (!hasRenderableTasks) {
 			renderEmptyListState(unscheduledTasksListEl, "No suitable tasks. An active task needs an ETC to be schedulable.");
+			autoScheduleBtnEl.disabled = true;
+		}
+		else {
+			autoScheduleBtnEl.disabled = false;
 		}
 	}
 
@@ -3615,6 +3621,220 @@ function getTaskRemainingMinutes(taskId) {
 	return Math.max(0, task.etcMinutes - totalScheduledMinutes);
 }
 
+function suggestAutoSchedule() {
+	const suggestions = [];
+	const semester = appState.semesterById.get(appState.activeSemesterId);
+	
+	if (!semester || !appState.studySessions.length) {
+		return suggestions;
+	}
+
+	const semesterStart = new Date(semester.startDate);
+	const semesterEnd = new Date(semester.endDate);
+	const now = new Date();
+
+	const unscheduledTasks = appState.tasks.filter(task => {
+		if (task.status === "done" || task.etcMinutes === null) return false;
+		const remainingMinutes = getTaskRemainingMinutes(task.id);
+		return remainingMinutes > 0;
+	});
+
+	const sessionUsageFromSuggestions = new Map();
+
+	const getAvailableMinutesForSession = (sessionId, dateStr) => {
+		const ss = appState.studySessionById.get(sessionId);
+		if (!ss) return 0;
+
+		let scheduledMinutes = 0;
+		for (const st of appState.scheduledTaskById.values()) {
+			if (st.studySessionId === sessionId && st.sessionDate === dateStr) {
+				scheduledMinutes += st.durationMinutes;
+			}
+		}
+
+		const suggestionKey = `${sessionId}-${dateStr}`;
+		const suggestionMinutes = sessionUsageFromSuggestions.get(suggestionKey) || 0;
+
+		return ss.durationMinutes - scheduledMinutes - suggestionMinutes;
+	};
+
+	const isSessionSchedulable = (session, dateStr) => {
+		const [year, month, day] = dateStr.split("-").map(Number);
+		const sessionDate = new Date(year, month - 1, day);
+		const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+		if (sessionDate < todayDate) {
+			return false;
+		}
+
+		if (sessionDate.getTime() === todayDate.getTime()) {
+			const [sessionHours, sessionMinutes] = session.startTime.split(":").map(Number);
+			const sessionStartMinutes = sessionHours * 60 + sessionMinutes;
+			const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+			if (nowMinutes >= sessionStartMinutes) {
+				return false;
+			}
+		}
+
+		return true;
+	};
+
+	for (const task of unscheduledTasks) {
+		let remainingETC = getTaskRemainingMinutes(task.id);
+		
+		for (let d = new Date(semesterStart); d <= semesterEnd && remainingETC > 0; d.setDate(d.getDate() + 1)) {
+			const currentDate = new Date(d);
+			const dateStr = currentDate.toISOString().split("T")[0];
+			
+			const jsWeekday = currentDate.getDay();
+			const appWeekday = (jsWeekday + 6) % 7;
+			
+			const sessionsForDay = appState.studySessions
+				.filter(ss => ss.dayOfWeek === appWeekday)
+				.filter(ss => isSessionSchedulable(ss, dateStr))
+				.sort((a, b) => a.startTime.localeCompare(b.startTime));
+			
+			for (const session of sessionsForDay) {
+				if (remainingETC <= 0) break;
+				
+				const availableMinutes = getAvailableMinutesForSession(session.id, dateStr);
+				
+				if (availableMinutes > 0) {
+					const durationToSchedule = Math.min(remainingETC, availableMinutes);
+					
+					const sessionEndTime = getEndTime(session.startTime, session.durationMinutes);
+					const timeRange = `${formatTime(session.startTime)} – ${formatTime(sessionEndTime)}`;
+					
+					suggestions.push({
+						taskId: task.id,
+						taskName: task.name,
+						studySessionId: session.id,
+						sessionDate: dateStr,
+						durationMinutes: durationToSchedule,
+						timeRange: timeRange
+					});
+					
+					const suggestionKey = `${session.id}-${dateStr}`;
+					sessionUsageFromSuggestions.set(suggestionKey, (sessionUsageFromSuggestions.get(suggestionKey) || 0) + durationToSchedule);
+					
+					remainingETC -= durationToSchedule;
+				}
+			}
+		}
+	}
+
+	return suggestions;
+}
+
+function initAutoScheduleForm() {
+	const form = document.getElementById("auto-schedule-form");
+	if (!form) return;
+
+	const modal = document.getElementById("auto-schedule-modal");
+	const checklistEl = form.querySelector(".checklist");
+	const submitBtn = document.querySelector(
+		'button[form="auto-schedule-form"]'
+	);
+	const errorEl = document.getElementById("as-error");
+
+	if (!checklistEl || !submitBtn) return;
+
+	let suggestions = [];
+
+	modal.addEventListener("modal:open", () => {
+		form.loadSuggestions();
+	});
+
+	function renderChecklist() {
+		checklistEl.innerHTML = "";
+
+		if (!suggestions.length) {
+			checklistEl.innerHTML = `<div class="field-hint">No suggestions available.</div>`;
+			submitBtn.disabled = true;
+			return;
+		}
+
+		suggestions.forEach((s, index) => {
+			const label = document.createElement("label");
+			label.className = "checklist-item";
+
+			const dayDate = new Date(s.sessionDate);
+
+			const sessionDate = `${DAY_NAMES[appState.studySessionById.get(s.studySessionId).dayOfWeek]} ${dayDate.toLocaleDateString("en-GB", {
+				day: "numeric",
+				month: "short"
+			})}`;
+
+			label.innerHTML = `
+				<input type="checkbox" name="selectedAllocations" value="${index}" checked />
+				<span>
+					${s.taskName} → ${sessionDate}, ${s.timeRange}
+					(${s.durationMinutes}m)
+				</span>
+			`;
+
+			checklistEl.appendChild(label);
+		});
+
+		updateSubmitState();
+	}
+
+	function updateSubmitState() {
+		const checked = form.querySelectorAll(
+			'input[name="selectedAllocations"]:checked'
+		);
+		submitBtn.disabled = checked.length === 0;
+	}
+
+	form.addEventListener("change", (e) => {
+		if (e.target.name === "selectedAllocations") {
+			updateSubmitState();
+		}
+	});
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+		setAlert(errorEl, "");
+
+		const selectedIndexes = [...form.querySelectorAll(
+			'input[name="selectedAllocations"]:checked'
+		)].map(cb => Number(cb.value));
+
+		const allocations = selectedIndexes.map((i) => {
+			const { taskId, studySessionId, sessionDate, durationMinutes } = suggestions[i];
+
+			return {
+				taskId,
+				studySessionId,
+				sessionDate,
+				durationMinutes
+			};
+		});
+
+		try {
+			const res = await postJson("/api/scheduled-tasks/auto", {
+				allocations
+			});
+
+			showToast(res.message);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			document.dispatchEvent(new CustomEvent("scheduledTask:updated"));
+		} catch (err) {
+			setAlert(errorEl, err.message);
+		}
+	});
+
+	form.loadSuggestions = () => {
+		suggestions = suggestAutoSchedule();
+		renderChecklist();
+	};
+}
+
 function populateScheduleStudySessionsSelect(dateStr) {
 	const form = document.getElementById("schedule-task-form");
 	if (!form) return;
@@ -3721,7 +3941,7 @@ function updateScheduleDurationState() {
 
 function initScheduleTaskForm() {
 	const form = document.getElementById("schedule-task-form");
-	if (!form) return;
+	if (!form || !appState.activeSemesterId) return;
 
 	const dateInput = form.querySelector("#st-date");
 	const durationInput = form.querySelector("#st-duration");
@@ -4304,4 +4524,5 @@ document.addEventListener("DOMContentLoaded", async () => {
 	await initSchedule();
 	initScheduleTaskForm();
 	initScheduleTaskDragAndDrop();
+	initAutoScheduleForm();
 });

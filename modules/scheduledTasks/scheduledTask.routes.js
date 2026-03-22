@@ -10,4 +10,6 @@ router.get("/:scheduledTaskId", requireApiAuth, asyncHandler(scheduledTaskContro
 router.patch("/:scheduledTaskId", requireApiAuth, asyncHandler(scheduledTaskController.update));
 router.delete("/:scheduledTaskId", requireApiAuth, asyncHandler(scheduledTaskController.remove));
 
+router.post("/auto", requireApiAuth, asyncHandler(scheduledTaskController.createMany));
+
 module.exports = router;
