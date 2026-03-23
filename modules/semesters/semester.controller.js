@@ -38,7 +38,7 @@ async function remove(req, res) {
 
 	await semesterService.remove(req.user.id, semesterId);
 
-	return res.status(204).json({ message: "Semester deleted successfully." });
+	return res.status(204).json();
 }
 
 module.exports = { findAll, create, findById, update, remove };

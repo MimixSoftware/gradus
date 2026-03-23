@@ -47,7 +47,7 @@ async function remove(req, res) {
 
 	await moduleService.remove(req.user.id, moduleId);
 
-	return res.status(204).json({ message: "Module deleted successfully." });
+	return res.status(204).json();
 }
 
 module.exports = { findAll, findAllBySemester, createInSemester, findById, update, remove };

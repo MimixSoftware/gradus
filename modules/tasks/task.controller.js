@@ -56,7 +56,7 @@ async function remove(req, res) {
 
 	await taskService.remove(req.user.id, taskId);
 
-	return res.status(204).json({ message: "Task deleted successfully." });
+	return res.status(204).json();
 }
 
 async function estimate(req, res) {

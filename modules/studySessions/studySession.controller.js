@@ -47,7 +47,7 @@ async function remove(req, res) {
 
 	await studySessionService.remove(req.user.id, studySessionId);
 
-	return res.status(204).json({ message: "Study session deleted successfully." });
+	return res.status(204).json();
 }
 
 module.exports = { findAll, findAllBySemester, createInSemester, findById, update, remove };

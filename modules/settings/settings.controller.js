@@ -33,7 +33,7 @@ async function updateAvatar(req, res) {
 async function deleteAvatar(req, res) {
 	await settingsService.deleteAvatar(req.user.id);
 
-	res.status(204).json({ message: "Avatar deleted successfully." });
+	res.status(204).json();
 }
 
 module.exports = { getByUserId, getAvatar, update, updateAvatar, deleteAvatar };

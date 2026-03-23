@@ -71,7 +71,7 @@ async function remove(req, res) {
 
 	await scheduledTaskService.remove(req.user.id, scheduledTaskId);
 
-	return res.status(204).json({ message: "Task unscheduled successfully." });
+	return res.status(204).json();
 }
 
 module.exports = { findAll, findAllByStudySession, findAllByAssignment, findAllBySemester, createInStudySession, createMany, findById, update, remove };

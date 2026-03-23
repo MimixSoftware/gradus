@@ -55,7 +55,7 @@ async function remove(req, res) {
 
 	await assignmentService.remove(req.user.id, assignmentId);
 
-	return res.status(204).json({ message: "Assignment deleted successfully." });
+	return res.status(204).json();
 }
 
 module.exports = { findAll, findAllBySemester, findAllByModule, createInModule, findById, update, remove };
