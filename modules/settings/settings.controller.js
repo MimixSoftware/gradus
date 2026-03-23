@@ -16,8 +16,9 @@ async function getAvatar(req, res) {
 async function update(req, res) {
 	const validated = settingsValidation.validateUpdateInput(req.body);
 
-	const settings = await settingsService.update(req.user.id, validated);
+	const { user, settings } = await settingsService.update(req.user.id, validated);
 
+	req.session.user = user;
 	req.session.settings = settings;
 
 	return res.status(200).json({ message: "Settings updated successfully.", settings });

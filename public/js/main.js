@@ -4469,56 +4469,72 @@ function initSettings() {
 		const file = avatarInput.files[0];
 		if (!file) return;
 
-		const formData = new FormData();
-		formData.append("avatar", file);
+		try {
+			const formData = new FormData();
+			formData.append("avatar", file);
 
-		const res = await fetch("/api/settings/avatar", {
-			method: "PATCH",
-			body: formData
-		});
-		const data = await res.json();
+			const res = await fetch("/api/settings/avatar", {
+				method: "PATCH",
+				body: formData
+			});
 
-		showToast(data.message);
-		document.dispatchEvent(new Event("avatar:updated"));
+			const data = await res.json();
+
+			if (!res.ok) throw new Error(data.message || "Upload failed.");
+
+			showToast(data.message);
+			document.dispatchEvent(new Event("avatar:updated"));
+		} catch (err) {
+			showToast(err.message, { type: "error" });
+		} finally {
+			avatarInput.value = "";
+		}
 	});
 
 	deleteAvatarBtn.addEventListener("click", async () => {
-		await deleteJson("/api/settings/avatar");
+		try {
+			await deleteJson("/api/settings/avatar");
 
-		document.dispatchEvent(new Event("avatar:deleted"));
+			showToast("Avatar deleted successfully.");
+			document.dispatchEvent(new Event("avatar:deleted"));
+		} catch (err) {
+			showToast(err.message, { type: "error" });
+		}
 	});
 
 	profileForm.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
-		const payload = {
-			forename: document.getElementById("sp-forename").value.trim(),
-			surname: document.getElementById("sp-surname").value.trim()
-		};
+		try {
+			const payload = {
+				forename: forenameInput.value.trim(),
+				surname: surnameInput.value.trim()
+			};
 
-		await fetch("/api/settings", {
-			method: "PATCH",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(payload)
-		});
+			const res = await patchJson("/api/settings", payload);
 
-		document.dispatchEvent(new Event("setting:updated"));
+			document.dispatchEvent(new Event("setting:updated"));
+			showToast(res.message);
+		} catch (err) {
+			showToast(err.message, { type: "error" });
+		}
 	});
 
 	prefsForm.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
-		const payload = {
-			theme: document.getElementById("spf-theme").value
-		};
+		try {
+			const payload = {
+				theme: themeSelect.value
+			};
 
-		await fetch("/api/settings", {
-			method: "PATCH",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(payload)
-		});
+			const res = await patchJson("/api/settings", payload);
 
-		document.dispatchEvent(new Event("setting:updated"));
+			document.dispatchEvent(new Event("setting:updated"));
+			showToast(res.message);
+		} catch (err) {
+			showToast(err.message, { type: "error" });
+		}
 	});
 }
 

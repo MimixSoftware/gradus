@@ -1,3 +1,5 @@
 node_modules/
 .env
 logs/
+storage/avatars/*
+!storage/avatars/0.webp

@@ -17,6 +17,23 @@ function mapUserSettingsRow(row) {
 	};
 }
 
+function mapUserWithSettings(row) {
+	return {
+		user: {
+			id: row.id,
+			email: row.email,
+			forename: row.forename,
+			surname: row.surname,
+			role: row.role,
+			status: row.status
+		},
+		settings: {
+			activeSemesterId: row.active_semester_id,
+			theme: row.theme
+		}
+	};
+}
+
 async function getByUserId(userId) {
 	const [rows] = await db.query(
 		`SELECT
@@ -36,6 +53,31 @@ async function getByUserId(userId) {
 	}
 
 	return mapUserSettingsRow(rows[0]);
+}
+
+async function getUserWithSettingsById(userId) {
+	const [rows] = await db.query(
+		`SELECT
+			u.id,
+			u.email,
+			u.forename,
+			u.surname,
+			u.role,
+			u.status,
+			us.active_semester_id,
+			us.theme
+		FROM users u
+		INNER JOIN user_settings us ON us.user_id = u.id
+		WHERE u.id = ?
+		LIMIT 1`,
+		[userId]
+	);
+
+	if (rows.length === 0) {
+		throw new AppError("Settings not found.", 404);
+	}
+
+	return mapUserWithSettings(rows[0]);
 }
 
 async function getAvatarPath(userId) {
@@ -134,7 +176,7 @@ async function update(userId, payload) {
 
 		await conn.commit();
 
-		return await getByUserId(userId);
+		return await getUserWithSettingsById(userId);
 	} catch (err) {
 		await conn.rollback();
 
