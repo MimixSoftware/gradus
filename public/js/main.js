@@ -3720,7 +3720,7 @@ function suggestAutoSchedule() {
 		
 		for (let d = new Date(semesterStart); d <= semesterEnd && remainingETC > 0; d.setDate(d.getDate() + 1)) {
 			const currentDate = new Date(d);
-			const dateStr = currentDate.toISOString().split("T")[0];
+			const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
 			
 			const jsWeekday = currentDate.getDay();
 			const appWeekday = (jsWeekday + 6) % 7;
@@ -3744,6 +3744,7 @@ function suggestAutoSchedule() {
 					suggestions.push({
 						taskId: task.id,
 						taskName: task.name,
+						assignmentName: appState.assignmentById.get(task.assignmentId).name,
 						studySessionId: session.id,
 						sessionDate: dateStr,
 						durationMinutes: durationToSchedule,
@@ -3804,7 +3805,7 @@ function initAutoScheduleForm() {
 			label.innerHTML = `
 				<input type="checkbox" name="selectedAllocations" value="${index}" checked />
 				<span>
-					${s.taskName} → ${sessionDate}, ${s.timeRange}
+					${s.taskName}, ${s.assignmentName} → ${sessionDate}, ${s.timeRange}
 					(${s.durationMinutes}m)
 				</span>
 			`;
