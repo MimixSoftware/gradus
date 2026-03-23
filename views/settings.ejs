@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %> - Gradus</title>
+	<link rel="icon" href="/images/favicon.ico">
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+	<%- include('partials/header') %>
+
+	<main class="page" data-page="settings">
+		<div class="container">
+
+			<header class="ui-header">
+				<div class="ui-title">
+					<h1>Settings</h1>
+					<div class="ui-subline">
+						Manage your account and preferences.
+					</div>
+				</div>
+			</header>
+
+			<section class="ui-grid ui-grid--settings">
+				<article class="ui-card">
+					<h2 class="ui-card-title">Profile</h2>
+
+					<form class="form" id="settings-profile-form">
+						
+						<div id="sp-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+						<div class="form-row">
+							<label>Avatar</label>
+
+							<div class="ui-user">
+								<img 
+									src="/api/settings/avatar" 
+									class="ui-avatar"
+									id="sp-avatar-preview"
+								/>
+
+								<input 
+									type="file" 
+									id="sp-avatar" 
+									name="avatar" 
+									accept="image/*"
+								/>
+
+								<button 
+									type="button" 
+									class="btn btn-small btn-danger" 
+									id="sp-avatar-delete"
+								>
+									Remove
+								</button>
+							</div>
+
+							<div class="field-hint">Upload a new profile picture or remove it.</div>
+						</div>
+
+						<div class="form-grid">
+							<div class="form-row">
+								<label for="sp-forename">Forename</label>
+								<input id="sp-forename" name="forename" type="text" required />
+							</div>
+
+							<div class="form-row">
+								<label for="sp-surname">Surname</label>
+								<input id="sp-surname" name="surname" type="text" />
+							</div>
+						</div>
+
+						<div class="ui-actions">
+							<button type="submit" class="btn btn-small btn-primary">Save</button>
+						</div>
+					</form>
+				</article>
+
+				<article class="ui-card">
+					<h2 class="ui-card-title">Preferences</h2>
+
+					<form class="form" id="settings-preferences-form">
+
+						<div id="spf-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+						<div class="form-row">
+							<label for="spf-theme">Theme</label>
+
+							<select id="spf-theme" name="theme">
+								<option value="system">System</option>
+								<option value="light">Light</option>
+								<option value="dark">Dark</option>
+							</select>
+
+							<div class="field-hint">
+								System = follows your device settings.
+							</div>
+						</div>
+
+						<div class="ui-actions">
+							<button type="submit" class="btn btn-small btn-primary">Save</button>
+						</div>
+
+					</form>
+				</article>
+
+			</section>
+
+		</div>
+	</main>
+
+	<%- include('partials/footer') %>
+
+	<script src="/js/main.js"></script>
+</body>
+</html>

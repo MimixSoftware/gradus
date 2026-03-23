@@ -680,6 +680,11 @@ input:focus {
   margin: 0 auto;
 }
 
+.ui-grid--settings {
+  grid-template-columns: 1fr 1fr;
+  margin: 0 auto;
+}
+
 .ui-card {
 	height: 420px;
 	display: flex;
@@ -1246,4 +1251,14 @@ body.modal-open {
 
 .schedule-day-label.is-today {
 	color: var(--primary);
+}
+
+.ui-card .form {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.ui-card .form .ui-actions {
+	margin-top: auto;
 }

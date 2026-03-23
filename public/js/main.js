@@ -3,6 +3,8 @@ const appState = {
 	// Settings
 	activeSemesterId: null,
 	theme: "system",
+	forename: "",
+	surname: "",
 	// Dashboard
 	semesters: [],
 	modules: [],
@@ -22,7 +24,7 @@ const appState = {
 	// Schedule
 	selectedWeekStart: null,
 	scheduledTasks: [],
-	scheduledTaskById: new Map()
+	scheduledTaskById: new Map(),
 };
 
 // Variables
@@ -93,6 +95,8 @@ async function loadSettings() {
 
 		appState.activeSemesterId = settings.activeSemesterId;
 		appState.theme = settings.theme;
+		appState.forename = settings.forename;
+		appState.surname = settings.surname;
 
 		applyTheme(appState.theme);
 
@@ -4416,6 +4420,108 @@ function initScheduleTaskDragAndDrop() {
 	pageEl.addEventListener("pointercancel", cleanupAll);
 }
 
+// Settings
+function initSettings() {
+	if (getRouteName() !== "settings") return;
+
+	const profileForm = document.getElementById("settings-profile-form");
+	const prefsForm = document.getElementById("settings-preferences-form");
+	const avatarImg = document.getElementById("sp-avatar-preview");
+	const avatarInput = document.getElementById("sp-avatar");
+	const deleteAvatarBtn = document.getElementById("sp-avatar-delete");
+	const forenameInput = document.getElementById("sp-forename");
+	const surnameInput = document.getElementById("sp-surname");
+	const themeSelect = document.getElementById("spf-theme");
+	const profileSaveBtn = document.querySelector('#settings-profile-form button[type="submit"]');
+	const prefsSaveBtn = document.querySelector('#settings-preferences-form button[type="submit"]');
+
+	document.addEventListener("setting:updated", refreshSettings);
+	document.addEventListener("avatar:updated", refreshSettings);
+	document.addEventListener("avatar:deleted", refreshSettings);
+
+	function updateButtons() {
+		profileSaveBtn.disabled =
+			forenameInput.value.trim() === (appState.forename || "") &&
+			surnameInput.value.trim() === (appState.surname || "");
+
+		prefsSaveBtn.disabled =
+			themeSelect.value === appState.theme;
+	}
+
+	async function refreshSettings() {
+		await loadSettings();
+
+		avatarImg.src = `/api/settings/avatar?t=${Date.now()}`;
+		forenameInput.value = appState.forename;
+		surnameInput.value = appState.surname;
+		themeSelect.value = appState.theme;
+
+		updateButtons();
+	}
+
+	refreshSettings();
+
+	forenameInput.addEventListener("input", updateButtons);
+	surnameInput.addEventListener("input", updateButtons);
+	themeSelect.addEventListener("change", updateButtons);
+
+	avatarInput.addEventListener("change", async () => {
+		const file = avatarInput.files[0];
+		if (!file) return;
+
+		const formData = new FormData();
+		formData.append("avatar", file);
+
+		const res = await fetch("/api/settings/avatar", {
+			method: "PATCH",
+			body: formData
+		});
+		const data = await res.json();
+
+		showToast(data.message);
+		document.dispatchEvent(new Event("avatar:updated"));
+	});
+
+	deleteAvatarBtn.addEventListener("click", async () => {
+		await deleteJson("/api/settings/avatar");
+
+		document.dispatchEvent(new Event("avatar:deleted"));
+	});
+
+	profileForm.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const payload = {
+			forename: document.getElementById("sp-forename").value.trim(),
+			surname: document.getElementById("sp-surname").value.trim()
+		};
+
+		await fetch("/api/settings", {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload)
+		});
+
+		document.dispatchEvent(new Event("setting:updated"));
+	});
+
+	prefsForm.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const payload = {
+			theme: document.getElementById("spf-theme").value
+		};
+
+		await fetch("/api/settings", {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload)
+		});
+
+		document.dispatchEvent(new Event("setting:updated"));
+	});
+}
+
 // Global Inits
 function initAuthForms() {
 	const loginForm = document.getElementById("login-form");
@@ -4556,4 +4662,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initScheduleTaskForm();
 	initScheduleTaskDragAndDrop();
 	initAutoScheduleForm();
+
+	await initSettings();
 });

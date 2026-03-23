@@ -54,6 +54,11 @@ router.get('/schedule', requireAuth, (req, res) => {
 	res.render('schedule', { title: 'My Schedule' });
 });
 
+// Settings page
+router.get('/settings', requireAuth, (req, res) => {
+	res.render('settings', { title: 'Settings' });
+});
+
 // 404 page
 router.get(/.*/, (req, res) => {
 	res.status(404).render('error', { 

@@ -6,7 +6,7 @@ const db = require("../../database/db");
 const AppError = require("../../utils/AppError");
 
 const AVATAR_DIR = path.join(process.cwd(), "storage", "avatars");
-const DEFAULT_AVATAR_PATH = path.join(process.cwd(), "storage", "avatars", "default.png");
+const DEFAULT_AVATAR_PATH = path.join(process.cwd(), "storage", "avatars", "0.webp");
 
 function mapUserSettingsRow(row) {
 	return {
