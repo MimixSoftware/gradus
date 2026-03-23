@@ -1,5 +1,12 @@
+const fs = require("fs/promises");
+const path = require("path");
+const sharp = require("sharp");
+
 const db = require("../../database/db");
 const AppError = require("../../utils/AppError");
+
+const AVATAR_DIR = path.join(process.cwd(), "storage", "avatars");
+const DEFAULT_AVATAR_PATH = path.join(process.cwd(), "storage", "avatars", "default.png");
 
 function mapUserSettingsRow(row) {
 	return {
@@ -29,6 +36,17 @@ async function getByUserId(userId) {
 	}
 
 	return mapUserSettingsRow(rows[0]);
+}
+
+async function getAvatarPath(userId) {
+	const avatarPath = path.join(AVATAR_DIR, `${userId}.webp`);
+
+	try {
+		await fs.access(avatarPath);
+		return avatarPath;
+	} catch {
+		return DEFAULT_AVATAR_PATH;
+	}
 }
 
 async function updateUserFields(conn, userId, { forename, surname }) {
@@ -130,4 +148,36 @@ async function update(userId, payload) {
 	}
 }
 
-module.exports = { getByUserId, update };
+async function updateAvatar(userId, file) {
+	if (!file) {
+		throw new AppError("No avatar file uploaded.", 400);
+	}
+
+	await fs.mkdir(AVATAR_DIR, { recursive: true });
+
+	const outputPath = path.join(AVATAR_DIR, `${userId}.webp`);
+
+	try {
+		await sharp(file.buffer)
+			.resize(256, 256, { fit: "cover", position: "centre" })
+			.webp({ quality: 82 })
+			.toFile(outputPath);
+	} catch {
+		throw new AppError("Failed to process avatar image.", 400);
+	}
+}
+
+async function deleteAvatar(userId) {
+	const avatarPath = path.join(AVATAR_DIR, `${userId}.webp`);
+
+	try {
+		await fs.unlink(avatarPath);
+	} catch (err) {
+		if (err.code === "ENOENT") {
+			return;
+		}
+		throw err;
+	}
+}
+
+module.exports = { getByUserId, getAvatarPath, update, updateAvatar, deleteAvatar };
