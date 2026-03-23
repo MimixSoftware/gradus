@@ -1,23 +1,25 @@
 const db = require("../../database/db");
-const AppError = require('../../utils/AppError');
+const AppError = require("../../utils/AppError");
 
-function mapUserSettingsRow(us) {
+function mapUserSettingsRow(row) {
 	return {
-		activeSemesterId: us.active_semester_id,
-		theme: us.theme
+		forename: row.forename,
+		surname: row.surname,
+		activeSemesterId: row.active_semester_id,
+		theme: row.theme
 	};
 }
 
 async function getByUserId(userId) {
 	const [rows] = await db.query(
 		`SELECT
-			us.user_id,
+			u.forename,
+			u.surname,
 			us.active_semester_id,
-			us.theme,
-			us.created_at,
-			us.updated_at
-		FROM user_settings us
-		WHERE us.user_id = ?
+			us.theme
+		FROM users u
+		INNER JOIN user_settings us ON us.user_id = u.id
+		WHERE u.id = ?
 		LIMIT 1`,
 		[userId]
 	);
@@ -29,13 +31,46 @@ async function getByUserId(userId) {
 	return mapUserSettingsRow(rows[0]);
 }
 
-async function update(userId, { activeSemesterId, theme }) {
+async function updateUserFields(conn, userId, { forename, surname }) {
+	const setParts = [];
+	const values = [];
+
+	if (forename !== undefined) {
+		setParts.push("forename = ?");
+		values.push(forename);
+	}
+
+	if (surname !== undefined) {
+		setParts.push("surname = ?");
+		values.push(surname);
+	}
+
+	if (!setParts.length) return;
+
+	values.push(userId);
+
+	const [result] = await conn.query(
+		`UPDATE users
+		SET ${setParts.join(", ")}
+		WHERE id = ?`,
+		values
+	);
+
+	if (result.affectedRows === 0) {
+		throw new AppError("User not found.", 404);
+	}
+}
+
+async function updateUserSettingsFields(conn, userId, { activeSemesterId, theme }) {
 	const setParts = [];
 	const values = [];
 
 	if (activeSemesterId !== undefined && activeSemesterId !== null) {
-		const [semRows] = await db.query(
-			`SELECT 1 FROM semesters WHERE id = ? AND user_id = ? LIMIT 1`,
+		const [semRows] = await conn.query(
+			`SELECT 1
+			FROM semesters
+			WHERE id = ? AND user_id = ?
+			LIMIT 1`,
 			[activeSemesterId, userId]
 		);
 
@@ -44,36 +79,54 @@ async function update(userId, { activeSemesterId, theme }) {
 		}
 	}
 
-	if (activeSemesterId  !== undefined) {
-		setParts.push("us.active_semester_id = ?");
+	if (activeSemesterId !== undefined) {
+		setParts.push("active_semester_id = ?");
 		values.push(activeSemesterId);
 	}
 
 	if (theme !== undefined) {
-		setParts.push("us.theme = ?");
+		setParts.push("theme = ?");
 		values.push(theme);
 	}
 
+	if (!setParts.length) return;
+
 	values.push(userId);
 
-	try {
-		const [result] = await db.query(
-			`UPDATE user_settings us
-			SET ${setParts.join(", ")}
-			WHERE user_id = ?`,
-			values
-		);
+	const [result] = await conn.query(
+		`UPDATE user_settings
+		SET ${setParts.join(", ")}
+		WHERE user_id = ?`,
+		values
+	);
 
-		if (result.affectedRows === 0) {
-			throw new AppError("Settings not found.", 404);
-		}
+	if (result.affectedRows === 0) {
+		throw new AppError("Settings not found.", 404);
+	}
+}
+
+async function update(userId, payload) {
+	const conn = await db.getConnection();
+
+	try {
+		await conn.beginTransaction();
+
+		await updateUserFields(conn, userId, payload);
+		await updateUserSettingsFields(conn, userId, payload);
+
+		await conn.commit();
 
 		return await getByUserId(userId);
 	} catch (err) {
+		await conn.rollback();
+
 		if (err.code === "ER_NO_REFERENCED_ROW_2") {
 			throw new AppError("Semester not found.", 404);
 		}
+
 		throw err;
+	} finally {
+		conn.release();
 	}
 }
 
