@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= title %> - Gradus</title>
+	<link rel="icon" href="/images/favicon.ico">
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+	<%- include('partials/header') %>
+
+	<main class="page" data-page="statistics">
+		<div class="container">
+
+			<header class="ui-header">
+				<div class="ui-title">
+					<h1>Statistics</h1>
+					<div class="ui-subline">
+						Your study performance at a glance.
+					</div>
+				</div>
+			</header>
+
+			<section class="ui-grid">
+				<article class="ui-card">
+					<h2 class="ui-card-title">Overview</h2>
+
+					<!-- <ul class="ui-list ui-list--editable" data-list="modules"></ul>
+
+					<div class="ui-actions">
+						<button type="button" class="btn btn-small" data-modal-open="new-module-modal">New</button>
+					</div> -->
+				</article>
+
+				<article class="ui-card">
+					<h2 class="ui-card-title">Analytics</h2>
+
+					<!-- <ul class="ui-list ui-list--clickable" data-list="assignments"></ul>
+
+					<div class="ui-actions">
+						<button type="button" class="btn btn-small" data-modal-open="new-assignment-modal">New</button>
+						<button type="button" class="btn btn-small" id="toggle-completed-btn">Show Completed</button>
+					</div> -->
+				</article>
+
+				<article class="ui-card">
+					<h2 class="ui-card-title">Insights</h2>
+
+					<!-- <ul class="ui-list ui-list--editable" data-list="today"></ul>
+
+					<div class="ui-actions">
+						<button type="button" class="btn btn-small" data-link="/schedule">My Schedule</button>
+					</div> -->
+				</article>
+			</section>
+
+		</div>
+	</main>
+
+	<%- include('partials/footer') %>
+
+	<script src="/js/main.js"></script>
+</body>
+</html>

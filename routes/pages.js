@@ -59,6 +59,11 @@ router.get('/settings', requireAuth, (req, res) => {
 	res.render('settings', { title: 'Settings' });
 });
 
+// Statistics page
+router.get('/statistics', requireAuth, (req, res) => {
+	res.render('statistics', { title: 'Statistics' });
+});
+
 // 404 page
 router.get(/.*/, (req, res) => {
 	res.status(404).render('error', { 
