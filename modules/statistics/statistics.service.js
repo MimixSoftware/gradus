@@ -30,75 +30,134 @@ async function getSemester(userId, semesterId) {
 }
 
 async function getOverview(userId, semesterId) {
-	const [rows] = await db.query(
+	// Active Assignments Count
+	const [activeAssignmentsRows] = await db.query(
+		`SELECT COUNT(*) AS active_count
+		 FROM assignments a
+		 INNER JOIN modules m ON m.id = a.module_id
+		 WHERE m.semester_id = ? 
+		   AND a.status = 'active'
+		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
+		[semesterId, userId]
+	);
+
+	// Estimation Accuracy (for completed tasks)
+	const [estimationRows] = await db.query(
 		`SELECT 
-			COUNT(t.id) AS total_tasks,
-			SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) AS completed_tasks,
-			SUM(CASE WHEN t.deadline IS NOT NULL AND t.deadline < NOW() AND t.status != 'done' THEN 1 ELSE 0 END) AS overdue_tasks,
-			SUM(CASE WHEN t.status = 'done' AND t.atc_minutes IS NOT NULL THEN t.etc_minutes ELSE 0 END) AS total_etc_minutes,
-			SUM(CASE WHEN t.status = 'done' AND t.atc_minutes IS NOT NULL THEN t.atc_minutes ELSE 0 END) AS total_atc_minutes,
-			COUNT(CASE WHEN t.status = 'done' AND t.atc_minutes IS NOT NULL THEN 1 END) AS completed_tasks_with_atc
-		FROM tasks t
-		INNER JOIN assignments a ON a.id = t.assignment_id
-		INNER JOIN modules m ON m.id = a.module_id
-		WHERE m.semester_id = ? AND m.semester_id IN (
-			SELECT s.id FROM semesters s WHERE s.user_id = ?
-		)`,
+			COUNT(*) AS completed_count,
+			AVG(CASE 
+				WHEN t.etc_minutes > 0 THEN ABS(CAST(t.atc_minutes AS SIGNED) - CAST(t.etc_minutes AS SIGNED)) / t.etc_minutes 
+				ELSE 0 
+			END) AS avg_variance
+		 FROM tasks t
+		 INNER JOIN assignments a ON a.id = t.assignment_id
+		 INNER JOIN modules m ON m.id = a.module_id
+		 WHERE m.semester_id = ? 
+		   AND t.status = 'done'
+		   AND t.atc_minutes IS NOT NULL
+		   AND t.etc_minutes IS NOT NULL
+		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
 		[semesterId, userId]
 	);
 
-	const [unscheduledRows] = await db.query(
-		`SELECT COUNT(DISTINCT t.id) AS unscheduled_count
-		FROM tasks t
-		INNER JOIN assignments a ON a.id = t.assignment_id
-		INNER JOIN modules m ON m.id = a.module_id
-		WHERE m.semester_id = ? 
-		  AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)
-		  AND t.status != 'done'
-		  AND t.id NOT IN (
-			SELECT DISTINCT st.task_id 
-			FROM scheduled_tasks st
-		  )`,
-		[semesterId, userId]
-	);
+	const activeAssignments = activeAssignmentsRows[0]?.active_count || 0;
+	const completedCount = estimationRows[0]?.completed_count || 0;
+	const avgVariance = estimationRows[0]?.avg_variance || 0;
 
-	const data = rows[0];
-	const unscheduledData = unscheduledRows[0];
-
-	const totalTasks = data.total_tasks || 0;
-	const completedTasks = data.completed_tasks || 0;
-	const overdueTasks = data.overdue_tasks || 0;
-	const unscheduledTasks = unscheduledData.unscheduled_count || 0;
-
-	const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-	let estimationAccuracy = 0;
-	if (data.completed_tasks_with_atc > 0 && data.total_etc_minutes > 0) {
-		estimationAccuracy = Math.round(
-			(data.total_atc_minutes / data.total_etc_minutes) * 100
-		);
+	let estimationAccuracy = 100;
+	if (completedCount > 0) {
+		estimationAccuracy = Math.round(Math.max(0, 100 - (avgVariance * 100)));
 	}
 
-	return {
-		tasksCompleted: completedTasks,
-		completionRate,
-		overdueTasks,
-		unscheduledWork: unscheduledTasks,
-		estimationAccuracy
+	return [
+		{ key: 'activeAssignments', label: 'Active Assignments', value: activeAssignments },
+		{ key: 'estimationAccuracy', label: 'Estimation Accuracy (%)', value: estimationAccuracy }
+	];
+}
+
+async function getAnalytics(userId, semesterId) {
+	// Task Status Distribution
+	const [statusDistributionRows] = await db.query(
+		`SELECT 
+			SUM(CASE WHEN t.status = 'todo' THEN 1 ELSE 0 END) AS todo_count,
+			SUM(CASE WHEN t.status = 'doing' THEN 1 ELSE 0 END) AS doing_count,
+			SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) AS done_count
+		 FROM tasks t
+		 INNER JOIN assignments a ON a.id = t.assignment_id
+		 INNER JOIN modules m ON m.id = a.module_id
+		 WHERE m.semester_id = ? 
+		   AND a.status = 'active'
+		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
+		[semesterId, userId]
+	);
+
+	const distribution = statusDistributionRows[0];
+	const todoCount = distribution?.todo_count || 0;
+	const doingCount = distribution?.doing_count || 0;
+	const doneCount = distribution?.done_count || 0;
+
+	const taskStatusDistribution = {
+		type: 'doughnut',
+		title: 'Task Status Distribution',
+		labels: ['To Do', 'In Progress', 'Done'],
+		datasets: [
+			{
+				label: "Tasks",
+				data: [todoCount, doingCount, doneCount]
+			}
+		]
 	};
+
+	// Estimation Accuracy by Module
+	const [accuracyRows] = await db.query(
+		`SELECT 
+			m.name,
+			COUNT(*) AS completed_count,
+			ROUND(100 - (AVG(CASE 
+				WHEN t.etc_minutes > 0 THEN ABS(CAST(t.atc_minutes AS SIGNED) - CAST(t.etc_minutes AS SIGNED)) / t.etc_minutes 
+				ELSE 0 
+			END) * 100), 1) AS accuracy_percent
+		 FROM tasks t
+		 INNER JOIN assignments a ON a.id = t.assignment_id
+		 INNER JOIN modules m ON m.id = a.module_id
+		 WHERE m.semester_id = ? 
+		   AND t.status = 'done'
+		   AND t.atc_minutes IS NOT NULL
+		   AND t.etc_minutes IS NOT NULL
+		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)
+		 GROUP BY m.id, m.name
+		 ORDER BY m.name`,
+		[semesterId, userId]
+	);
+
+	const moduleNames = accuracyRows.map(row => row.name);
+	const accuracyValues = accuracyRows.map(row => row.accuracy_percent || 100);
+
+	const estimationAccuracyChart = {
+		type: 'bar',
+		title: 'Estimation Accuracy by Module',
+		labels: moduleNames.length > 0 ? moduleNames : ['No data'],
+		datasets: [
+			{
+				label: "Accuracy %",
+				data: accuracyValues.length > 0 ? accuracyValues : [0]
+			}
+		]
+	};
+
+	return [taskStatusDistribution, estimationAccuracyChart];
 }
 
 async function getStatistics(userId, semesterId) {
 	const semester = await getSemester(userId, semesterId);
 
 	const overview = await getOverview(userId, semester.id);
-	// const analytics = await getAnalytics(userId, semester.id);
-	// const insights = buildInsights({ overview, analytics });
+	const analytics = await getAnalytics(userId, semester.id);
 
 	return {
-		overview
-		// analytics,
-		// insights
+		overview,
+		analytics,
+		insights: []
 	};
 }
 
