@@ -27,32 +27,36 @@
 				<article class="ui-card">
 					<h2 class="ui-card-title">Overview</h2>
 
-					<!-- <ul class="ui-list ui-list--editable" data-list="modules"></ul>
-
-					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-modal-open="new-module-modal">New</button>
-					</div> -->
+					<ul id="statistics-overview-list" class="ui-list statistics-list">
+						<li class="ui-item">
+							<div class="ui-item-title">Loading overview...</div>
+						</li>
+					</ul>
 				</article>
 
 				<article class="ui-card">
 					<h2 class="ui-card-title">Analytics</h2>
 
-					<!-- <ul class="ui-list ui-list--clickable" data-list="assignments"></ul>
+					<div class="ui-field">
+						<select id="statistics-analytics-select" class="ui-input">
+							<option value="">Loading charts...</option>
+						</select>
+					</div>
 
-					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-modal-open="new-assignment-modal">New</button>
-						<button type="button" class="btn btn-small" id="toggle-completed-btn">Show Completed</button>
-					</div> -->
+					<div class="statistics-chart-wrap">
+						<canvas id="statistics-chart"></canvas>
+						<p id="statistics-analytics-empty" hidden>No analytics available yet.</p>
+					</div>
 				</article>
 
 				<article class="ui-card">
 					<h2 class="ui-card-title">Insights</h2>
 
-					<!-- <ul class="ui-list ui-list--editable" data-list="today"></ul>
-
-					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-link="/schedule">My Schedule</button>
-					</div> -->
+					<ul id="statistics-insights-list" class="ui-list statistics-list statistics-insights">
+						<li class="ui-item">
+							<div class="ui-item-title">Loading insights...</div>
+						</li>
+					</ul>
 				</article>
 			</section>
 
@@ -61,6 +65,7 @@
 
 	<%- include('partials/footer') %>
 
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<script src="/js/main.js"></script>
 </body>
 </html>

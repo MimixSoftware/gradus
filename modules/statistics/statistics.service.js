@@ -38,6 +38,7 @@ async function getOverview(userId, semesterId) {
 		 WHERE m.semester_id = ? 
 		   AND a.status = 'active'
 		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
+
 		[semesterId, userId]
 	);
 
@@ -46,17 +47,18 @@ async function getOverview(userId, semesterId) {
 		`SELECT 
 			COUNT(*) AS completed_count,
 			AVG(CASE 
-				WHEN t.etc_minutes > 0 THEN ABS(CAST(t.atc_minutes AS SIGNED) - CAST(t.etc_minutes AS SIGNED)) / t.etc_minutes 
+				WHEN t.etc_minutes > 0 AND t.atc_minutes > 0 
+				THEN ABS(CAST(t.atc_minutes AS SIGNED) - CAST(t.etc_minutes AS SIGNED)) / GREATEST(t.etc_minutes, t.atc_minutes)
 				ELSE 0 
 			END) AS avg_variance
-		 FROM tasks t
-		 INNER JOIN assignments a ON a.id = t.assignment_id
-		 INNER JOIN modules m ON m.id = a.module_id
-		 WHERE m.semester_id = ? 
-		   AND t.status = 'done'
-		   AND t.atc_minutes IS NOT NULL
-		   AND t.etc_minutes IS NOT NULL
-		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
+		FROM tasks t
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		WHERE m.semester_id = ? 
+			AND t.status = 'done'
+			AND t.atc_minutes IS NOT NULL
+			AND t.etc_minutes IS NOT NULL
+			AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
 		[semesterId, userId]
 	);
 
@@ -82,19 +84,19 @@ async function getAnalytics(userId, semesterId) {
 			SUM(CASE WHEN t.status = 'todo' THEN 1 ELSE 0 END) AS todo_count,
 			SUM(CASE WHEN t.status = 'doing' THEN 1 ELSE 0 END) AS doing_count,
 			SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) AS done_count
-		 FROM tasks t
-		 INNER JOIN assignments a ON a.id = t.assignment_id
-		 INNER JOIN modules m ON m.id = a.module_id
-		 WHERE m.semester_id = ? 
-		   AND a.status = 'active'
-		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
+		FROM tasks t
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		WHERE m.semester_id = ? 
+			AND a.status = 'active'
+			AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
 		[semesterId, userId]
 	);
 
 	const distribution = statusDistributionRows[0];
-	const todoCount = distribution?.todo_count || 0;
-	const doingCount = distribution?.doing_count || 0;
-	const doneCount = distribution?.done_count || 0;
+	const todoCount = Number(distribution?.todo_count) || 0;
+	const doingCount = Number(distribution?.doing_count) || 0;
+	const doneCount = Number(distribution?.done_count) || 0;
 
 	const taskStatusDistribution = {
 		type: 'doughnut',
@@ -108,44 +110,47 @@ async function getAnalytics(userId, semesterId) {
 		]
 	};
 
-	// Estimation Accuracy by Module
+	 // Estimation Accuracy by Module
 	const [accuracyRows] = await db.query(
 		`SELECT 
-			m.name,
-			COUNT(*) AS completed_count,
-			ROUND(100 - (AVG(CASE 
-				WHEN t.etc_minutes > 0 THEN ABS(CAST(t.atc_minutes AS SIGNED) - CAST(t.etc_minutes AS SIGNED)) / t.etc_minutes 
-				ELSE 0 
-			END) * 100), 1) AS accuracy_percent
-		 FROM tasks t
-		 INNER JOIN assignments a ON a.id = t.assignment_id
-		 INNER JOIN modules m ON m.id = a.module_id
-		 WHERE m.semester_id = ? 
-		   AND t.status = 'done'
-		   AND t.atc_minutes IS NOT NULL
-		   AND t.etc_minutes IS NOT NULL
-		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)
-		 GROUP BY m.id, m.name
-		 ORDER BY m.name`,
-		[semesterId, userId]
+			m.id AS module_id,
+			m.name AS module_name,
+			AVG(CASE 
+					WHEN t.etc_minutes > 0 AND t.atc_minutes > 0 
+					THEN ABS(CAST(t.atc_minutes AS SIGNED) - CAST(t.etc_minutes AS SIGNED)) / GREATEST(t.etc_minutes, t.atc_minutes)
+					ELSE 0 
+				END) AS avg_variance
+		FROM tasks t
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		WHERE m.semester_id = ? 
+			AND t.status = 'done'
+			AND t.atc_minutes IS NOT NULL
+			AND t.etc_minutes IS NOT NULL
+		GROUP BY m.id
+		HAVING COUNT(t.id) > 0`,
+		[semesterId]
 	);
 
-	const moduleNames = accuracyRows.map(row => row.name);
-	const accuracyValues = accuracyRows.map(row => row.accuracy_percent || 100);
+    const moduleAccuracyData = accuracyRows.map(row => ({
+		moduleId: row.module_id,
+		moduleName: row.module_name,
+		accuracy: Math.round(100 - (row.avg_variance * 100))
+	}));
 
-	const estimationAccuracyChart = {
+	const moduleAccuracyChart = {
 		type: 'bar',
 		title: 'Estimation Accuracy by Module',
-		labels: moduleNames.length > 0 ? moduleNames : ['No data'],
+		labels: moduleAccuracyData.map(d => d.moduleName),
 		datasets: [
 			{
-				label: "Accuracy %",
-				data: accuracyValues.length > 0 ? accuracyValues : [0]
+				label: 'Accuracy %',
+				data: moduleAccuracyData.map(d => d.accuracy)
 			}
 		]
 	};
 
-	return [taskStatusDistribution, estimationAccuracyChart];
+    return [taskStatusDistribution, moduleAccuracyChart];
 }
 
 async function getStatistics(userId, semesterId) {

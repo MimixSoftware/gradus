@@ -4539,6 +4539,163 @@ function initSettings() {
 	});
 }
 
+// Statistics
+function initStatistics() {
+	if (getRouteName() !== "statistics") return;
+
+	const overviewList = document.getElementById("statistics-overview-list");
+	const analyticsSelect = document.getElementById("statistics-analytics-select");
+	const analyticsCanvas = document.getElementById("statistics-chart");
+	const analyticsEmpty = document.getElementById("statistics-analytics-empty");
+	const insightsList = document.getElementById("statistics-insights-list");
+
+	let chart = null;
+	let analytics = [];
+
+	function destroyChart() {
+		if (chart) {
+			chart.destroy();
+			chart = null;
+		}
+	}
+
+	function renderOverview(overview) {
+		if (!overview || overview.length === 0) {
+			renderEmptyListState(overviewList, "No overview statistics available.");
+			return;
+		}
+
+		overviewList.innerHTML = overview
+			.map(
+				(item) => `
+					<li class="ui-item">
+						<div class="ui-item-title">${escapeHtml(item.label)}</div>
+						<div class="ui-item-meta">${escapeHtml(String(item.value))}</div>
+					</li>
+				`
+			)
+			.join("");
+	}
+
+	function renderInsights(insights) {
+		if (!insights || insights.length === 0) {
+			renderEmptyListState(insightsList, "No insights available.");
+			return;
+		}
+
+		insightsList.innerHTML = insights
+			.map(
+				(text) => `
+					<li class="ui-item">
+						<div class="ui-item-title">${escapeHtml(text)}</div>
+					</li>
+				`
+			)
+			.join("");
+	}
+
+	function buildChartConfig(graph) {
+		return {
+			type: graph.type,
+			data: {
+				labels: graph.labels,
+				datasets: graph.datasets
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					legend: {
+						display: true
+					},
+					title: {
+						display: false
+					}
+				}
+			}
+		};
+	}
+
+	function renderAnalyticsOptions(graphs) {
+		if (!graphs || graphs.length === 0) {
+			analyticsSelect.innerHTML = `<option value="">No charts available</option>`;
+			analyticsSelect.disabled = true;
+			analyticsCanvas.style.display = "none";
+			analyticsEmpty.hidden = false;
+			destroyChart();
+			return;
+		}
+
+		analyticsSelect.disabled = false;
+		analyticsCanvas.style.display = "";
+		analyticsEmpty.hidden = true;
+
+		analyticsSelect.innerHTML = graphs
+			.map(
+				(graph, index) => `
+					<option value="${index}">${escapeHtml(graph.title)}</option>
+				`
+			)
+			.join("");
+	}
+
+	function renderSelectedChart(index) {
+		const graph = analytics[index];
+		if (!graph) {
+			destroyChart();
+			return;
+		}
+
+		destroyChart();
+		chart = new Chart(analyticsCanvas, buildChartConfig(graph));
+	}
+
+	async function loadStatistics() {
+		try {
+			const res = await getJson(`/api/statistics/${appState.activeSemesterId}`);
+			const statistics = res.statistics || {};
+			const overview = statistics.overview || [];
+			analytics = statistics.analytics || [];
+			const insights = statistics.insights || [];
+
+			renderOverview(overview);
+			renderInsights(insights);
+			renderAnalyticsOptions(analytics);
+
+			if (analytics.length > 0) {
+				analyticsSelect.value = "0";
+				renderSelectedChart(0);
+			}
+		} catch (err) {
+			showToast(err.message || "Failed to load statistics.", { type: "error" });
+
+			renderEmptyListState(overviewList, "Failed to load overview statistics.");
+			renderEmptyListState(insightsList, "Failed to load insights.");
+
+			analyticsSelect.innerHTML = `<option value="">No charts available</option>`;
+			analyticsSelect.disabled = true;
+			analyticsCanvas.style.display = "none";
+			analyticsEmpty.hidden = false;
+			destroyChart();
+		}
+	}
+
+	analyticsSelect.addEventListener("change", () => {
+		renderSelectedChart(Number(analyticsSelect.value));
+	});
+
+	loadStatistics();
+}
+
+function escapeHtml(value) {
+	return String(value)
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#039;");
+}
+
 // Global Inits
 function initAuthForms() {
 	const loginForm = document.getElementById("login-form");
@@ -4681,4 +4838,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initAutoScheduleForm();
 
 	await initSettings();
+
+	initStatistics();
 });
