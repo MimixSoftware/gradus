@@ -68,6 +68,14 @@
 	--modal-shadow: var(--shadow-lg);
 }
 
+.logo-icon {
+	display: block;
+}
+
+.logo-dark {
+	display: none;
+}
+
 :root[data-theme="dark"] {
 	color-scheme: dark;
 
@@ -109,6 +117,14 @@
 	--success: #4fe08a;
 
 	--focus-ring: #5a5a66;
+}
+
+:root[data-theme="dark"] .logo-icon {
+	display: none;
+}
+
+:root[data-theme="dark"] .logo-dark {
+	display: block;
 }
 
 /* Dark Mode */
@@ -154,6 +170,14 @@
 		--success: #4fe08a;
 
 		--focus-ring: #5a5a66;
+	}
+
+	:root:not([data-theme]) .logo-icon {
+		display: none;
+	}
+
+	:root:not([data-theme]) .logo-dark {
+		display: block;
 	}
 }
 
