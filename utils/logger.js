@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const LOG_DIR = path.join(process.cwd(), "logs");
+const LOG_DIR = path.join(process.cwd(), "storage", "logs");
 
 const LEVELS = { DEBUG: 10, INFO: 20, WARN: 30, ERROR: 40 };
 const CURRENT_LEVEL = process.env.LOG_LEVEL;
