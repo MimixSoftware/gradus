@@ -596,6 +596,7 @@ async function initDashboard() {
 	const newAssignmentBtnEl = document.querySelector('[data-modal-open="new-assignment-modal"]');
 	const moduleSelectEl = document.getElementById("na-module");
 	const toggleCompletedBtnEl = document.getElementById("toggle-completed-btn");
+	const deadlineInput = document.querySelector("#new-assignment-form #na-deadline");
 
 	document.addEventListener("activeSemester:changed", async () => {
 		await loadSettings();
@@ -652,6 +653,7 @@ async function initDashboard() {
 		renderSemesterNameAndUpdateButtons();
 		
 		populateModuleSelect();
+		refreshNewAssignmentDeadlineRange();
 	}
 	
 	function refreshDashboardClock() {
@@ -1027,6 +1029,14 @@ async function initDashboard() {
 		}
 
 		moduleSelectEl.value = "";
+	}
+
+	function refreshNewAssignmentDeadlineRange() {
+		const semester = appState.semesterById.get(appState.activeSemesterId);
+		if (semester) {
+			deadlineInput.min = `${semester.startDate}T00:00`;
+			deadlineInput.max = `${semester.endDate}T23:59`;
+		}
 	}
 
 	function openEditModuleModal(moduleId) {
@@ -1606,8 +1616,10 @@ function initNewAssignmentForm() {
 	const deadlineInput = form.querySelector("#na-deadline");
 
 	const semester = appState.semesterById.get(appState.activeSemesterId);
-	deadlineInput.min = `${semester.startDate}T00:00`;
-	deadlineInput.max = `${semester.endDate}T23:59`;
+	if (semester) {
+		deadlineInput.min = `${semester.startDate}T00:00`;
+		deadlineInput.max = `${semester.endDate}T23:59`;
+	}
 
 	function syncRanges() {
 		if (weightEl && weightValEl) weightValEl.textContent = weightEl.value;
