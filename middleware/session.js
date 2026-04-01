@@ -20,7 +20,7 @@ function createSessionMiddleware(dbPool) {
 		cookie: {
 			httpOnly: true,
 			sameSite: "lax",
-			secure: false, // true in prod
+			secure: process.env.PRODUCTION === "true",
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		}
 	});

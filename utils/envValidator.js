@@ -39,6 +39,10 @@ function validateEnv() {
 	assertPort("PORT", port);
 	process.env.PORT = port;
 
+	const production = optional("PRODUCTION", "false");
+	assertBool("PRODUCTION", production);
+	process.env.PRODUCTION = production.toLowerCase();
+
 	const level = optional("LOG_LEVEL", "INFO").toUpperCase();
 	if (!VALID_LOG_LEVELS.includes(level)) {
 		throw new Error(
