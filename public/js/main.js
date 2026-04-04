@@ -4808,11 +4808,60 @@ function initLinkButtons() {
 	});
 }
 
+function initLandingSlide() {
+	if (getRouteName() !== "index") return;
+
+	const slides = Array.from(document.querySelectorAll(".hero-slide"));
+	const dots = Array.from(document.querySelectorAll(".hero-dot"));
+
+	if (!slides.length || slides.length !== dots.length) return;
+
+	let currentIndex = 0;
+	let intervalId;
+
+	function showSlide(index) {
+		slides.forEach((slide, i) => {
+			slide.classList.toggle("active", i === index);
+		});
+
+		dots.forEach((dot, i) => {
+			dot.classList.toggle("active", i === index);
+		});
+
+		currentIndex = index;
+	}
+
+	function nextSlide() {
+		const nextIndex = (currentIndex + 1) % slides.length;
+		showSlide(nextIndex);
+	}
+
+	function startAutoSlide() {
+		intervalId = setInterval(nextSlide, 6000);
+	}
+
+	function resetAutoSlide() {
+		clearInterval(intervalId);
+		startAutoSlide();
+	}
+
+	dots.forEach((dot, index) => {
+		dot.addEventListener("click", () => {
+			showSlide(index);
+			resetAutoSlide();
+		});
+	});
+
+	showSlide(0);
+	startAutoSlide();
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
 	initAuthForms();
 	initMobileNav();
 	initFooterYear();
-
+	initLandingSlide();
+	
 	const publicRoutes = ["register", "login", "index"];
 	if (publicRoutes.includes(getRouteName())) return;
 
