@@ -418,6 +418,17 @@ body {
 	pointer-events: none;
 }
 
+.hero-buttons a + a {
+    margin-left: 0.4rem;
+}
+
+@media (max-width: 700px) {
+    .hero-buttons a + a {
+        margin-left: 0;
+        margin-top: 0.4rem;
+    }
+}
+
 /* Icon Buttons */
 .icon-btn {
 	text-decoration: none;
@@ -545,6 +556,13 @@ body {
 	line-height: 1.6;
 	color: var(--text-muted);
 	margin-bottom: 2.2rem;
+}
+
+/* Responsive: Slide */
+@media (max-width: 700px) {
+	.hero-caption {
+		padding: 0.3rem 0.5rem;
+	}
 }
 
 /* Footer */
