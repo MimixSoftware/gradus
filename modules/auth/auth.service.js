@@ -14,12 +14,6 @@ function generateVerificationCode() {
 	return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-function getCodeExpiryDate() {
-	const expiresAt = new Date();
-	expiresAt.setMinutes(expiresAt.getMinutes() + VERIFICATION_CODE_EXPIRATION_MINUTES);
-	return expiresAt;
-}
-
 async function findPendingRegistrationByEmail(connection, email) {
 	const [rows] = await connection.query(
 		`SELECT id, email, forename, surname, password_hash, verification_code_hash, code_expires_at, attempts, created_at, updated_at
@@ -35,9 +29,9 @@ async function findPendingRegistrationByEmail(connection, email) {
 async function ensureEmailNotRegistered(connection, email) {
 	const [rows] = await connection.query(
 		`SELECT id
-		 FROM users
-		 WHERE email = ?
-		 LIMIT 1`,
+		FROM users
+		WHERE email = ?
+		LIMIT 1`,
 		[email]
 	);
 
@@ -84,7 +78,6 @@ async function startRegistration({ email, forename, surname, password }) {
 		const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 		const verificationCode = generateVerificationCode();
 		const verificationCodeHash = await bcrypt.hash(verificationCode, SALT_ROUNDS);
-		const codeExpiresAt = getCodeExpiryDate();
 
 		const existingPending = await findPendingRegistrationByEmail(connection, email);
 
@@ -95,7 +88,7 @@ async function startRegistration({ email, forename, surname, password }) {
 					surname = ?,
 					password_hash = ?,
 					verification_code_hash = ?,
-					code_expires_at = ?,
+					code_expires_at = DATE_ADD(NOW(), INTERVAL ? MINUTE),
 					attempts = 0
 				WHERE email = ?`,
 				[
@@ -103,7 +96,7 @@ async function startRegistration({ email, forename, surname, password }) {
 					surname || null,
 					passwordHash,
 					verificationCodeHash,
-					codeExpiresAt,
+					VERIFICATION_CODE_EXPIRATION_MINUTES,
 					email
 				]
 			);
@@ -118,14 +111,14 @@ async function startRegistration({ email, forename, surname, password }) {
 					code_expires_at,
 					attempts
 				)
-				VALUES (?, ?, ?, ?, ?, ?, ?)`,
+				VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?)`,
 				[
 					email,
 					forename,
 					surname || null,
 					passwordHash,
 					verificationCodeHash,
-					codeExpiresAt,
+					VERIFICATION_CODE_EXPIRATION_MINUTES,
 					0
 				]
 			);
@@ -233,15 +226,14 @@ async function resendRegistrationCode({ email }) {
 
 		const verificationCode = generateVerificationCode();
 		const verificationCodeHash = await bcrypt.hash(verificationCode, SALT_ROUNDS);
-		const codeExpiresAt = getCodeExpiryDate();
 
 		await connection.query(
 			`UPDATE pending_registrations
 			SET verification_code_hash = ?,
-				code_expires_at = ?,
+				code_expires_at = DATE_ADD(NOW(), INTERVAL ? MINUTE),
 				attempts = 0
 			WHERE id = ?`,
-			[verificationCodeHash, codeExpiresAt, pending.id]
+			[verificationCodeHash, VERIFICATION_CODE_EXPIRATION_MINUTES, pending.id]
 		);
 
 		await connection.commit();
