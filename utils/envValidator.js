@@ -73,6 +73,27 @@ function validateEnv() {
 	required("OPENROUTER_MODEL");
 	required("OPENROUTER_SITE_URL");
 	required("OPENROUTER_APP_NAME");
+
+	required("SMTP_HOST");
+	const smtpPort = required("SMTP_PORT");
+	assertPort("SMTP_PORT", smtpPort);
+	process.env.SMTP_PORT = smtpPort;
+
+	const smtpSecure = required("SMTP_SECURE");
+	assertBool("SMTP_SECURE", smtpSecure);
+	process.env.SMTP_SECURE = smtpSecure.toLowerCase();
+
+	required("SMTP_USER");
+	required("SMTP_PASS");
+	required("EMAIL_FROM");
+
+	const verificationCodeExpirationMinutes = required("VERIFICATION_CODE_EXPIRATION_MINUTES");
+	assertInt("VERIFICATION_CODE_EXPIRATION_MINUTES", verificationCodeExpirationMinutes);
+	process.env.VERIFICATION_CODE_EXPIRATION_MINUTES = verificationCodeExpirationMinutes;
+
+	const maxVerificationAttempts = required("MAX_VERIFICATION_ATTEMPTS");
+	assertInt("MAX_VERIFICATION_ATTEMPTS", maxVerificationAttempts);
+	process.env.MAX_VERIFICATION_ATTEMPTS = maxVerificationAttempts;
 }
 
 module.exports = { validateEnv };

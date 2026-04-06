@@ -1,15 +1,31 @@
 const authService = require("./auth.service");
 const authValidation = require("./auth.validation");
 
-async function register(req, res) {
-	const validated = authValidation.validateRegisterInput(req.body);
+async function startRegistration(req, res) {
+	const validated = authValidation.validateStartRegistrationInput(req.body);
 
-	const { user, settings } = await authService.register(validated);
+	const { email, expiresInMinutes } = await authService.startRegistration(validated);
+
+	return res.status(201).json({ message: "Verification code sent successfully.", email, expiresInMinutes });
+}
+
+async function completeRegistration(req, res) {
+	const validated = authValidation.validateCompleteRegistrationInput(req.body);
+
+	const { user, settings } = await authService.completeRegistration(validated);
 
 	req.session.user = user;
 	req.session.settings = settings;
 
-	return res.status(201).json({ message: "Registered successfully." });
+	return res.status(201).json({ message: "Registered successfully.", user});
+}
+
+async function resendRegistrationCode(req, res) {
+	const validated = authValidation.validateResendRegistrationCodeInput(req.body);
+
+	const { email, expiresInMinutes } = await authService.resendRegistrationCode(validated);
+
+	return res.status(200).json({ message: "Verification code resent successfully.", email, expiresInMinutes });
 }
 
 async function login(req, res, next) {
@@ -36,4 +52,4 @@ function logout(req, res, next) {
 	});
 }
 
-module.exports = { register, login, logout };
+module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, logout };

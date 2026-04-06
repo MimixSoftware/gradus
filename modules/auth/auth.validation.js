@@ -1,7 +1,7 @@
 const v = require("../../utils/validationUtils");
 const AppError = require("../../utils/AppError");
 
-function validateRegisterInput({ email, forename, surname, password, confirmPassword } = {}) {
+function validateStartRegistrationInput({ email, forename, surname, password, confirmPassword } = {}) {
 	forename = v.validateRequiredString(forename, "Forename", { max: 100 });
 	surname = v.validateOptionalString(surname, "Surname", { max: 100 }) ?? null;
 	email = v.validateRequiredString(email, "Email", {
@@ -24,6 +24,39 @@ function validateRegisterInput({ email, forename, surname, password, confirmPass
 	};
 }
 
+function validateCompleteRegistrationInput({ email, code } = {}) {
+	email = v.validateRequiredString(email, "Email", {
+		toLowerCase: true,
+		max: 255,
+		pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+		patternMessage: "Invalid email format."
+	});
+	code = v.validateRequiredString(code, "Verification Code", { 
+		min: 6,
+		max: 6,
+		pattern: /^\d{6}$/,
+		patternMessage: "Verification code must be a 6-digit number." 
+	});
+
+	return {
+		email,
+		code
+	};
+}
+
+function validateResendRegistrationCodeInput({ email } = {}) {
+	email = v.validateRequiredString(email, "Email", {
+		toLowerCase: true,
+		max: 255,
+		pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+		patternMessage: "Invalid email format."
+	});
+
+	return {
+		email
+	};
+}
+
 function validateLoginInput({ email, password } = {}) {
 	email = v.validateRequiredString(email, "Email", {
 		toLowerCase: true,
@@ -39,4 +72,4 @@ function validateLoginInput({ email, password } = {}) {
 	};
 }
 
-module.exports = { validateRegisterInput, validateLoginInput };
+module.exports = { validateStartRegistrationInput, validateCompleteRegistrationInput, validateResendRegistrationCodeInput, validateLoginInput };

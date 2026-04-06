@@ -35,11 +35,12 @@ async function sendMail({ to, subject, text, html }) {
 	return transporter.sendMail(mailOptions);
 }
 
-async function sendVerificationCode({ to, code }) {
+async function sendVerificationCode(to, code, expiresInMinutes) {
 	const subject = "Verify your Gradus account";
 
-	const text = `Your Gradus verification code is: ${code}\n\nThis code expires in 10 minutes.`;
+	const text = `Your Gradus verification code is: ${code}\n\nThis code expires in ${expiresInMinutes} minutes.`;
 
+	const year = new Date().getFullYear();
 	const html = `
 		<!doctype html>
 		<html lang="en">
@@ -81,7 +82,7 @@ async function sendVerificationCode({ to, code }) {
 										</div>
 
 										<p style="margin:0 0 12px 0; font-size:15px; line-height:1.6; color:#374151;">
-											This code expires in <strong>10 minutes</strong>.
+											This code expires in <strong>${expiresInMinutes} minutes</strong>.
 										</p>
 
 										<p style="margin:0; font-size:14px; line-height:1.6; color:#6b7280;">
@@ -93,14 +94,14 @@ async function sendVerificationCode({ to, code }) {
 								<tr>
 									<td style="padding:0 32px 32px 32px; text-align:center;">
 										<p style="margin:0; font-size:12px; line-height:1.5; color:#9ca3af;">
-											Gradus — Student-focused task and time-management system
+											Gradus - Student Planning System
 										</p>
 									</td>
 								</tr>
 							</table>
 
 							<p style="margin:16px 0 0 0; font-size:12px; line-height:1.5; color:#9ca3af;">
-								© Gradus
+								Gradus © ${year} by Mimix Software
 							</p>
 						</td>
 					</tr>
