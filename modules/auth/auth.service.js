@@ -7,7 +7,7 @@ const settingsService = require("../settings/settings.service");
 const emailService = require("../../utils/emailService");
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS);
-const VERIFICATION_CODE_EXPIRATION_MINUTES = 1;
+const VERIFICATION_CODE_EXPIRATION_MINUTES = Number(process.env.VERIFICATION_CODE_EXPIRATION_MINUTES);
 const MAX_VERIFICATION_ATTEMPTS = Number(process.env.MAX_VERIFICATION_ATTEMPTS);
 
 function generateVerificationCode() {
@@ -246,7 +246,7 @@ async function resendRegistrationCode({ email }) {
 
 		await connection.commit();
 
-		await emailService.sendVerificationCode(email, verificationCode);
+		await emailService.sendVerificationCode(email, verificationCode, VERIFICATION_CODE_EXPIRATION_MINUTES);
 
 		return {
 			email,

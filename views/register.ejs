@@ -24,83 +24,135 @@
 					class="auth-logo"
 				>
 
-				<h1>Create account</h1>
-				<p class="auth-subtitle">Start organising your work step by step.</p>
+				<div id="register-start-view">
+					<h1>Create account</h1>
+					<p class="auth-subtitle">Start organising your work step by step.</p>
 
-				<div
-					id="auth-error"
-					class="alert alert-error"
-					style="display: none;"
-					role="alert"
-				></div>
+					<div
+						id="auth-start-error"
+						class="alert alert-error"
+						style="display: none;"
+						role="alert"
+					></div>
 
-				<form class="form" id="register-form" novalidate>
-					<div class="form-grid">
+					<form class="form" id="register-start-form" novalidate>
+						<div class="form-grid">
+							<div class="form-row">
+								<label for="forename">Forename <span class="required">*</span></label>
+								<input
+									id="forename"
+									name="forename"
+									type="text"
+									autocomplete="given-name"
+									required
+								>
+							</div>
+
+							<div class="form-row">
+								<label for="surname">Surname</label>
+								<input
+									id="surname"
+									name="surname"
+									type="text"
+									autocomplete="family-name"
+								>
+							</div>
+						</div>
+
 						<div class="form-row">
-							<label for="forename">Forename <span class="required">*</span></label>
+							<label for="register-email">Email <span class="required">*</span></label>
 							<input
-								id="forename"
-								name="forename"
-								type="text"
-								autocomplete="given-name"
+								id="register-email"
+								name="email"
+								type="email"
+								autocomplete="email"
 								required
 							>
 						</div>
 
 						<div class="form-row">
-							<label for="surname">Surname</label>
+							<label for="password">Password <span class="required">*</span></label>
 							<input
-								id="surname"
-								name="surname"
-								type="text"
-								autocomplete="family-name"
+								id="password"
+								name="password"
+								type="password"
+								autocomplete="new-password"
+								required
+							>
+							<p class="field-hint">Use at least 8 characters.</p>
+						</div>
+
+						<div class="form-row">
+							<label for="confirm-password">Confirm password <span class="required">*</span></label>
+							<input
+								id="confirm-password"
+								name="confirmPassword"
+								type="password"
+								autocomplete="new-password"
+								required
 							>
 						</div>
-					</div>
 
-					<div class="form-row">
-						<label for="email">Email <span class="required">*</span></label>
-						<input
-							id="email"
-							name="email"
-							type="email"
-							autocomplete="email"
-							required
-						>
-					</div>
+						<button class="btn btn-primary btn-large form-submit" type="submit">
+							Next
+						</button>
 
-					<div class="form-row">
-						<label for="password">Password <span class="required">*</span></label>
-						<input
-							id="password"
-							name="password"
-							type="password"
-							autocomplete="new-password"
-							required
-						>
-						<p class="field-hint">Use at least 8 characters.</p>
-					</div>
+						<p class="auth-alt">
+							Already have an account?
+							<a href="/login">Login</a>
+						</p>
+					</form>
+				</div>
 
-					<div class="form-row">
-						<label for="confirm-password">Confirm password <span class="required">*</span></label>
-						<input
-							id="confirm-password"
-							name="confirmPassword"
-							type="password"
-							autocomplete="new-password"
-							required
-						>
-					</div>
-
-					<button class="btn btn-primary btn-large form-submit" type="submit">
-						Create account
-					</button>
-
-					<p class="auth-alt">
-						Already have an account?
-						<a href="/login">Login</a>
+				<div id="register-verify-view" style="display: none;">
+					<h1>Verify your email</h1>
+					<p class="auth-subtitle">
+						We sent a 6-digit verification code to
+						<strong id="register-verify-email-text"></strong>.
 					</p>
-				</form>
+
+					<div
+						id="auth-verify-error"
+						class="alert alert-error"
+						style="display: none;"
+						role="alert"
+					></div>
+
+					<form class="form" id="register-verify-form" novalidate>
+						<input
+							id="register-verify-email"
+							name="email"
+							type="hidden"
+						>
+
+						<div class="form-row">
+							<label for="verification-code">Verification code <span class="required">*</span></label>
+							<input
+								id="verification-code"
+								name="code"
+								type="text"
+								inputmode="numeric"
+								autocomplete="one-time-code"
+								maxlength="6"
+								placeholder="Enter 6-digit code"
+								required
+							>
+							<p class="field-hint">
+								The code expires in <span id="register-expiry-minutes"></span> minutes.
+								<a href="#" id="register-resend-link" class="ui-link">Resend</a>
+							</p>
+						</div>
+
+						<button class="btn btn-primary btn-large form-submit" type="submit">
+							Verify and create account
+						</button>
+
+						<p class="auth-alt">
+							Already have an account?
+							<a href="/login">Login</a>
+						</p>
+					</form>
+				</div>
 			</div>
 		</section>
 	</main>

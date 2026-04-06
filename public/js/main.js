@@ -4721,6 +4721,7 @@ function initAuthForms() {
 			const formData = new FormData(loginForm);
 			const email = formData.get("email");
 			const password = formData.get("password");
+
 			try {
 				await postJson("/api/auth/login", { email, password });
 				window.location.href = "/dashboard";
@@ -4730,14 +4731,41 @@ function initAuthForms() {
 		});
 	}
 
-	const registerForm = document.getElementById("register-form");
-	if (registerForm) {
-		const errorEl = document.getElementById("auth-error");;
-		registerForm.addEventListener("submit", async (e) => {
-			e.preventDefault();
-			setAlert(errorEl, "");
+	const registerStartForm = document.getElementById("register-start-form");
+	const registerVerifyForm = document.getElementById("register-verify-form");
 
-			const formData = new FormData(registerForm);
+	if (registerStartForm && registerVerifyForm) {
+		const startView = document.getElementById("register-start-view");
+		const verifyView = document.getElementById("register-verify-view");
+
+		const startErrorEl = document.getElementById("auth-start-error");
+		const verifyErrorEl = document.getElementById("auth-verify-error");
+
+		const verifyEmailInput = document.getElementById("register-verify-email");
+		const verifyEmailText = document.getElementById("register-verify-email-text");
+		const expiryMinutesEl = document.getElementById("register-expiry-minutes");
+		const resendLink = document.getElementById("register-resend-link");
+
+		function showVerifyStep(email, expiresInMinutes) {
+			setAlert(startErrorEl, "");
+			setAlert(verifyErrorEl, "");
+
+			verifyEmailInput.value = email;
+			verifyEmailText.textContent = email;
+
+			if (expiresInMinutes) {
+				expiryMinutesEl.textContent = expiresInMinutes;
+			}
+
+			startView.style.display = "none";
+			verifyView.style.display = "";
+		}
+
+		registerStartForm.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			setAlert(startErrorEl, "");
+
+			const formData = new FormData(registerStartForm);
 			const forename = formData.get("forename");
 			const surname = formData.get("surname");
 			const email = formData.get("email");
@@ -4745,16 +4773,57 @@ function initAuthForms() {
 			const confirmPassword = formData.get("confirmPassword");
 
 			try {
-				await postJson("/api/auth/register", {
+				const result = await postJson("/api/auth/register/start", {
 					forename,
 					surname,
 					email,
 					password,
 					confirmPassword
 				});
-			window.location.href = "/dashboard";
+
+				showVerifyStep(result.email, result.expiresInMinutes);
 			} catch (err) {
-				setAlert(errorEl, err.message);
+				setAlert(startErrorEl, err.message);
+			}
+		});
+
+		registerVerifyForm.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			setAlert(verifyErrorEl, "");
+
+			const formData = new FormData(registerVerifyForm);
+			const email = formData.get("email");
+			const code = String(formData.get("code") || "").replace(/\s+/g, "");
+
+			try {
+				await postJson("/api/auth/register/complete", {
+					email,
+					code
+				});
+
+				window.location.href = "/dashboard";
+			} catch (err) {
+				setAlert(verifyErrorEl, err.message);
+			}
+		});
+
+		const codeInput = document.getElementById('verification-code');
+		codeInput.addEventListener('input', () => {
+			codeInput.value = codeInput.value.replace(/\D/g, '');
+		});
+
+		resendLink.addEventListener("click", async (e) => {
+			e.preventDefault();
+
+			setAlert(verifyErrorEl, "");
+
+			const email = verifyEmailInput.value;
+
+			try {
+				await postJson("/api/auth/register/resend", { email });
+				showToast("A new verification code has been sent.");
+			} catch (err) {
+				setAlert(verifyErrorEl, err.message);
 			}
 		});
 	}
