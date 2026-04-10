@@ -36,6 +36,18 @@
 						<div id="sp-error" class="alert alert-error" style="display:none;" role="alert"></div>
 
 						<div class="form-row">
+							<label for="sp-email">Email</label>
+							<input 
+								id="sp-email" 
+								name="email" 
+								type="email" 
+								value="<%= user.email %>"
+								disabled 
+							/>
+							<div class="field-hint">Your email cannot be changed.</div>
+						</div>
+
+						<div class="form-row">
 							<label>Avatar</label>
 
 							<div class="ui-user">
@@ -60,8 +72,6 @@
 									Remove
 								</button>
 							</div>
-
-							<div class="field-hint">Upload a new profile picture or remove it.</div>
 						</div>
 
 						<div class="form-grid">
