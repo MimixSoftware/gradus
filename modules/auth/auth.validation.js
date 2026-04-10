@@ -32,10 +32,8 @@ function validateCompleteRegistrationInput({ email, code } = {}) {
 		patternMessage: "Invalid email format."
 	});
 	code = v.validateRequiredString(code, "Verification Code", { 
-		min: 6,
-		max: 6,
 		pattern: /^\d{6}$/,
-		patternMessage: "Verification code must be a 6-digit number." 
+		patternMessage: "Invalid or expired verification code." 
 	});
 
 	return {

@@ -9,6 +9,9 @@ const emailService = require("../../utils/emailService");
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS);
 const VERIFICATION_CODE_EXPIRATION_MINUTES = Number(process.env.VERIFICATION_CODE_EXPIRATION_MINUTES);
 const MAX_VERIFICATION_ATTEMPTS = Number(process.env.MAX_VERIFICATION_ATTEMPTS);
+const RESEND_COOLDOWN_SECONDS = Number(process.env.RESEND_COOLDOWN_SECONDS);
+const MAX_RESEND_COUNT = Number(process.env.MAX_RESEND_COUNT);
+const RESEND_LOCK_HOURS = Number(process.env.RESEND_LOCK_HOURS);
 
 function generateVerificationCode() {
 	return String(Math.floor(100000 + Math.random() * 900000));
@@ -16,7 +19,7 @@ function generateVerificationCode() {
 
 async function findPendingRegistrationByEmail(connection, email) {
 	const [rows] = await connection.query(
-		`SELECT id, email, forename, surname, password_hash, verification_code_hash, code_expires_at, attempts, created_at, updated_at
+		`SELECT id, email, forename, surname, password_hash, verification_code_hash, code_expires_at, verification_attempts, resend_count, last_code_sent_at, created_at, updated_at
 		FROM pending_registrations
 		WHERE email = ?
 		LIMIT 1`,
@@ -67,6 +70,38 @@ async function createUserFromPending(connection, pending) {
 	};
 }
 
+function enforceCooldown(lastSentAt) {
+	const now = new Date();
+	const lastSent = new Date(lastSentAt);
+	const seconds = (now - lastSent) / 1000;
+
+	if (seconds < RESEND_COOLDOWN_SECONDS) {
+		throw new AppError(`Please wait ${Math.ceil(RESEND_COOLDOWN_SECONDS - seconds)} seconds before requesting a new code.`, 429);
+	}
+}
+
+async function enforceResendLimit(connection, pending) {
+	const now = new Date();
+
+	if (pending.resend_count >= MAX_RESEND_COUNT) {
+		const lastSent = new Date(pending.last_code_sent_at);
+		const hoursSinceLastSend = (now - lastSent) / (1000 * 60 * 60);
+
+		if (hoursSinceLastSend < RESEND_LOCK_HOURS) {
+			throw new AppError("Too many resend attempts. Please try again later.", 429);
+		} else {
+			await connection.query(
+				`UPDATE pending_registrations
+				SET resend_count = 0
+				WHERE id = ?`,
+				[pending.id]
+			);
+
+			pending.resend_count = 0;
+		}
+	}
+}
+
 async function startRegistration({ email, forename, surname, password }) {
 	const connection = await db.getConnection();
 
@@ -75,22 +110,30 @@ async function startRegistration({ email, forename, surname, password }) {
 
 		await ensureEmailNotRegistered(connection, email);
 
+		const existingPending = await findPendingRegistrationByEmail(connection, email);
+
+		if (existingPending) {
+			enforceCooldown(existingPending.last_code_sent_at);
+
+			await enforceResendLimit(connection, existingPending);
+		}
+
 		const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 		const verificationCode = generateVerificationCode();
 		const verificationCodeHash = await bcrypt.hash(verificationCode, SALT_ROUNDS);
 
-		const existingPending = await findPendingRegistrationByEmail(connection, email);
-
 		if (existingPending) {
 			await connection.query(
 				`UPDATE pending_registrations
-				SET forename = ?,
+				 SET forename = ?,
 					surname = ?,
 					password_hash = ?,
 					verification_code_hash = ?,
 					code_expires_at = DATE_ADD(NOW(), INTERVAL ? MINUTE),
-					attempts = 0
-				WHERE email = ?`,
+					verification_attempts = 0,
+					resend_count = resend_count + 1,
+					last_code_sent_at = NOW()
+				 WHERE email = ?`,
 				[
 					forename,
 					surname || null,
@@ -109,9 +152,11 @@ async function startRegistration({ email, forename, surname, password }) {
 					password_hash,
 					verification_code_hash,
 					code_expires_at,
-					attempts
+					verification_attempts,
+					resend_count,
+					last_code_sent_at
 				)
-				VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?)`,
+				VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?, ?, NOW())`,
 				[
 					email,
 					forename,
@@ -119,6 +164,7 @@ async function startRegistration({ email, forename, surname, password }) {
 					passwordHash,
 					verificationCodeHash,
 					VERIFICATION_CODE_EXPIRATION_MINUTES,
+					0,
 					0
 				]
 			);
@@ -159,13 +205,12 @@ async function completeRegistration({ email, code }) {
 			throw new AppError("No pending registration found for this email.", 404);
 		}
 
-		if (pending.attempts >= MAX_VERIFICATION_ATTEMPTS) {
-			throw new AppError("Too many incorrect verification attempts. Please request a new code.", 429);
+		if (pending.verification_attempts >= MAX_VERIFICATION_ATTEMPTS) {
+			throw new AppError("Too many attempts. Please request a new code.", 429);
 		}
 
-		const now = new Date();
-		if (new Date(pending.code_expires_at) < now) {
-			throw new AppError("Verification code expired. Please request a new code.", 400);
+		if (new Date(pending.code_expires_at) < new Date()) {
+			throw new AppError("Invalid or expired verification code.", 400);
 		}
 
 		const isCodeValid = await bcrypt.compare(code, pending.verification_code_hash);
@@ -173,19 +218,19 @@ async function completeRegistration({ email, code }) {
 		if (!isCodeValid) {
 			await connection.query(
 				`UPDATE pending_registrations
-				SET attempts = attempts + 1
+				SET verification_attempts = verification_attempts + 1
 				WHERE id = ?`,
 				[pending.id]
 			);
 
-			throw new AppError("Invalid verification code.", 400);
+			await connection.commit();
+			throw new AppError("Invalid or expired verification code.", 400);
 		}
 
 		const result = await createUserFromPending(connection, pending);
 
 		await connection.query(
-			`DELETE FROM pending_registrations
-			WHERE id = ?`,
+			`DELETE FROM pending_registrations WHERE id = ?`,
 			[pending.id]
 		);
 
@@ -224,6 +269,10 @@ async function resendRegistrationCode({ email }) {
 			throw new AppError("No pending registration found for this email.", 404);
 		}
 
+		enforceCooldown(pending.last_code_sent_at);
+
+		await enforceResendLimit(connection, pending);
+
 		const verificationCode = generateVerificationCode();
 		const verificationCodeHash = await bcrypt.hash(verificationCode, SALT_ROUNDS);
 
@@ -231,7 +280,9 @@ async function resendRegistrationCode({ email }) {
 			`UPDATE pending_registrations
 			SET verification_code_hash = ?,
 				code_expires_at = DATE_ADD(NOW(), INTERVAL ? MINUTE),
-				attempts = 0
+				verification_attempts = 0,
+				resend_count = resend_count + 1,
+				last_code_sent_at = NOW()
 			WHERE id = ?`,
 			[verificationCodeHash, VERIFICATION_CODE_EXPIRATION_MINUTES, pending.id]
 		);
@@ -252,52 +303,52 @@ async function resendRegistrationCode({ email }) {
 	}
 }
 
-async function register({ email, forename, surname, password }) {
-	const connection = await db.getConnection();
-	try {
-		await connection.beginTransaction();
+// async function register({ email, forename, surname, password }) {
+// 	const connection = await db.getConnection();
+// 	try {
+// 		await connection.beginTransaction();
 
-		const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+// 		const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-		const [userResult] = await connection.query(
-			`INSERT INTO users (email, forename, surname, password_hash, last_login_at)
-			VALUES (?, ?, ?, ?, NOW())`,
-			[email, forename, surname, password_hash]
-		);
-		const userId = userResult.insertId;
+// 		const [userResult] = await connection.query(
+// 			`INSERT INTO users (email, forename, surname, password_hash, last_login_at)
+// 			VALUES (?, ?, ?, ?, NOW())`,
+// 			[email, forename, surname, password_hash]
+// 		);
+// 		const userId = userResult.insertId;
 
-		await connection.query(
-			`INSERT INTO user_settings (user_id, active_semester_id, theme)
-			VALUES (?, ?, ?)`,
-			[userId, null, "system"]
-		);
+// 		await connection.query(
+// 			`INSERT INTO user_settings (user_id, active_semester_id, theme)
+// 			VALUES (?, ?, ?)`,
+// 			[userId, null, "system"]
+// 		);
 
-		await connection.commit();
+// 		await connection.commit();
 
-		const settings = await settingsService.getByUserId(userId);
+// 		const settings = await settingsService.getByUserId(userId);
 
-		return {
-			user: {
-				id: userId,
-				email,
-				forename,
-				surname,
-				role: "user",
-				status: "active"
-			},
-			settings
-		};
-	} catch (err) {
-		await connection.rollback();
+// 		return {
+// 			user: {
+// 				id: userId,
+// 				email,
+// 				forename,
+// 				surname,
+// 				role: "user",
+// 				status: "active"
+// 			},
+// 			settings
+// 		};
+// 	} catch (err) {
+// 		await connection.rollback();
 
-		if (err.code === "ER_DUP_ENTRY") {
-			throw new AppError("Email already in use.", 409);
-		}
-		throw err;
-	} finally {
-		connection.release();
-	}
-}
+// 		if (err.code === "ER_DUP_ENTRY") {
+// 			throw new AppError("Email already in use.", 409);
+// 		}
+// 		throw err;
+// 	} finally {
+// 		connection.release();
+// 	}
+// }
 
 async function login({ email, password }) {
 	const [rows] = await db.query(

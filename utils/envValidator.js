@@ -94,6 +94,18 @@ function validateEnv() {
 	const maxVerificationAttempts = required("MAX_VERIFICATION_ATTEMPTS");
 	assertInt("MAX_VERIFICATION_ATTEMPTS", maxVerificationAttempts);
 	process.env.MAX_VERIFICATION_ATTEMPTS = maxVerificationAttempts;
+
+	const resendCooldownSeconds = required("RESEND_COOLDOWN_SECONDS");
+	assertInt("RESEND_COOLDOWN_SECONDS", resendCooldownSeconds);
+	process.env.RESEND_COOLDOWN_SECONDS = resendCooldownSeconds;
+
+	const maxResendCount = required("MAX_RESEND_COUNT");
+	assertInt("MAX_RESEND_COUNT", maxResendCount);
+	process.env.MAX_RESEND_COUNT = maxResendCount;
+
+	const resendLockHours = required("RESEND_LOCK_HOURS");
+	assertInt("RESEND_LOCK_HOURS", resendLockHours);
+	process.env.RESEND_LOCK_HOURS = resendLockHours;
 }
 
 module.exports = { validateEnv };
