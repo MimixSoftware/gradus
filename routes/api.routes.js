@@ -5,6 +5,7 @@ const { requireApiAuth } = require("../middleware/authGuards");
 const { rateLimiter } = require("../middleware/rateLimiter");
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require("../utils/AppError");
+const { validateRequiredInt } = require("../utils/validationUtils");
 
 const settingsService = require("../modules/settings/settings.service");
 const semesterService = require("../modules/semesters/semester.service");
@@ -39,6 +40,24 @@ router.get("/dashboard", asyncHandler(async (req, res) => {
 		tasks,
 		studySessions,
 		scheduledTasks
+	 });
+}));
+
+router.get("/assignment/:assignmentId", asyncHandler(async (req, res) => {
+	const assignmentId = validateRequiredInt(req.params.assignmentId, "Assignment ID", { min: 1 });
+
+	const assignment = await assignmentService.findById(req.user.id, assignmentId);
+	const tasks = await taskService.findAllByAssignment(req.user.id, assignmentId);
+	const scheduledTasks = await scheduledTaskService.findAllByAssignment(req.user.id, assignmentId);
+	const module = await moduleService.findById(req.user.id, assignment.moduleId);
+	const semester = await semesterService.findById(req.user.id, module.semesterId);
+
+	return res.status(200).json({ 
+		assignment,
+		tasks,
+		scheduledTasks,
+		module,
+		semester
 	 });
 }));
 

@@ -134,11 +134,6 @@ async function loadAppState({ scope, assignmentId } = {}) {
 	const settings = await loadSettings();
 	if (!settings) return null;
 
-	if (scope === "assignment") {
-		await loadAssignmentData(assignmentId);
-		return settings;
-	}
-
 	if (scope === "studySessions") {
 		await loadStudySessionsData(settings.activeSemesterId);
 		return settings;
@@ -190,47 +185,30 @@ async function loadDashboardData() {
 }
 
 async function loadAssignmentData(assignmentId) {
-	const assignmentPayload = await getJson(`/api/assignments/${assignmentId}`);
-	const assignment = assignmentPayload.assignment;
+	try {
+		const {
+			assignment = null,
+			tasks = [],
+			scheduledTasks = [],
+			module = null,
+			semester = null
+		} = await getJson(`/api/assignment/${assignmentId}`);
 
-	const [tasksPayload, scheduledTasksPayload, modulePayload] = await Promise.all([
-		getJson(`/api/assignments/${assignment.id}/tasks`),
-		getJson(`/api/assignments/${assignment.id}/scheduled-tasks`),
-		getJson(`/api/modules/${assignment.moduleId}`)
-	]);
+		tasks.sort((a, b) => {
+			const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+			const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+			return aTime - bTime;
+		});
 
-	const tasks = tasksPayload.tasks;
-	const scheduledTasks = scheduledTasksPayload.scheduledTasks;
-	const module = modulePayload.module;
-
-	const semesterPayload = await getJson(`/api/semesters/${module.semesterId}`);
-	const semester = semesterPayload.semester;
-
-	tasks.sort((a, b) => {
-		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-		return aTime - bTime;
-	});
-
-	appState.assignment = assignment;
-	appState.module = module;
-	appState.semester = semester;
-	appState.tasks = tasks;
-	appState.taskById = new Map(tasks.map(t => [t.id, t]));
-	appState.scheduledTasks = scheduledTasks;
-	appState.scheduledTaskById = new Map(scheduledTasks.map(st => [st.id, st]));
-
-	appState.semesters = [];
-	appState.modules = [];
-	appState.assignments = [];
-	appState.semesterById = new Map();
-	appState.moduleById = new Map();
-	appState.assignmentById = new Map();
-
-	appState.studySessions = [];
-	appState.studySessionById = new Map();
-
-	appState.selectedWeekStart = null;
+		appState.assignment = assignment;
+		appState.module = module;
+		appState.semester = semester;
+		setAppStateCollection("tasks", tasks);
+		setAppStateCollection("scheduledTasks", scheduledTasks);
+	}
+	catch (err) {
+		showToast(err.message || "Failed to load assignment.", { type: "error" });
+	}
 }
 
 async function loadStudySessionsData(activeSemesterId) {
