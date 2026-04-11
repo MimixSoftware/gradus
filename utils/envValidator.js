@@ -106,6 +106,14 @@ function validateEnv() {
 	const resendLockHours = required("RESEND_LOCK_HOURS");
 	assertInt("RESEND_LOCK_HOURS", resendLockHours);
 	process.env.RESEND_LOCK_HOURS = resendLockHours;
+
+	const maxFailedLoginAttempts = required("MAX_FAILED_LOGIN_ATTEMPTS");
+	assertInt("MAX_FAILED_LOGIN_ATTEMPTS", maxFailedLoginAttempts);
+	process.env.MAX_FAILED_LOGIN_ATTEMPTS = maxFailedLoginAttempts;
+
+	const loginCooldownSeconds = required("LOGIN_COOLDOWN_SECONDS");
+	assertInt("LOGIN_COOLDOWN_SECONDS", loginCooldownSeconds);
+	process.env.LOGIN_COOLDOWN_SECONDS = loginCooldownSeconds;
 }
 
 module.exports = { validateEnv };

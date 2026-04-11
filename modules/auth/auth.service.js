@@ -12,6 +12,8 @@ const MAX_VERIFICATION_ATTEMPTS = Number(process.env.MAX_VERIFICATION_ATTEMPTS);
 const RESEND_COOLDOWN_SECONDS = Number(process.env.RESEND_COOLDOWN_SECONDS);
 const MAX_RESEND_COUNT = Number(process.env.MAX_RESEND_COUNT);
 const RESEND_LOCK_HOURS = Number(process.env.RESEND_LOCK_HOURS);
+const MAX_FAILED_LOGIN_ATTEMPTS = Number(process.env.MAX_FAILED_LOGIN_ATTEMPTS);
+const LOGIN_COOLDOWN_SECONDS = Number(process.env.LOGIN_COOLDOWN_SECONDS);
 
 function generateVerificationCode() {
 	return String(Math.floor(100000 + Math.random() * 900000));
@@ -352,7 +354,7 @@ async function resendRegistrationCode({ email }) {
 
 async function login({ email, password }) {
 	const [rows] = await db.query(
-		`SELECT id, email, forename, surname, password_hash, role, status
+		`SELECT id, email, forename, surname, password_hash, role, status, last_login_at, failed_login_attempts, last_failed_login_at
 		FROM users
 		WHERE email = ?
 		LIMIT 1`,
@@ -365,19 +367,39 @@ async function login({ email, password }) {
 
 	const user = rows[0];
 
-	if (user.status !== "active") {
-		throw new AppError("Account suspended.", 403);
+	const now = new Date();
+	if (user.failed_login_attempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+		const lastFailed = new Date(user.last_failed_login_at)
+		const seconds = (now - lastFailed) / 1000;
+		
+		if (seconds < LOGIN_COOLDOWN_SECONDS) {
+			throw new AppError(
+				`Too many failed login attempts. Try again in ${Math.ceil(LOGIN_COOLDOWN_SECONDS - seconds)} second${Math.ceil(LOGIN_COOLDOWN_SECONDS - seconds) === 1 ? "" : "s"}.`,
+				429
+			);
+		}
 	}
 
 	const ok = await bcrypt.compare(password, user.password_hash);
 
 	if (!ok) {
+		await db.query(
+			`UPDATE users 
+				SET failed_login_attempts = failed_login_attempts + 1, last_failed_login_at = NOW()
+			WHERE id = ?`,
+			[user.id]
+		);
+
 		throw new AppError("Invalid email or password.", 401);
+	}
+
+	if (user.status !== "active") {
+		throw new AppError("Account suspended.", 403);
 	}
 
 	await db.query(
 		`UPDATE users 
-		SET last_login_at = NOW() 
+			SET failed_login_attempts = 0, last_failed_login_at = NULL, last_login_at = NOW()
 		WHERE id = ?`,
 		[user.id]
 	);

@@ -8,6 +8,8 @@ CREATE TABLE users (
 	role ENUM('user','admin') NOT NULL DEFAULT 'user',
 	status ENUM('active','suspended') NOT NULL DEFAULT 'active',
 	last_login_at TIMESTAMP NULL,
+	failed_login_attempts INT UNSIGNED NOT NULL DEFAULT 0,
+	last_failed_login_at TIMESTAMP NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
