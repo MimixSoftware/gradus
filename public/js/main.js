@@ -134,11 +134,6 @@ async function loadAppState({ scope, assignmentId } = {}) {
 	const settings = await loadSettings();
 	if (!settings) return null;
 
-	if (scope === "schedule") {
-		await loadScheduleData(settings.activeSemesterId);
-		return settings;
-	}
-
 	return settings;
 }
 
@@ -213,7 +208,6 @@ async function loadStudySessionsData() {
 			semesters = [],
 			studySessions = []
 		} = await getJson("/api/aggregate/study-sessions");
-		console.log(semesters);
 		
 		semesters.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -225,79 +219,51 @@ async function loadStudySessionsData() {
 	}
 }
 
-async function loadScheduleData(activeSemesterId) {
-	const semestersPayload = await getJson("/api/semesters");
-	const semesters = semestersPayload.semesters;
+async function loadScheduleData() {
+	try {
+		const {
+			semesters = [],
+			modules = [],
+			assignments = [],
+			tasks = [],
+			studySessions = [],
+			scheduledTasks = []
+		} = await getJson("/api/aggregate/schedule");
+		
+		semesters.sort((a, b) => a.name.localeCompare(b.name));
+		modules.sort((a, b) => a.name.localeCompare(b.name));
+		assignments.sort((a, b) => {
+			const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+			const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+			return aTime - bTime;
+		});
+		tasks.sort((a, b) => {
+			const aAssignment = appState.assignmentById.get(a.assignmentId);
+			const bAssignment = appState.assignmentById.get(b.assignmentId);
 
-	semesters.sort((a, b) => a.name.localeCompare(b.name));
-	appState.semesters = semesters;
-	appState.semesterById = new Map(semesters.map(s => [s.id, s]));
+			const aAssignmentTime = aAssignment?.deadline ? new Date(aAssignment.deadline).getTime() : Infinity;
+			const bAssignmentTime = bAssignment?.deadline ? new Date(bAssignment.deadline).getTime() : Infinity;
 
-	if (!activeSemesterId) {
-		appState.modules = [];
-		appState.assignments = [];
-		appState.tasks = [];
-		appState.studySessions = [];
-		appState.scheduledTasks = [];
-		appState.moduleById = new Map();
-		appState.assignmentById = new Map();
-		appState.taskById = new Map();
-		appState.studySessionById = new Map();
-		appState.scheduledTaskById = new Map();
-		return;
+			if (aAssignmentTime !== bAssignmentTime) {
+				return aAssignmentTime - bAssignmentTime;
+			}
+
+			const aTaskTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+			const bTaskTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+
+			return aTaskTime - bTaskTime;
+		});
+
+		setAppStateCollection("semesters", semesters);
+		setAppStateCollection("modules", modules);
+		setAppStateCollection("assignments", assignments);
+		setAppStateCollection("tasks", tasks);
+		setAppStateCollection("studySessions", studySessions);
+		setAppStateCollection("scheduledTasks", scheduledTasks);
 	}
-
-	const [modulesPayload, assignmentsPayload, tasksPayload, studySessionsPayload, scheduledTasksPayload] = await Promise.all([
-		getJson(`/api/semesters/${activeSemesterId}/modules`),
-		getJson(`/api/semesters/${activeSemesterId}/assignments`),
-		getJson(`/api/semesters/${activeSemesterId}/tasks`),
-		getJson(`/api/semesters/${activeSemesterId}/study-sessions`),
-		getJson(`/api/semesters/${activeSemesterId}/scheduled-tasks`)
-	]);
-
-	const modules = modulesPayload.modules;
-	const assignments = assignmentsPayload.assignments;
-	const tasks = tasksPayload.tasks;
-	const studySessions = studySessionsPayload.studySessions;
-	const scheduledTasks = scheduledTasksPayload.scheduledTasks;
-
-	modules.sort((a, b) => a.name.localeCompare(b.name));
-	assignments.sort((a, b) => {
-		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-		return aTime - bTime;
-	});
-	tasks.sort((a, b) => {
-		const aAssignment = appState.assignmentById.get(a.assignmentId);
-		const bAssignment = appState.assignmentById.get(b.assignmentId);
-
-		const aAssignmentTime = aAssignment?.deadline ? new Date(aAssignment.deadline).getTime() : Infinity;
-		const bAssignmentTime = bAssignment?.deadline ? new Date(bAssignment.deadline).getTime() : Infinity;
-
-		if (aAssignmentTime !== bAssignmentTime) {
-			return aAssignmentTime - bAssignmentTime;
-		}
-
-		const aTaskTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-		const bTaskTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-
-		return aTaskTime - bTaskTime;
-	});
-
-	appState.modules = modules;
-	appState.assignments = assignments;
-	appState.tasks = tasks;
-	appState.studySessions = studySessions;
-	appState.scheduledTasks = scheduledTasks;
-	appState.moduleById = new Map(modules.map(m => [m.id, m]));
-	appState.assignmentById = new Map(assignments.map(a => [a.id, a]));
-	appState.taskById = new Map(tasks.map(t => [t.id, t]));
-	appState.studySessionById = new Map(studySessions.map(ss => [ss.id, ss]));
-	appState.scheduledTaskById = new Map(scheduledTasks.map(st => [st.id, st]));
-
-	appState.assignment = null;
-	appState.module = null;
-	appState.semester = null;
+	catch (err) {
+		showToast(err.message || "Failed to load schedule.", { type: "error" });
+	}
 }
 
 // Global Helpers

@@ -75,4 +75,29 @@ router.get("/study-sessions", asyncHandler(async (req, res) => {
 	return res.status(200).json({ semesters, studySessions });
 }));
 
+router.get("/schedule", asyncHandler(async (req, res) => {
+	const { activeSemesterId } = await settingsService.getByUserId(req.user.id);
+
+	const semesters = await semesterService.findAll(req.user.id);
+
+	if (!activeSemesterId) {
+		return res.status(200).json({ semesters });
+	}
+
+	const modules = await moduleService.findAllBySemester(req.user.id, activeSemesterId);
+	const assignments = await assignmentService.findAllBySemester(req.user.id, activeSemesterId);
+	const tasks = await taskService.findAllBySemester(req.user.id, activeSemesterId);
+	const studySessions = await studySessionService.findAllBySemester(req.user.id, activeSemesterId);
+	const scheduledTasks = await scheduledTaskService.findAllBySemester(req.user.id, activeSemesterId);
+
+	return res.status(200).json({ 
+		semesters,
+		modules,
+		assignments,
+		tasks,
+		studySessions,
+		scheduledTasks
+	});
+}));
+
 module.exports = router;
