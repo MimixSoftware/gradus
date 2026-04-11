@@ -130,13 +130,6 @@ function getRouteContext(name) {
 	return { scope: "settings" };
 }
 
-async function loadAppState({ scope, assignmentId } = {}) {
-	const settings = await loadSettings();
-	if (!settings) return null;
-
-	return settings;
-}
-
 function setAppStateCollection(key, items) {
 	appState[key] = items;
 	appState[`${key.slice(0, -1)}ById`] = new Map(
@@ -4827,8 +4820,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const publicRoutes = ["register", "login", "index"];
 	if (publicRoutes.includes(getRouteName())) return;
 
-	const routeContext = getRouteContext(getRouteName());
-	await loadAppState(routeContext);
+	await loadSettings();
 
 	initLogoutLink();
 	initModals();
