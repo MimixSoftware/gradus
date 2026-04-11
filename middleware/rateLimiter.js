@@ -10,7 +10,11 @@ const rateLimiter = rateLimit({
 	keyGenerator: (req) => {
 		const ip = rateLimit.ipKeyGenerator(req);
 
-		return req.user?.id || ip;
+		if (req.user?.id) {
+			return `user:${req.user.id}`;
+		}
+
+		return `ip:${ip}`;
 	},
 
 	statusCode: 429,
@@ -29,7 +33,8 @@ const authRateLimiter = rateLimit({
 	legacyHeaders: false,
 
 	keyGenerator: (req) => {
-		return rateLimit.ipKeyGenerator(req);
+		const ip = rateLimit.ipKeyGenerator(req);
+		return `ip:${ip}`;
 	},
 
 	statusCode: 429,

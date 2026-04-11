@@ -5,12 +5,10 @@ const { authRateLimiter } = require("../../middleware/rateLimiter");
 const asyncHandler = require('../../utils/asyncHandler');
 const authController = require("./auth.controller");
 
-router.use(authRateLimiter);
-
-router.post("/register/start", asyncHandler(authController.startRegistration));
-router.post("/register/complete", asyncHandler(authController.completeRegistration));
-router.post("/register/resend", asyncHandler(authController.resendRegistrationCode));
-router.post("/login", asyncHandler(authController.login));
+router.post("/register/start", authRateLimiter, asyncHandler(authController.startRegistration));
+router.post("/register/complete", authRateLimiter, asyncHandler(authController.completeRegistration));
+router.post("/register/resend", authRateLimiter, asyncHandler(authController.resendRegistrationCode));
+router.post("/login", authRateLimiter, asyncHandler(authController.login));
 router.post("/logout", authController.logout);
 
 module.exports = router;
