@@ -4,7 +4,7 @@ const router = express.Router();
 const { requireAuth, redirectIfAuth } = require("../middleware/authGuards");
 
 const assignmentService = require("../modules/assignments/assignment.service");
-const { validateRequiredInt } = require("./../utils/validationUtils");
+const { validateRequiredInt } = require("../utils/validationUtils");
 
 // Landing page
 router.get('/', redirectIfAuth, (req, res) => {

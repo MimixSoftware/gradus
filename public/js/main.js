@@ -134,11 +134,6 @@ async function loadAppState({ scope, assignmentId } = {}) {
 	const settings = await loadSettings();
 	if (!settings) return null;
 
-	if (scope === "dashboard") {
-		await loadDashboardData(settings.activeSemesterId);
-		return settings;
-	}
-
 	if (scope === "assignment") {
 		await loadAssignmentData(assignmentId);
 		return settings;
@@ -157,65 +152,41 @@ async function loadAppState({ scope, assignmentId } = {}) {
 	return settings;
 }
 
-async function loadDashboardData(activeSemesterId) {
-	const semestersPayload = await getJson("/api/semesters");
-	const semesters = semestersPayload.semesters;
+function setAppStateCollection(key, items) {
+	appState[key] = items;
+	appState[`${key.slice(0, -1)}ById`] = new Map(
+		items.map(item => [item.id, item])
+	);
+}
 
-	semesters.sort((a, b) => a.name.localeCompare(b.name));
-	appState.semesters = semesters;
-	appState.semesterById = new Map(semesters.map(s => [s.id, s]));
+async function loadDashboardData() {
+	try {
+		const {
+			semesters = [],
+			modules = [],
+			assignments = [],
+			tasks = [],
+			studySessions = [],
+			scheduledTasks = []
+		} = await getJson("/api/dashboard");
 
-	if (!activeSemesterId) {
-		appState.modules = [];
-		appState.assignments = [];
-		appState.tasks = [];
-		appState.studySessions = [];
-		appState.scheduledTasks	= [];
-		appState.moduleById = new Map();
-		appState.assignmentById = new Map();
-		appState.taskById = new Map();
-		appState.studySessionById = new Map();
-		appState.scheduledTaskById = new Map();
-		return;
+		modules.sort((a, b) => a.name.localeCompare(b.name));
+		assignments.sort((a, b) => {
+			const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+			const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+			return aTime - bTime;
+		});
+
+		setAppStateCollection("semesters", semesters);
+		setAppStateCollection("modules", modules);
+		setAppStateCollection("assignments", assignments);
+		setAppStateCollection("tasks", tasks);
+		setAppStateCollection("studySessions", studySessions);
+		setAppStateCollection("scheduledTasks", scheduledTasks);
 	}
-
-	const [modulesPayload, assignmentsPayload, tasksPayload, studySessionsPayload, scheduledTasksPayload] = await Promise.all([
-		getJson(`/api/semesters/${activeSemesterId}/modules`),
-		getJson(`/api/semesters/${activeSemesterId}/assignments`),
-		getJson(`/api/semesters/${activeSemesterId}/tasks`),
-		getJson(`/api/semesters/${activeSemesterId}/study-sessions`),
-		getJson(`/api/semesters/${activeSemesterId}/scheduled-tasks`)
-	]);
-
-	const modules = modulesPayload.modules;
-	const assignments = assignmentsPayload.assignments;
-	const tasks = tasksPayload.tasks;
-	const studySessions = studySessionsPayload.studySessions;
-	const scheduledTasks = scheduledTasksPayload.scheduledTasks;
-
-	modules.sort((a, b) => a.name.localeCompare(b.name));
-	assignments.sort((a, b) => {
-		const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-		const bTime = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-		return aTime - bTime;
-	});
-
-	appState.modules = modules;
-	appState.assignments = assignments;
-	appState.tasks = tasks;
-	appState.studySessions = studySessions;
-	appState.scheduledTasks = scheduledTasks;
-	appState.moduleById = new Map(modules.map(m => [m.id, m]));
-	appState.assignmentById = new Map(assignments.map(a => [a.id, a]));
-	appState.studySessionById = new Map(studySessions.map(ss => [ss.id, ss]));
-	appState.scheduledTaskById = new Map(scheduledTasks.map(st => [st.id, st]));
-	appState.taskById = new Map(tasks.map(t => [t.id, t]));
-
-	appState.assignment = null;
-	appState.module = null;
-	appState.semester = null;
-
-	appState.selectedWeekStart = null;
+	catch (err) {
+		showToast(err.message || "Failed to load dashboard.", { type: "error" });
+	}
 }
 
 async function loadAssignmentData(assignmentId) {
@@ -644,7 +615,7 @@ async function initDashboard() {
 	await refreshDashboard();
 
 	async function refreshDashboard() {
-		await loadDashboardData(appState.activeSemesterId);
+		await loadDashboardData();
 
 		renderModulesList();
 		renderAssignmentsList();
@@ -1152,7 +1123,7 @@ function initSemesterModal() {
 
 			document.dispatchEvent(new CustomEvent("activeSemester:changed"));
 
-			await loadDashboardData(appState.activeSemesterId);
+			await loadDashboardData();
 			refreshModal();
 			setAlert(listErrorEl, "");
 
@@ -1188,7 +1159,7 @@ function initSemesterModal() {
 				showToast(res.message);
 			}
 
-			await loadDashboardData(appState.activeSemesterId);
+			await loadDashboardData();
 			refreshModal();
 			semesterModalShowListView();
 		} catch (err) {

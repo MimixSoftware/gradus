@@ -60,7 +60,10 @@ app.use("/api/scheduled-tasks", scheduledTaskRoutes);
 const statisticsRoutes = require("./modules/statistics/statistics.routes");
 app.use("/api/statistics", statisticsRoutes);
 
-const pageRoutes = require("./routes/pages");
+const aggregateApiRoutes = require("./routes/api.routes");
+app.use("/api", aggregateApiRoutes);
+
+const pageRoutes = require("./routes/page.routes");
 app.use(pageRoutes);
 
 app.use(errorHandler);
