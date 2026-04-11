@@ -61,4 +61,18 @@ router.get("/assignment/:assignmentId", asyncHandler(async (req, res) => {
 	 });
 }));
 
+router.get("/study-sessions", asyncHandler(async (req, res) => {
+	const { activeSemesterId } = await settingsService.getByUserId(req.user.id);
+
+	const semesters = await semesterService.findAll(req.user.id);
+
+	if (!activeSemesterId) {
+		return res.status(200).json({ semesters });
+	}
+
+	const studySessions = await studySessionService.findAllBySemester(req.user.id, activeSemesterId);
+
+	return res.status(200).json({ semesters, studySessions });
+}));
+
 module.exports = router;

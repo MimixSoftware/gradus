@@ -134,11 +134,6 @@ async function loadAppState({ scope, assignmentId } = {}) {
 	const settings = await loadSettings();
 	if (!settings) return null;
 
-	if (scope === "studySessions") {
-		await loadStudySessionsData(settings.activeSemesterId);
-		return settings;
-	}
-
 	if (scope === "schedule") {
 		await loadScheduleData(settings.activeSemesterId);
 		return settings;
@@ -163,8 +158,9 @@ async function loadDashboardData() {
 			tasks = [],
 			studySessions = [],
 			scheduledTasks = []
-		} = await getJson("/api/dashboard");
+		} = await getJson("/api/aggregate/dashboard");
 
+		semesters.sort((a, b) => a.name.localeCompare(b.name));
 		modules.sort((a, b) => a.name.localeCompare(b.name));
 		assignments.sort((a, b) => {
 			const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
@@ -192,7 +188,7 @@ async function loadAssignmentData(assignmentId) {
 			scheduledTasks = [],
 			module = null,
 			semester = null
-		} = await getJson(`/api/assignment/${assignmentId}`);
+		} = await getJson(`/api/aggregate/assignment/${assignmentId}`);
 
 		tasks.sort((a, b) => {
 			const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
@@ -211,40 +207,22 @@ async function loadAssignmentData(assignmentId) {
 	}
 }
 
-async function loadStudySessionsData(activeSemesterId) {
-	const semestersPayload = await getJson("/api/semesters");
-	const semesters = semestersPayload.semesters;
+async function loadStudySessionsData() {
+	try {
+		const {
+			semesters = [],
+			studySessions = []
+		} = await getJson("/api/aggregate/study-sessions");
+		console.log(semesters);
+		
+		semesters.sort((a, b) => a.name.localeCompare(b.name));
 
-	semesters.sort((a, b) => a.name.localeCompare(b.name));
-	appState.semesters = semesters;
-	appState.semesterById = new Map(semesters.map(s => [s.id, s]));
-
-	if (!activeSemesterId) {
-		appState.studySessions = [];
-		appState.studySessionById = new Map();
-		return;
+		setAppStateCollection("semesters", semesters);
+		setAppStateCollection("studySessions", studySessions);
 	}
-
-	const studySessionsPayload = await getJson(`/api/semesters/${activeSemesterId}/study-sessions`);
-	const studySessions = studySessionsPayload.studySessions;
-
-	appState.studySessions = studySessions;
-	appState.studySessionById = new Map(studySessions.map(ss => [ss.id, ss]));
-
-	appState.modules = [];
-	appState.assignments = [];
-	appState.moduleById = new Map();
-	appState.assignmentById = new Map();
-
-	appState.assignment = null;
-	appState.module = null;
-	appState.semester = null;
-	appState.tasks = null;
-	appState.taskById = new Map();
-
-	appState.selectedWeekStart = null;
-	appState.scheduledTasks = null;
-	appState.scheduledTaskById = new Map();
+	catch (err) {
+		showToast(err.message || "Failed to load study sessions.", { type: "error" });
+	}
 }
 
 async function loadScheduleData(activeSemesterId) {
