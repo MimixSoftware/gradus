@@ -499,6 +499,13 @@ async function initDashboard() {
 	document.addEventListener("module:deleted", refreshDashboard);
 	document.addEventListener("assignment:created", refreshDashboard);
 
+	window.addEventListener("pageshow", async (e) => {
+		if (e.persisted) {
+			await loadSettings();
+			await refreshDashboard();
+		}
+	});
+
 	modulesListEl.addEventListener("click", (e) => {
 		const btn = e.target.closest("button[data-module-id][data-action]");
 		if (!btn) return;
@@ -1584,6 +1591,13 @@ async function initAssignment() {
 	editModal.addEventListener("modal:open", populateEditAssignmentForm);
 	main.addEventListener("click", handleAssignmentActions);
 
+	window.addEventListener("pageshow", async (e) => {
+		if (e.persisted) {
+			await loadSettings();
+			await refreshAssignment();
+		}
+	});
+
 	const handleTaskActions = (e) => {
 		const btn = e.target.closest('button[data-task-id][data-action]');
 		if (!btn) return;
@@ -2551,6 +2565,13 @@ async function initStudySessions() {
 	document.addEventListener("studySession:updated", refreshStudySessions);
 	document.addEventListener("studySession:deleted", refreshStudySessions);
 
+	window.addEventListener("pageshow", async (e) => {
+		if (e.persisted) {
+			await loadSettings();
+			await refreshStudySessions();
+		}
+	});
+
 	studySessionsListEl.addEventListener("click", (e) => {
 		const btn = e.target.closest("button[data-study-session-id][data-action]");
 		if (!btn) return;
@@ -2887,6 +2908,13 @@ async function initSchedule() {
 	document.addEventListener("scheduledTask:created", refreshSchedule);
 	document.addEventListener("scheduledTask:updated", refreshSchedule);
 	document.addEventListener("scheduledTask:deleted", refreshSchedule);
+
+	window.addEventListener("pageshow", async (e) => {
+		if (e.persisted) {
+			await loadSettings();
+			await refreshSchedule();
+		}
+	});
 
 	prevWeekBtnEl.addEventListener("click", () => changeWeek(-1));
 	nextWeekBtnEl.addEventListener("click", () => changeWeek(1));
@@ -4337,6 +4365,8 @@ function initSettings() {
 	document.addEventListener("setting:updated", refreshSettings);
 	document.addEventListener("avatar:updated", refreshSettings);
 	document.addEventListener("avatar:deleted", refreshSettings);
+
+	window.addEventListener("pageshow", refreshSettings);
 
 	function updateButtons() {
 		profileSaveBtn.disabled =
