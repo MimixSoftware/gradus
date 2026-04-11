@@ -2,7 +2,7 @@ const rateLimit = require("express-rate-limit");
 
 const rateLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 1000,
+	max: 900,
 
 	standardHeaders: true,
 	legacyHeaders: false,
@@ -20,14 +20,13 @@ const rateLimiter = rateLimit({
 	statusCode: 429,
 
 	message: {
-		statusCode: 429,
 		message: "Too many requests, please try again later."
 	}
 });
 
 const authRateLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 50,
+	max: 60,
 
 	standardHeaders: true,
 	legacyHeaders: false,
@@ -40,7 +39,6 @@ const authRateLimiter = rateLimit({
 	statusCode: 429,
 
 	message: {
-		statusCode: 429,
 		message: "Too many requests, please try again later."
 	}
 });
