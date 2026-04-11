@@ -1,8 +1,11 @@
 const express = require("express");
 const router = express.Router();
 
+const { authRateLimiter } = require("../../middleware/authRateLimiter");
 const asyncHandler = require('../../utils/asyncHandler');
 const authController = require("./auth.controller");
+
+router.use(authRateLimiter);
 
 router.post("/register/start", asyncHandler(authController.startRegistration));
 router.post("/register/complete", asyncHandler(authController.completeRegistration));

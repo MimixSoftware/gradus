@@ -2,16 +2,21 @@ const express = require("express");
 const router = express.Router();
 
 const { requireApiAuth } = require("../../middleware/authGuards");
+const { rateLimiter } = require("../../middleware/rateLimiter");
 const asyncHandler = require('../../utils/asyncHandler');
+
 const moduleController = require("./module.controller");
 const assignmentController = require("../assignments/assignment.controller");
 
-router.get("/", requireApiAuth, asyncHandler(moduleController.findAll));
-router.get("/:moduleId", requireApiAuth, asyncHandler(moduleController.findById));
-router.patch("/:moduleId", requireApiAuth, asyncHandler(moduleController.update));
-router.delete("/:moduleId", requireApiAuth, asyncHandler(moduleController.remove));
+router.use(requireApiAuth);
+router.use(rateLimiter);
 
-router.get("/:moduleId/assignments", requireApiAuth, asyncHandler(assignmentController.findAllByModule));
-router.post("/:moduleId/assignments", requireApiAuth, asyncHandler(assignmentController.createInModule));
+router.get("/", asyncHandler(moduleController.findAll));
+router.get("/:moduleId", asyncHandler(moduleController.findById));
+router.patch("/:moduleId", asyncHandler(moduleController.update));
+router.delete("/:moduleId", asyncHandler(moduleController.remove));
+
+router.get("/:moduleId/assignments", asyncHandler(assignmentController.findAllByModule));
+router.post("/:moduleId/assignments", asyncHandler(assignmentController.createInModule));
 
 module.exports = router;

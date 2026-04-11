@@ -2,14 +2,19 @@ const express = require("express");
 const router = express.Router();
 
 const { requireApiAuth } = require("../../middleware/authGuards");
+const { rateLimiter } = require("../../middleware/rateLimiter");
 const asyncHandler = require('../../utils/asyncHandler');
+
 const taskController = require("./task.controller");
 
-router.get("/", requireApiAuth, asyncHandler(taskController.findAll));
-router.get("/:taskId", requireApiAuth, asyncHandler(taskController.findById));
-router.patch("/:taskId", requireApiAuth, asyncHandler(taskController.update));
-router.delete("/:taskId", requireApiAuth, asyncHandler(taskController.remove));
+router.use(requireApiAuth);
+router.use(rateLimiter);
 
-router.post("/estimate", requireApiAuth, asyncHandler(taskController.estimate));
+router.get("/", asyncHandler(taskController.findAll));
+router.get("/:taskId", asyncHandler(taskController.findById));
+router.patch("/:taskId", asyncHandler(taskController.update));
+router.delete("/:taskId", asyncHandler(taskController.remove));
+
+router.post("/estimate", asyncHandler(taskController.estimate));
 
 module.exports = router;
