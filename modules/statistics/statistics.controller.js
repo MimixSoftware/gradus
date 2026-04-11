@@ -1,5 +1,6 @@
-const statisticsService = require("./statistics.service");
 const { validateRequiredInt } = require("../../utils/validationUtils");
+
+const statisticsService = require("./statistics.service");
 
 async function getStatistics(req, res) {
 	const semesterId = validateRequiredInt(req.params.semesterId, "Semester ID", { min: 1 });

@@ -146,7 +146,7 @@ async function loadDashboardData() {
 			tasks = [],
 			studySessions = [],
 			scheduledTasks = []
-		} = await getJson("/api/aggregate/dashboard");
+		} = await getJson("/api/semesters/aggregate");
 
 		semesters.sort((a, b) => a.name.localeCompare(b.name));
 		modules.sort((a, b) => a.name.localeCompare(b.name));
@@ -176,7 +176,7 @@ async function loadAssignmentData(assignmentId) {
 			scheduledTasks = [],
 			module = null,
 			semester = null
-		} = await getJson(`/api/aggregate/assignment/${assignmentId}`);
+		} = await getJson(`/api/assignments/${assignmentId}/aggregate`);
 
 		tasks.sort((a, b) => {
 			const aTime = a.deadline ? new Date(a.deadline).getTime() : Infinity;
@@ -200,7 +200,7 @@ async function loadStudySessionsData() {
 		const {
 			semesters = [],
 			studySessions = []
-		} = await getJson("/api/aggregate/study-sessions");
+		} = await getJson("/api/study-sessions/aggregate");
 		
 		semesters.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -221,7 +221,7 @@ async function loadScheduleData() {
 			tasks = [],
 			studySessions = [],
 			scheduledTasks = []
-		} = await getJson("/api/aggregate/schedule");
+		} = await getJson("/api/scheduled-tasks/aggregate");
 		
 		semesters.sort((a, b) => a.name.localeCompare(b.name));
 		modules.sort((a, b) => a.name.localeCompare(b.name));

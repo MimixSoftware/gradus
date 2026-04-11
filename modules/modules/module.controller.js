@@ -1,6 +1,7 @@
+const { validateRequiredInt } = require("../../utils/validationUtils");
+
 const moduleService = require("./module.service");
 const moduleValidation = require("./module.validation");
-const { validateRequiredInt } = require("../../utils/validationUtils");
 
 async function findAll(req, res) {
 	const modules = await moduleService.findAll(req.user.id);

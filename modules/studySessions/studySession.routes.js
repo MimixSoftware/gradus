@@ -11,6 +11,8 @@ const scheduledTaskController = require("../scheduledTasks/scheduledTask.control
 router.use(requireApiAuth);
 router.use(rateLimiter);
 
+router.get("/aggregate", asyncHandler(studySessionController.getAggregate));
+
 router.get("/", asyncHandler(studySessionController.findAll));
 router.get("/:studySessionId", asyncHandler(studySessionController.findById));
 router.patch("/:studySessionId", asyncHandler(studySessionController.update));

@@ -1,6 +1,9 @@
+const { validateRequiredInt } = require("../../utils/validationUtils");
+
 const studySessionService = require("./studySession.service");
 const studySessionValidation = require("./studySession.validation");
-const { validateRequiredInt } = require("../../utils/validationUtils");
+const settingsService = require("../settings/settings.service");
+const semesterService = require("../semesters/semester.service");
 
 async function findAll(req, res) {
 	const studySessions = await studySessionService.findAll(req.user.id);
@@ -50,4 +53,18 @@ async function remove(req, res) {
 	return res.status(204).json();
 }
 
-module.exports = { findAll, findAllBySemester, createInSemester, findById, update, remove };
+async function getAggregate(req, res) {
+	const { activeSemesterId } = await settingsService.getByUserId(req.user.id);
+	
+	const semesters = await semesterService.findAll(req.user.id);
+
+	if (activeSemesterId == null) {
+		return res.status(200).json({ semesters });
+	}
+
+	const studySessions = await studySessionService.findAllBySemester(req.user.id, activeSemesterId);
+
+	return res.status(200).json({ semesters, studySessions });
+}
+
+module.exports = { findAll, findAllBySemester, createInSemester, findById, update, remove, getAggregate };

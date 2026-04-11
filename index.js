@@ -60,9 +60,6 @@ app.use("/api/scheduled-tasks", scheduledTaskRoutes);
 const statisticsRoutes = require("./modules/statistics/statistics.routes");
 app.use("/api/statistics", statisticsRoutes);
 
-const aggregateApiRoutes = require("./routes/api.routes");
-app.use("/api/aggregate", aggregateApiRoutes);
-
 const pageRoutes = require("./routes/page.routes");
 app.use(pageRoutes);
 

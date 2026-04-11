@@ -1,6 +1,11 @@
+const { validateRequiredInt } = require("../../utils/validationUtils");
+
 const assignmentService = require("./assignment.service");
 const assignmentValidation = require("./assignment.validation");
-const { validateRequiredInt } = require("../../utils/validationUtils");
+const semesterService = require("../semesters/semester.service");
+const moduleService = require("../modules/module.service");
+const taskService = require("../tasks/task.service");
+const scheduledTaskService = require("../scheduledTasks/scheduledTask.service");
 
 async function findAll(req, res) {
 	const assignments = await assignmentService.findAll(req.user.id);
@@ -58,4 +63,22 @@ async function remove(req, res) {
 	return res.status(204).json();
 }
 
-module.exports = { findAll, findAllBySemester, findAllByModule, createInModule, findById, update, remove };
+async function getAggregate(req, res) {
+	const assignmentId = validateRequiredInt(req.params.assignmentId, "Assignment ID", { min: 1 });
+	
+	const assignment = await assignmentService.findById(req.user.id, assignmentId);
+	const tasks = await taskService.findAllByAssignment(req.user.id, assignmentId);
+	const scheduledTasks = await scheduledTaskService.findAllByAssignment(req.user.id, assignmentId);
+	const module = await moduleService.findById(req.user.id, assignment.moduleId);
+	const semester = await semesterService.findById(req.user.id, module.semesterId);
+
+	return res.status(200).json({ 
+		assignment,
+		tasks,
+		scheduledTasks,
+		module,
+		semester
+	});
+}
+
+module.exports = { findAll, findAllBySemester, findAllByModule, createInModule, findById, update, remove, getAggregate };
