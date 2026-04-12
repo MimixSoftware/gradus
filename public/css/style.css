@@ -215,6 +215,19 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+
+	animation: pageFadeIn 0.2s ease;
+}
+
+@keyframes pageFadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 /* Header and Navigation */
@@ -322,12 +335,12 @@ body {
 	}
 
 	.nav-menu {
-		display: none;
 		position: absolute;
 		top: 72px;
 		right: 1.25rem;
 		left: 1.25rem;
 
+		display: flex;
 		flex-direction: column;
 		align-items: stretch;
 		gap: 0.75rem;
@@ -337,10 +350,23 @@ body {
 		border-radius: 12px;
 		padding: 1rem;
 		box-shadow: var(--menu-shadow);
+
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transform: translateY(-8px) scale(0.98);
+
+		transition:
+			opacity 0.18s ease,
+			transform 0.18s ease,
+			visibility 0.18s ease;
 	}
 
 	.nav-menu.is-open {
-		display: flex;
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+		transform: translateY(0) scale(1);
 	}
 
 	.nav-link,
@@ -1084,25 +1110,39 @@ input:focus {
 .modal {
 	position: fixed;
 	inset: 0;
-	display: none;
 	z-index: 50;
-}
 
-.modal.is-open {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 
 	padding: 1.25rem;
-
 	overflow: auto;
 	-webkit-overflow-scrolling: touch;
+
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+
+	transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+.modal.is-open {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
 }
 
 .modal-overlay {
 	position: absolute;
 	inset: 0;
 	background: var(--overlay);
+	opacity: 0;
+	transition: opacity 0.18s ease;
+}
+
+.modal.is-open .modal-overlay {
+	opacity: 1;
 }
 
 .modal-dialog {
@@ -1119,8 +1159,16 @@ input:focus {
 	flex-direction: column;
 
 	max-height: calc(100vh - 9.25rem);
-
 	overflow: hidden;
+
+	opacity: 0;
+	transform: scale(0.95) translateY(8px);
+	transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.modal.is-open .modal-dialog {
+	opacity: 1;
+	transform: scale(1) translateY(0);
 }
 
 .modal-header {
@@ -1145,18 +1193,23 @@ input:focus {
 	cursor: pointer;
 	line-height: 1;
 	color: var(--text);
+	transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .modal-close:hover {
 	background: var(--surface-muted);
 }
 
+.modal-close:active {
+	transform: scale(0.96);
+}
+
 .modal-body {
 	padding: 1.25rem;
-
 	overflow: auto;
 	-webkit-overflow-scrolling: touch;
 }
+
 .modal-footer {
 	display: flex;
 	justify-content: flex-end;
