@@ -4761,14 +4761,6 @@ function initMobileNav() {
 	});
 }
 
-function initFooterYear() {
-	currentYearEl = document.getElementById("current-year");
-	if (!currentYearEl) return;
-
-	const currentYear = new Date().getFullYear();
-	currentYearEl.textContent = currentYear;
-}
-
 function initLogoutLink() {
 	const logoutLinkEl= document.getElementById("logout-link");
 	if (!logoutLinkEl) return;
@@ -4844,7 +4836,6 @@ function initLandingSlide() {
 document.addEventListener("DOMContentLoaded", async () => {
 	initAuthForms();
 	initMobileNav();
-	initFooterYear();
 	initLandingSlide();
 	
 	const publicRoutes = ["register", "login", "index"];

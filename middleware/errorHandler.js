@@ -39,6 +39,7 @@ module.exports = function errorHandler(err, req, res, next) {
 	
 	res.status(statusCode).render('error', { 
 		title: 'Error',
+		currentYear: new Date().getFullYear(),
 		statusCode,
 		message: statusCode === 500 ? "Something went wrong on our side. Please try again later." : err.message,
 		showHomeButton: true

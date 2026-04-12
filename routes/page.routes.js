@@ -8,22 +8,22 @@ const { validateRequiredInt } = require("../utils/validationUtils");
 
 // Landing page
 router.get('/', redirectIfAuth, (req, res) => {
-	res.render('index', { title: 'Home' });
+	res.render('index', { title: 'Home', currentYear: new Date().getFullYear() });
 });
 
 // Login page
 router.get('/login', redirectIfAuth, (req, res) => {
-	res.render('login', { title: 'Login' });
+	res.render('login', { title: 'Login', currentYear: new Date().getFullYear() });
 });
 
 // Registration page
 router.get('/register', redirectIfAuth, (req, res) => {
-	res.render('register', { title: 'Register' });
+	res.render('register', { title: 'Register', currentYear: new Date().getFullYear() });
 });
 
 // Dashboard page
 router.get('/dashboard', requireAuth, (req, res) => {
-	res.render('dashboard', { title: 'Dashboard' });
+	res.render('dashboard', { title: 'Dashboard', currentYear: new Date().getFullYear() });
 });
 
 // Assignment page
@@ -35,39 +35,41 @@ router.get('/assignments/:assignmentId', requireAuth, async (req, res) => {
 	if (!assignment) {
 		res.status(404).render('error', { 
 			title: 'Error',
+			currentYear: new Date().getFullYear(),
 			statusCode: '404',
 			message: 'Assignment not found.',
 			showHomeButton: true
 		});
 	}
 
-	res.render('assignment', { title: assignment.name, assignmentId: assignment.id });
+	res.render('assignment', { title: assignment.name, currentYear: new Date().getFullYear(), assignmentId: assignment.id, assignmentName: assignment.name });
 });
 
 // Study Sessions page
 router.get('/study-sessions', requireAuth, (req, res) => {
-	res.render('studySessions', { title: 'Study Sessions' });
+	res.render('studySessions', { title: 'Study Sessions', currentYear: new Date().getFullYear() });
 });
 
 // Schedule page
 router.get('/schedule', requireAuth, (req, res) => {
-	res.render('schedule', { title: 'My Schedule' });
+	res.render('schedule', { title: 'My Schedule', currentYear: new Date().getFullYear() });
 });
 
 // Settings page
 router.get('/settings', requireAuth, (req, res) => {
-	res.render('settings', { title: 'Settings' });
+	res.render('settings', { title: 'Settings', currentYear: new Date().getFullYear() });
 });
 
 // Statistics page
 router.get('/statistics', requireAuth, (req, res) => {
-	res.render('statistics', { title: 'Statistics' });
+	res.render('statistics', { title: 'Statistics', currentYear: new Date().getFullYear() });
 });
 
 // 404 page
 router.get(/.*/, (req, res) => {
 	res.status(404).render('error', { 
 		title: 'Error',
+		currentYear: new Date().getFullYear(),
 		statusCode: '404',
 		message: `The route ${req.originalUrl} does not exist! Please check the URL and try again.`,
 		showHomeButton: true
