@@ -378,6 +378,19 @@ function renderEmptyListState(listEl, message) {
 	listEl.appendChild(li);
 }
 
+function renderLoadingListState(listEl) {
+	listEl.innerHTML = "";
+
+	const li = document.createElement("li");
+	li.className = "ui-loading";
+
+	const spinner = document.createElement("div");
+	spinner.className = "spinner";
+
+	li.appendChild(spinner);
+	listEl.appendChild(li);
+}
+
 function isOverdue(deadline) {
 	if (!deadline) return false;
 	const due = new Date(deadline);
@@ -537,6 +550,10 @@ async function initDashboard() {
 	await refreshDashboard();
 
 	async function refreshDashboard() {
+		renderLoadingListState(modulesListEl);
+		renderLoadingListState(assignmentsListEl);
+		renderLoadingListState(todayListEl);
+
 		await loadDashboardData();
 
 		renderModulesList();
@@ -1617,6 +1634,10 @@ async function initAssignment() {
 	await refreshAssignment();
 
 	async function refreshAssignment() {
+		renderLoadingListState(todoListEl);
+		renderLoadingListState(doingListEl);
+		renderLoadingListState(doneListEl);
+
 		await loadAssignmentData(assignmentId);
 
 		renderDetailsAndUpdateButtons();
@@ -2588,6 +2609,8 @@ async function initStudySessions() {
 	await refreshStudySessions();
 
 	async function refreshStudySessions() {
+		renderLoadingListState(studySessionsListEl);
+
 		await loadStudySessionsData(appState.activeSemesterId);
 
 		renderStudySessionsList();
@@ -2924,6 +2947,9 @@ async function initSchedule() {
 	await refreshSchedule();
 
 	async function refreshSchedule() {
+		renderLoadingListState(scheduleListEl);
+		renderLoadingListState(unscheduledTasksListEl);
+
 		await loadScheduleData(appState.activeSemesterId);
 
 		renderWeekNameAndUpdateButtons();
