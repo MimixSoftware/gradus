@@ -120,19 +120,46 @@ async function findAll(userId) {
 async function create(userId, { name, startDate, endDate }) {
 	await overlapCheck(userId, endDate, startDate);
 
+	const connection = await db.getConnection();
+
 	try {
-		const [result] = await db.query(
+		await connection.beginTransaction();
+
+		const [[{ count }]] = await connection.query(
+			`SELECT COUNT(*) AS count
+			FROM semesters
+			WHERE user_id = ?`,
+			[userId]
+		);
+
+		const [result] = await connection.query(
 			`INSERT INTO semesters (user_id, name, start_date, end_date)
 			VALUES (?, ?, ?, ?)`,
 			[userId, name, startDate, endDate]
 		);
 
+		if (count === 0) {
+			await connection.query(
+				`UPDATE user_settings
+				SET active_semester_id = ?
+				WHERE user_id = ?`,
+				[result.insertId, userId]
+			);
+		}
+
+		await connection.commit();
+
 		return await findById(userId, result.insertId);
 	} catch (err) {
+		await connection.rollback();
+
 		if (err.code === "ER_DUP_ENTRY") {
 			throw new AppError("Semester name already in use.", 409);
 		}
+
 		throw err;
+	} finally {
+		connection.release();
 	}
 }
 
@@ -205,6 +232,17 @@ async function remove(userId, semesterId) {
 		WHERE user_id = ?`,
 		[userId]
 	);
+
+	const [[user]] = await db.query(
+		`SELECT active_semester_id 
+			FROM user_settings 
+			WHERE user_id = ?`,
+		[userId]
+	);
+
+	if (user.active_semester_id === semesterId) {
+		throw new AppError("Active semester cannot be deleted",	400);
+	}
 
 	if (count <= 1) {
 		throw new AppError("You must keep at least one semester.",	400);

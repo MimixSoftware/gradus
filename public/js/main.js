@@ -501,7 +501,10 @@ async function initDashboard() {
 		await loadSettings();
 		await refreshDashboard();
 	});
-	document.addEventListener("semester:created", refreshDashboard);
+	document.addEventListener("semester:created", async () => {
+		await loadSettings();
+		await refreshDashboard();
+	});
 	document.addEventListener("semester:updated", refreshDashboard);
 	document.addEventListener("semester:deleted", async () => {
 		await loadSettings();
@@ -1162,7 +1165,7 @@ function initSemesterModal() {
 			deleteBtn.dataset.semesterId = s.id;
 			deleteBtn.dataset.action = "delete";
 
-			if (appState.semesters.length === 1) {
+			if (appState.semesters.length === 1 || appState.activeSemesterId === s.id) {
 				deleteBtn.disabled = true;
 				deleteBtn.title = "You must keep at least one semester";
 			} else {
@@ -1300,7 +1303,7 @@ function initDeleteSemesterForm() {
 
 			const semesterModal = document.getElementById("semester-modal");
 			if (semesterModal.classList.contains("is-open")) {
-				await loadDashboardData(appState.activeSemesterId);
+				await loadDashboardData();
 				window.refreshModal();
 			}
 
