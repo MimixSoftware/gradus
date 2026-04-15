@@ -36,4 +36,16 @@ async function deleteAvatar(req, res) {
 	res.status(204).json();
 }
 
-module.exports = { getByUserId, getAvatar, update, updateAvatar, deleteAvatar };
+async function getOnboardingStatus(req, res) {
+	const onboarded = await settingsService.getOnboardingStatus(req.user.id);
+
+	return res.status(200).json({ onboarded });
+}
+
+async function completeOnboarding(req, res) {
+	await settingsService.completeOnboarding(req.user.id);
+
+	return res.status(200).json({ message: "Onboarding completed successfully." });
+}
+
+module.exports = { getByUserId, getAvatar, update, updateAvatar, deleteAvatar, getOnboardingStatus, completeOnboarding };

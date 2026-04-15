@@ -222,4 +222,32 @@ async function deleteAvatar(userId) {
 	}
 }
 
-module.exports = { getByUserId, getAvatarPath, update, updateAvatar, deleteAvatar };
+async function getOnboardingStatus(userId) {
+	const [rows] = await db.query(
+		`SELECT onboarded FROM users 
+		WHERE id = ?
+		LIMIT 1`,
+		[userId]
+	);
+
+	if (rows.length === 0) {
+		throw new AppError("User not found.", 404);
+	}
+
+	return Boolean(rows[0].onboarded);
+}
+
+async function completeOnboarding(userId) {
+	const [result] = await db.query(
+		`UPDATE users
+		SET onboarded = TRUE
+		WHERE id = ?`,
+		[userId]
+	);
+
+	if (result.affectedRows === 0) {
+		throw new AppError("User not found.", 404);
+	}
+}
+
+module.exports = { getByUserId, getAvatarPath, update, updateAvatar, deleteAvatar, getOnboardingStatus, completeOnboarding };

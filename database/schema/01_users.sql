@@ -7,6 +7,7 @@ CREATE TABLE users (
 	password_hash VARCHAR(60) NOT NULL,
 	role ENUM('user','admin') NOT NULL DEFAULT 'user',
 	status ENUM('active','suspended') NOT NULL DEFAULT 'active',
+	onboarded BOOLEAN NOT NULL DEFAULT FALSE,
 	last_login_at TIMESTAMP NULL,
 	failed_login_attempts INT UNSIGNED NOT NULL DEFAULT 0,
 	last_failed_login_at TIMESTAMP NULL,
