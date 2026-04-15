@@ -589,12 +589,12 @@ async function initDashboard() {
 	}
 
 	function renderModulesList() {
+		modulesListEl.innerHTML = "";
+
 		if (!appState.modules.length) {
-			renderEmptyListState(modulesListEl, "No modules yet. Create one to get started.");
+			if (appState.activeSemesterId) renderEmptyListState(modulesListEl, "No modules yet. Create one to get started.");
 			return;
 		}
-
-		modulesListEl.innerHTML = "";
 
 		for (const m of appState.modules) {
 			const li = document.createElement("li");
@@ -647,16 +647,20 @@ async function initDashboard() {
 	}
 
 	function renderAssignmentsList() {
+		assignmentsListEl.innerHTML = "";
+
 		const assignments = showCompletedAssignments
 			? appState.assignments 
 			: appState.assignments.filter(a => a.status === "active");
 
-		if (!assignments.length) {
-			renderEmptyListState(assignmentsListEl, "No assignments yet. Create one to get started.");
+		if (!appState.assignments.length) {
+			if (appState.modules.length) renderEmptyListState(assignmentsListEl, "No assignments yet. Create one to get started.");
 			return;
 		}
-
-		assignmentsListEl.innerHTML = "";
+		else if (!assignments.length) {
+			renderEmptyListState(assignmentsListEl, "No active assignments! 🎉");
+			return;
+		}
 
 		for (const a of assignments) {
 			const mod = appState.moduleById.get(a.moduleId);
@@ -727,7 +731,6 @@ async function initDashboard() {
 
 		const semester = appState.semesterById.get(appState.activeSemesterId);
 		if (!semester) {
-			renderEmptyListState(todayListEl, "Nothing is scheduled today! 🥳");
 			return;
 		}
 
@@ -1116,10 +1119,12 @@ function initSemesterModal() {
 		refreshModal();
 		semesterModalShowListView();
 	});
+	activeSelect.addEventListener("change", updateSetActiveButtonState);
 
 	function refreshModal() {
 		populateActiveSemesterSelect();
 		renderSemestersList();
+		updateSetActiveButtonState();
 	}
 	window.refreshModal = refreshModal;
 
@@ -1210,6 +1215,22 @@ function initSemesterModal() {
 			activeSelect.value = "";
 			studySessionsBtn.disabled = true;
 		}
+	}
+
+	function updateSetActiveButtonState() {
+		const picked = activeSelect.value;
+
+		if (!picked) {
+			setActiveBtn.disabled = true;
+			return;
+		}
+
+		if (Number(picked) === appState.activeSemesterId) {
+			setActiveBtn.disabled = true;
+			return;
+		}
+
+		setActiveBtn.disabled = false;
 	}
 
 	function semesterModalShowListView() {
