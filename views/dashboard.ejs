@@ -352,35 +352,38 @@
 				<!-- SCREEN A: List and Pick -->
 				<section id="semester-screen-list">
 					<div
-					id="sm-error"
-					class="alert alert-error"
-					style="display:none;"
-					role="alert"
+						id="sm-error"
+						class="alert alert-error"
+						style="display:none;"
+						role="alert"
 					></div>
 
 					<div class="form-row">
-					<label for="sm-active">Active semester</label>
-					<select id="sm-active" name="activeSemesterId">
-						<option value="" disabled selected>Select a semester…</option>
-						<!-- populated by JS -->
-					</select>
-					<div class="field-hint">This controls what shows on your dashboard.</div>
+						<div class="range-row">
+							<label for="sm-active">Active semester</label>
+							<button type="button" class="btn btn-small" id="sm-study-sessions-btn" data-link="/study-sessions">Study Sessions</button>
+						</div>
+						<select id="sm-active" name="activeSemesterId">
+							<option value="" disabled selected>Select a semester…</option>
+							<!-- populated by JS -->
+						</select>
+						<div class="field-hint">This controls what shows on your dashboard.</div>
 					</div>
 
 					<ul class="ui-list ui-list--editable" data-list="semesters"></ul>
 
 					<div class="ui-actions">
-					<button type="button" class="btn btn-small" id="sm-new-btn">New</button>
+						<button type="button" class="btn btn-small" id="sm-new-btn">New</button>
 					</div>
 				</section>
 
 				<!-- SCREEN B: Create/Edit -->
 				<section id="semester-screen-form" style="display:none;">
 					<div
-					id="sm-form-error"
-					class="alert alert-error"
-					style="display:none;"
-					role="alert"
+						id="sm-form-error"
+						class="alert alert-error"
+						style="display:none;"
+						role="alert"
 					></div>
 
 					<form id="semester-form" class="form">

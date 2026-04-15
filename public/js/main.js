@@ -1010,6 +1010,7 @@ function initSemesterModal() {
 	if (!modalEl) return;
 
 	const activeSelect = modalEl.querySelector("#sm-active");
+	const studySessionsBtn = modalEl.querySelector("#sm-study-sessions-btn");
 	const semestersListEl = document.querySelector('[data-list="semesters"]');
 	const listErrorEl = modalEl.querySelector("#sm-error");
 	const formErrorEl = modalEl.querySelector("#sm-form-error");
@@ -1195,8 +1196,10 @@ function initSemesterModal() {
 
 		if (appState.activeSemesterId != null) {
 			activeSelect.value = String(appState.activeSemesterId);
+			studySessionsBtn.disabled = false;
 		} else {
 			activeSelect.value = "";
+			studySessionsBtn.disabled = true;
 		}
 	}
 
