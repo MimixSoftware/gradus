@@ -1159,9 +1159,15 @@ function initSemesterModal() {
 			deleteBtn.className = "icon-btn icon-btn-danger";
 			deleteBtn.type = "button";
 			deleteBtn.textContent = "✖";
-			deleteBtn.title = "Delete semester";
 			deleteBtn.dataset.semesterId = s.id;
 			deleteBtn.dataset.action = "delete";
+
+			if (appState.semesters.length === 1) {
+				deleteBtn.disabled = true;
+				deleteBtn.title = "You must keep at least one semester";
+			} else {
+				deleteBtn.title = "Delete semester";
+			}
 
 			actions.appendChild(editBtn);
 			actions.appendChild(deleteBtn);

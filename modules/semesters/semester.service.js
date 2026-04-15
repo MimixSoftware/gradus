@@ -199,6 +199,17 @@ async function update(userId, semesterId, { name, startDate, endDate }) {
 }
 
 async function remove(userId, semesterId) {
+	const [[{ count }]] = await db.query(
+		`SELECT COUNT(*) AS count 
+		FROM semesters 
+		WHERE user_id = ?`,
+		[userId]
+	);
+
+	if (count <= 1) {
+		throw new AppError("You must keep at least one semester.",	400);
+	}
+
 	const [result] = await db.query(
 		`DELETE FROM semesters
 		WHERE id = ? AND user_id = ?`,
