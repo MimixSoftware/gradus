@@ -15,447 +15,434 @@
 
 	<%- include('partials/header') %>
 
-	<main class="page" data-page="dashboard">
+	<main class="page" data-page="<%= user.onboarded ? 'dashboard-main' : 'dashboard-onboarding' %>">
         <div class="container">
-			<header class="ui-header">
-				<div class="ui-title">
-					<div class="ui-user">
-						<img 
-							src="/api/settings/avatar" 
-							class="ui-avatar"
-						/>
-
-						<div>
-							<h1>
-								Welcome back 
-								<span class="ui-name"><%= user.forename %></span>!
-							</h1>
-
-							<div class="ui-subline">
-								<span id="active-semester-name">-</span>
-								<a class="ui-link" href="#" data-modal-open="semester-modal">
-									Manage Semesters
-								</a>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="ui-meta">
-					<div class="ui-datetime">
-						<div class="dash-date">-</div>
-						<div class="ui-time">-</div>
-					</div>
-				</div>
-			</header>
-
-			<section class="ui-grid">
-
-				<article class="ui-card">
-					<h2 class="ui-card-title">Your Modules</h2>
-
-					<ul class="ui-list ui-list--editable" data-list="modules"></ul>
-
-					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-modal-open="new-module-modal">New</button>
-					</div>
-				</article>
-
-				<article class="ui-card">
-					<h2 class="ui-card-title">Your Assignments</h2>
-
-					<ul class="ui-list ui-list--clickable" data-list="assignments"></ul>
-
-					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-modal-open="new-assignment-modal">New</button>
-						<button type="button" class="btn btn-small" id="toggle-completed-btn">Show Completed</button>
-					</div>
-				</article>
-
-				<article class="ui-card">
-					<h2 class="ui-card-title">Today</h2>
-
-					<ul class="ui-list ui-list--editable" data-list="today"></ul>
-
-					<div class="ui-actions">
-						<button type="button" class="btn btn-small" data-link="/schedule">My Schedule</button>
-					</div>
-				</article>
-
-			</section>
-
+			<% if (!user.onboarded) { %>
+				<%- include('partials/dashboardOnboarding') %>
+			<% } else { %>
+				<%- include('partials/dashboardMain') %>
+			<% } %>
 		</div>
 	</main>
 
 	<%- include('partials/footer') %>
 
-	<!-- New Assignment Modal -->
-	<div class="modal" id="new-assignment-modal">
-		<div class="modal-overlay" data-modal-close></div>
+	<% if (user.onboarded) { %>
+		<!-- New Assignment Modal -->
+		<div class="modal" id="new-assignment-modal">
+			<div class="modal-overlay" data-modal-close></div>
 
-		<div class="modal-dialog" role="dialog">
-			<header class="modal-header">
-				<div>
-					<div class="modal-title" id="new-assignment-title">New Assignment</div>
-					<div class="field-hint">Create an assignment under a module in your active semester.</div>
-				</div>
-
-				<button type="button" class="modal-close" data-modal-close>✕</button>
-			</header>
-
-			<form class="modal-body form" id="new-assignment-form">
-				<div
-					id="na-error"
-					class="alert alert-error"
-					style="display: none;"
-					role="alert"
-				>Test</div>
-
-				<div class="form-row">
-					<label for="na-name">Assignment name <span class="required">*</span></label>
-					<input id="na-name" name="name" type="text" maxlength="100" required placeholder="e.g. Networks Report" />
-				</div>
-
-				<div class="form-grid">
-					<div class="form-row">
-						<label for="na-module">Module <span class="required">*</span></label>
-						<select id="na-module" name="moduleId" required>
-							<option value="" disabled selected>Select a module…</option>
-							<!-- populated by JS -->
-						</select>
+			<div class="modal-dialog" role="dialog">
+				<header class="modal-header">
+					<div>
+						<div class="modal-title" id="new-assignment-title">New Assignment</div>
+						<div class="field-hint">Create an assignment under a module in your active semester.</div>
 					</div>
 
-					<div class="form-row">
-						<label for="na-deadline">Deadline</label>
-						<input id="na-deadline" name="deadline" type="datetime-local" />
-						<div class="field-hint">Optional. Leave empty if you don’t have a deadline yet.</div>
-					</div>
-				</div>
+					<button type="button" class="modal-close" data-modal-close>✕</button>
+				</header>
 
-				<div class="form-row">
-					<label for="na-description">Description</label>
-					<textarea id="na-description" name="description" maxlength="500" placeholder="Optional notes, requirements, marking scheme, etc."></textarea>
-				</div>
-
-				<div class="form-row">
-					<div class="range-row">
-						<label for="na-weight">Weight</label>
-						<div class="range-value"><span id="na-weight-val">0</span>%</div>
-					</div>
-					<input id="na-weight" name="weight" type="range" min="0" max="100" step="1" value="0" />
-				</div>
-
-				<div class="form-row">
-					<div class="range-row">
-						<label for="na-confidence">Confidence</label>
-						<div class="range-value"><span id="na-confidence-val">0</span>/5</div>
-					</div>
-					<input id="na-confidence" name="confidence" type="range" min="0" max="5" step="1" value="0" />
-					<div class="field-hint">0 = no clue yet, 5 = very confident.</div>
-				</div>
-			</form>
-
-			<footer class="modal-footer">
-				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
-				<button type="submit" class="btn btn-small btn-primary" form="new-assignment-form">Create</button>
-			</footer>
-		</div>
-	</div>
-
-	<!-- New Module Modal -->
-	<div class="modal" id="new-module-modal">
-		<div class="modal-overlay" data-modal-close></div>
-
-		<div class="modal-dialog" role="dialog">
-			<header class="modal-header">
-				<div>
-					<div class="modal-title" id="new-module-title">New Module</div>
-					<div class="field-hint">Create a module under your active semester.</div>
-				</div>
-
-				<button type="button" class="modal-close" data-modal-close>✕</button>
-			</header>
-
-			<form class="modal-body form" id="new-module-form">
-				<div
-					id="nm-error"
-					class="alert alert-error"
-					style="display: none;"
-					role="alert"
-				></div>
-
-				<div class="form-row">
-					<label for="nm-name">Module name <span class="required">*</span></label>
-					<input
-						id="nm-name"
-						name="name"
-						type="text"
-						maxlength="100"
-						required
-						placeholder="e.g. Computer Networks"
-					/>
-				</div>
-
-				<div class="form-grid">
-					<div class="form-row">
-						<label for="nm-credits">Credits</label>
-						<input
-							id="nm-credits"
-							name="credits"
-							type="number"
-							min="0"
-							max="60"
-							step="1"
-							inputmode="numeric"
-							placeholder="Optional"
-						/>
-						<div class="field-hint">Optional. Leave empty if you don’t know yet.</div>
-					</div>
-
-					<div class="form-row">
-						<label for="nm-colour">Colour <span class="required">*</span></label>
-
-						<div class="form-grid" style="grid-template-columns: auto 1fr;">
-							<input
-								id="nm-colour"
-								name="colour"
-								type="color"
-								required
-								style="height: 42px; padding: 0; width: 56px;"
-							/>
-							<input
-								id="nm-colour-hex"
-								type="text"
-								inputmode="text"
-								maxlength="7"
-								autocomplete="off"
-								spellcheck="false"
-							/>
-						</div>
-
-						<div class="field-hint">Pick a colour for the module (used in the UI).</div>
-					</div>
-				</div>
-			</form>
-
-			<footer class="modal-footer">
-				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
-				<button type="submit" class="btn btn-small btn-primary" form="new-module-form">Create</button>
-			</footer>
-		</div>
-	</div>
-
-	<!-- Edit Module Modal -->
-	<div class="modal" id="edit-module-modal">
-		<div class="modal-overlay" data-modal-close></div>
-
-		<div class="modal-dialog" role="dialog">
-			<header class="modal-header">
-				<div>
-					<div class="modal-title" id="edit-module-title">Edit Module</div>
-					<div class="field-hint">Update module details.</div>
-				</div>
-
-				<button type="button" class="modal-close" data-modal-close>✕</button>
-			</header>
-
-			<form class="modal-body form" id="edit-module-form">
-				<input type="hidden" id="em-id" name="id" />
-
-				<div id="em-error" class="alert alert-error" style="display:none;" role="alert"></div>
-
-				<div class="form-row">
-					<label for="em-name">Module name <span class="required">*</span></label>
-					<input id="em-name" name="name" type="text" maxlength="100" required />
-				</div>
-
-				<div class="form-grid">
-					<div class="form-row">
-						<label for="em-credits">Credits</label>
-						<input id="em-credits" name="credits" type="number" min="0" max="60" step="1" />
-						<div class="field-hint">Optional.</div>
-					</div>
-
-					<div class="form-row">
-						<label for="em-colour">Colour <span class="required">*</span></label>
-						<div class="form-grid" style="grid-template-columns: auto 1fr;">
-							<input
-								id="em-colour"
-								name="colour"
-								type="color"
-								required
-								style="height: 42px; padding: 0; width: 56px;"
-							/>
-
-							<input id="em-colour-hex" type="text" inputmode="text" maxlength="7" autocomplete="off" spellcheck="false" />
-						</div>
-					</div>
-				</div>
-			</form>
-
-			<footer class="modal-footer">
-				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
-				<button type="submit" class="btn btn-small btn-primary" form="edit-module-form">Save</button>
-			</footer>
-		</div>
-	</div>
-
-	<!-- Delete Module Modal -->
-	<div class="modal" id="delete-module-modal">
-		<div class="modal-overlay" data-modal-close></div>
-
-		<div class="modal-dialog" role="dialog">
-			<header class="modal-header">
-				<div>
-					<div class="modal-title" id="delete-module-title">Delete Module</div>
-					<div class="field-hint">This action cannot be undone.</div>
-				</div>
-
-				<button type="button" class="modal-close" data-modal-close>✕</button>
-			</header>
-
-			<form class="modal-body form" id="delete-module-form">
-				<input type="hidden" id="dm-id" name="id" />
-
-				<div id="dm-error" class="alert alert-error" style="display:none;" role="alert"></div>
-
-				<div class="modal-warning">
-					<div id="dm-message" class="modal-warning-text">
-						Are you sure you want to delete this module?
-					</div>
-					<div id="dm-counts" class="field-hint" style="margin-top:.5rem;"></div>
-				</div>
-			</form>
-
-			<footer class="modal-footer">
-				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
-				<button type="submit" class="btn btn-small btn-danger" form="delete-module-form">Delete</button>
-			</footer>
-		</div>
-	</div>
-
-	<!-- Change Semester Modal -->
-	<div class="modal" id="semester-modal">
-		<div class="modal-overlay" data-modal-close></div>
-
-		<div class="modal-dialog" role="dialog">
-			<header class="modal-header">
-			<div>
-				<div class="modal-title" id="semester-modal-title">Semesters</div>
-				<div class="field-hint">Set your active semester, or manage semesters.</div>
-			</div>
-
-			<button type="button" class="modal-close" data-modal-close>✕</button>
-			</header>
-
-			<div class="modal-body form">
-				<!-- SCREEN A: List and Pick -->
-				<section id="semester-screen-list">
+				<form class="modal-body form" id="new-assignment-form">
 					<div
-						id="sm-error"
+						id="na-error"
 						class="alert alert-error"
-						style="display:none;"
+						style="display: none;"
 						role="alert"
-					></div>
+					>Test</div>
 
 					<div class="form-row">
-						<div class="range-row">
-							<label for="sm-active">Active semester</label>
-							<button type="button" class="btn btn-small" id="sm-study-sessions-btn" data-link="/study-sessions">Study Sessions</button>
-						</div>
-						<select id="sm-active" name="activeSemesterId">
-							<option value="" disabled selected>Select a semester…</option>
-							<!-- populated by JS -->
-						</select>
-						<div class="field-hint">This controls what shows on your dashboard.</div>
-					</div>
-
-					<ul class="ui-list ui-list--editable" data-list="semesters"></ul>
-
-					<div class="ui-actions">
-						<button type="button" class="btn btn-small" id="sm-new-btn">New</button>
-					</div>
-				</section>
-
-				<!-- SCREEN B: Create/Edit -->
-				<section id="semester-screen-form" style="display:none;">
-					<div
-						id="sm-form-error"
-						class="alert alert-error"
-						style="display:none;"
-						role="alert"
-					></div>
-
-					<form id="semester-form" class="form">
-					<input type="hidden" id="sm-id" name="id" value="" />
-
-					<div class="form-row">
-						<label for="sm-name">Semester name</label>
-						<input id="sm-name" name="name" type="text" maxlength="100" required placeholder="e.g. Spring 2026" />
+						<label for="na-name">Assignment name <span class="required">*</span></label>
+						<input id="na-name" name="name" type="text" maxlength="100" required placeholder="e.g. Networks Report" />
 					</div>
 
 					<div class="form-grid">
 						<div class="form-row">
-						<label for="sm-start">Start date</label>
-						<input id="sm-start" name="startDate" type="date" required />
+							<label for="na-module">Module <span class="required">*</span></label>
+							<select id="na-module" name="moduleId" required>
+								<option value="" disabled selected>Select a module…</option>
+								<!-- populated by JS -->
+							</select>
 						</div>
 
 						<div class="form-row">
-						<label for="sm-end">End date</label>
-						<input id="sm-end" name="endDate" type="date" required />
+							<label for="na-deadline">Deadline</label>
+							<input id="na-deadline" name="deadline" type="datetime-local" />
+							<div class="field-hint">Optional. Leave empty if you don’t have a deadline yet.</div>
 						</div>
 					</div>
-					</form>
-				</section>
+
+					<div class="form-row">
+						<label for="na-description">Description</label>
+						<textarea id="na-description" name="description" maxlength="500" placeholder="Optional notes, requirements, marking scheme, etc."></textarea>
+					</div>
+
+					<div class="form-row">
+						<div class="range-row">
+							<label for="na-weight">Weight</label>
+							<div class="range-value"><span id="na-weight-val">0</span>%</div>
+						</div>
+						<input id="na-weight" name="weight" type="range" min="0" max="100" step="1" value="0" />
+					</div>
+
+					<div class="form-row">
+						<div class="range-row">
+							<label for="na-confidence">Confidence</label>
+							<div class="range-value"><span id="na-confidence-val">0</span>/5</div>
+						</div>
+						<input id="na-confidence" name="confidence" type="range" min="0" max="5" step="1" value="0" />
+						<div class="field-hint">0 = no clue yet, 5 = very confident.</div>
+					</div>
+				</form>
+
+				<footer class="modal-footer">
+					<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+					<button type="submit" class="btn btn-small btn-primary" form="new-assignment-form">Create</button>
+				</footer>
 			</div>
-
-			<footer class="modal-footer">
-				<div id="semester-footer-list">
-					<button type="button" class="btn btn-small" data-modal-close>Close</button>
-					<button type="button" class="btn btn-small btn-primary" id="sm-set-active-btn">Set Active Semester</button>
-				</div>
-
-				<div id="semester-footer-form" style="display:none;">
-					<button type="button" class="btn btn-small" id="sm-cancel-form-btn">Cancel</button>
-					<button type="submit" class="btn btn-small btn-primary" form="semester-form" id="sm-save-btn">Save</button>
-				</div>
-			</footer>
 		</div>
-	</div>
 
-	<!-- Delete Semester Modal -->
-	<div class="modal" id="delete-semester-modal">
-		<div class="modal-overlay" data-modal-close></div>
+		<!-- New Module Modal -->
+		<div class="modal" id="new-module-modal">
+			<div class="modal-overlay" data-modal-close></div>
 
-		<div class="modal-dialog" role="dialog">
-			<header class="modal-header">
+			<div class="modal-dialog" role="dialog">
+				<header class="modal-header">
+					<div>
+						<div class="modal-title" id="new-module-title">New Module</div>
+						<div class="field-hint">Create a module under your active semester.</div>
+					</div>
+
+					<button type="button" class="modal-close" data-modal-close>✕</button>
+				</header>
+
+				<form class="modal-body form" id="new-module-form">
+					<div
+						id="nm-error"
+						class="alert alert-error"
+						style="display: none;"
+						role="alert"
+					></div>
+
+					<div class="form-row">
+						<label for="nm-name">Module name <span class="required">*</span></label>
+						<input
+							id="nm-name"
+							name="name"
+							type="text"
+							maxlength="100"
+							required
+							placeholder="e.g. Computer Networks"
+						/>
+					</div>
+
+					<div class="form-grid">
+						<div class="form-row">
+							<label for="nm-credits">Credits</label>
+							<input
+								id="nm-credits"
+								name="credits"
+								type="number"
+								min="0"
+								max="60"
+								step="1"
+								inputmode="numeric"
+								placeholder="Optional"
+							/>
+							<div class="field-hint">Optional. Leave empty if you don’t know yet.</div>
+						</div>
+
+						<div class="form-row">
+							<label for="nm-colour">Colour <span class="required">*</span></label>
+
+							<div class="form-grid" style="grid-template-columns: auto 1fr;">
+								<input
+									id="nm-colour"
+									name="colour"
+									type="color"
+									required
+									style="height: 42px; padding: 0; width: 56px;"
+								/>
+								<input
+									id="nm-colour-hex"
+									type="text"
+									inputmode="text"
+									maxlength="7"
+									autocomplete="off"
+									spellcheck="false"
+								/>
+							</div>
+
+							<div class="field-hint">Pick a colour for the module (used in the UI).</div>
+						</div>
+					</div>
+				</form>
+
+				<footer class="modal-footer">
+					<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+					<button type="submit" class="btn btn-small btn-primary" form="new-module-form">Create</button>
+				</footer>
+			</div>
+		</div>
+
+		<!-- Edit Module Modal -->
+		<div class="modal" id="edit-module-modal">
+			<div class="modal-overlay" data-modal-close></div>
+
+			<div class="modal-dialog" role="dialog">
+				<header class="modal-header">
+					<div>
+						<div class="modal-title" id="edit-module-title">Edit Module</div>
+						<div class="field-hint">Update module details.</div>
+					</div>
+
+					<button type="button" class="modal-close" data-modal-close>✕</button>
+				</header>
+
+				<form class="modal-body form" id="edit-module-form">
+					<input type="hidden" id="em-id" name="id" />
+
+					<div id="em-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+					<div class="form-row">
+						<label for="em-name">Module name <span class="required">*</span></label>
+						<input id="em-name" name="name" type="text" maxlength="100" required />
+					</div>
+
+					<div class="form-grid">
+						<div class="form-row">
+							<label for="em-credits">Credits</label>
+							<input id="em-credits" name="credits" type="number" min="0" max="60" step="1" />
+							<div class="field-hint">Optional.</div>
+						</div>
+
+						<div class="form-row">
+							<label for="em-colour">Colour <span class="required">*</span></label>
+							<div class="form-grid" style="grid-template-columns: auto 1fr;">
+								<input
+									id="em-colour"
+									name="colour"
+									type="color"
+									required
+									style="height: 42px; padding: 0; width: 56px;"
+								/>
+
+								<input id="em-colour-hex" type="text" inputmode="text" maxlength="7" autocomplete="off" spellcheck="false" />
+							</div>
+						</div>
+					</div>
+				</form>
+
+				<footer class="modal-footer">
+					<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+					<button type="submit" class="btn btn-small btn-primary" form="edit-module-form">Save</button>
+				</footer>
+			</div>
+		</div>
+
+		<!-- Delete Module Modal -->
+		<div class="modal" id="delete-module-modal">
+			<div class="modal-overlay" data-modal-close></div>
+
+			<div class="modal-dialog" role="dialog">
+				<header class="modal-header">
+					<div>
+						<div class="modal-title" id="delete-module-title">Delete Module</div>
+						<div class="field-hint">This action cannot be undone.</div>
+					</div>
+
+					<button type="button" class="modal-close" data-modal-close>✕</button>
+				</header>
+
+				<form class="modal-body form" id="delete-module-form">
+					<input type="hidden" id="dm-id" name="id" />
+
+					<div id="dm-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+					<div class="modal-warning">
+						<div id="dm-message" class="modal-warning-text">
+							Are you sure you want to delete this module?
+						</div>
+						<div id="dm-counts" class="field-hint" style="margin-top:.5rem;"></div>
+					</div>
+				</form>
+
+				<footer class="modal-footer">
+					<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+					<button type="submit" class="btn btn-small btn-danger" form="delete-module-form">Delete</button>
+				</footer>
+			</div>
+		</div>
+
+		<!-- Change Semester Modal -->
+		<div class="modal" id="semester-modal">
+			<div class="modal-overlay" data-modal-close></div>
+
+			<div class="modal-dialog" role="dialog">
+				<header class="modal-header">
 				<div>
-					<div class="modal-title" id="delete-semester-title">Delete Semester</div>
-					<div class="field-hint">This action cannot be undone.</div>
+					<div class="modal-title" id="semester-modal-title">Semesters</div>
+					<div class="field-hint">Set your active semester, or manage semesters.</div>
 				</div>
 
 				<button type="button" class="modal-close" data-modal-close>✕</button>
-			</header>
+				</header>
 
-			<form class="modal-body form" id="delete-semester-form">
-				<input type="hidden" id="ds-id" name="id" />
+				<div class="modal-body form">
+					<!-- SCREEN A: List and Pick -->
+					<section id="semester-screen-list">
+						<div
+							id="sm-error"
+							class="alert alert-error"
+							style="display:none;"
+							role="alert"
+						></div>
 
-				<div id="ds-error" class="alert alert-error" style="display:none;" role="alert"></div>
+						<div class="form-row">
+							<div class="range-row">
+								<label for="sm-active">Active semester</label>
+								<button type="button" class="btn btn-small" id="sm-study-sessions-btn" data-link="/study-sessions">Study Sessions</button>
+							</div>
+							<select id="sm-active" name="activeSemesterId">
+								<option value="" disabled selected>Select a semester…</option>
+								<!-- populated by JS -->
+							</select>
+							<div class="field-hint">This controls what shows on your dashboard.</div>
+						</div>
 
-				<div class="modal-warning">
-					<div id="ds-message" class="modal-warning-text">
-						Are you sure you want to delete this semester?
-					</div>
-					<div id="ds-counts" class="field-hint" style="margin-top:.5rem;"></div>
+						<ul class="ui-list ui-list--editable" data-list="semesters"></ul>
+
+						<div class="ui-actions">
+							<button type="button" class="btn btn-small" id="sm-new-btn">New</button>
+						</div>
+					</section>
+
+					<!-- SCREEN B: Create/Edit -->
+					<section id="semester-screen-form" style="display:none;">
+						<div
+							id="sm-form-error"
+							class="alert alert-error"
+							style="display:none;"
+							role="alert"
+						></div>
+
+						<form id="semester-form" class="form">
+						<input type="hidden" id="sm-id" name="id" value="" />
+
+						<div class="form-row">
+							<label for="sm-name">Semester name</label>
+							<input id="sm-name" name="name" type="text" maxlength="100" required placeholder="e.g. Spring 2026" />
+						</div>
+
+						<div class="form-grid">
+							<div class="form-row">
+							<label for="sm-start">Start date</label>
+							<input id="sm-start" name="startDate" type="date" required />
+							</div>
+
+							<div class="form-row">
+							<label for="sm-end">End date</label>
+							<input id="sm-end" name="endDate" type="date" required />
+							</div>
+						</div>
+						</form>
+					</section>
 				</div>
-			</form>
 
-			<footer class="modal-footer">
-				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
-				<button type="submit" class="btn btn-small btn-danger" form="delete-semester-form">Delete</button>
-			</footer>
+				<footer class="modal-footer">
+					<div id="semester-footer-list">
+						<button type="button" class="btn btn-small" data-modal-close>Close</button>
+						<button type="button" class="btn btn-small btn-primary" id="sm-set-active-btn">Set Active Semester</button>
+					</div>
+
+					<div id="semester-footer-form" style="display:none;">
+						<button type="button" class="btn btn-small" id="sm-cancel-form-btn">Cancel</button>
+						<button type="submit" class="btn btn-small btn-primary" form="semester-form" id="sm-save-btn">Save</button>
+					</div>
+				</footer>
+			</div>
 		</div>
-	</div>
+
+		<!-- Delete Semester Modal -->
+		<div class="modal" id="delete-semester-modal">
+			<div class="modal-overlay" data-modal-close></div>
+
+			<div class="modal-dialog" role="dialog">
+				<header class="modal-header">
+					<div>
+						<div class="modal-title" id="delete-semester-title">Delete Semester</div>
+						<div class="field-hint">This action cannot be undone.</div>
+					</div>
+
+					<button type="button" class="modal-close" data-modal-close>✕</button>
+				</header>
+
+				<form class="modal-body form" id="delete-semester-form">
+					<input type="hidden" id="ds-id" name="id" />
+
+					<div id="ds-error" class="alert alert-error" style="display:none;" role="alert"></div>
+
+					<div class="modal-warning">
+						<div id="ds-message" class="modal-warning-text">
+							Are you sure you want to delete this semester?
+						</div>
+						<div id="ds-counts" class="field-hint" style="margin-top:.5rem;"></div>
+					</div>
+				</form>
+
+				<footer class="modal-footer">
+					<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+					<button type="submit" class="btn btn-small btn-danger" form="delete-semester-form">Delete</button>
+				</footer>
+			</div>
+		</div>
+	<% } else { %>
+		<!-- New Semester Modal -->
+		<div class="modal" id="new-semester-modal">
+			<div class="modal-overlay" data-modal-close></div>
+
+			<div class="modal-dialog" role="dialog">
+				<header class="modal-header">
+					<div>
+						<div class="modal-title">New Semester</div>
+						<div class="field-hint">Create a semester.</div>
+					</div>
+
+					<button type="button" class="modal-close" data-modal-close>✕</button>
+				</header>
+
+				<form class="modal-body form" id="new-semester-form">
+					<div
+						id="ns-error"
+						class="alert alert-error"
+						style="display:none;"
+						role="alert"
+					></div>
+
+					<div class="form-row">
+						<label for="ns-name">Semester name</label>
+						<input id="ns-name" name="name" type="text" maxlength="100" required placeholder="e.g. Spring 2026" />
+					</div>
+
+					<div class="form-grid">
+						<div class="form-row">
+						<label for="ns-start">Start date</label>
+						<input id="ns-start" name="startDate" type="date" required />
+						</div>
+
+						<div class="form-row">
+						<label for="ns-end">End date</label>
+						<input id="ns-end" name="endDate" type="date" required />
+						</div>
+					</div>
+				</form>
+
+				<footer class="modal-footer">
+					<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+					<button type="submit" class="btn btn-small btn-primary" form="new-semester-form">Create</button>
+				</footer>
+			</div>
+		</div>
+	<% } %>
 
 	<script src="/js/main.js"></script>
 </body>

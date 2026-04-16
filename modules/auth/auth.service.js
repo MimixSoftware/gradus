@@ -67,7 +67,8 @@ async function createUserFromPending(connection, pending) {
 			forename: pending.forename,
 			surname: pending.surname,
 			role: "user",
-			status: "active"
+			status: "active",
+			onboarded: false
 		}
 	};
 }
@@ -354,7 +355,7 @@ async function resendRegistrationCode({ email }) {
 
 async function login({ email, password }) {
 	const [rows] = await db.query(
-		`SELECT id, email, forename, surname, password_hash, role, status, last_login_at, failed_login_attempts, last_failed_login_at
+		`SELECT id, email, forename, surname, password_hash, role, status, onboarded, last_login_at, failed_login_attempts, last_failed_login_at
 		FROM users
 		WHERE email = ?
 		LIMIT 1`,
@@ -413,7 +414,8 @@ async function login({ email, password }) {
 			forename: user.forename,
 			surname: user.surname,
 			role: user.role,
-			status: user.status
+			status: user.status,
+			onboarded: Boolean(user.onboarded)
 		},
 		settings
 	};

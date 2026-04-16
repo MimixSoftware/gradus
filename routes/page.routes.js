@@ -3,7 +3,6 @@ const router = express.Router();
 
 const { requireAuth, redirectIfAuth } = require("../middleware/authGuards");
 
-const settingsService = require("../modules/settings/settings.service");
 const assignmentService = require("../modules/assignments/assignment.service");
 const { validateRequiredInt } = require("../utils/validationUtils");
 
@@ -23,13 +22,8 @@ router.get('/register', redirectIfAuth, (req, res) => {
 });
 
 // Dashboard page
-router.get('/dashboard', requireAuth, async (req, res) => {
-	const onboarded = await settingsService.getOnboardingStatus(req.user.id);
-	
-	res.render('dashboard', { title: 'Dashboard',
-		currentYear: new Date().getFullYear(),
-		onboarded: onboarded
-	});
+router.get('/dashboard', requireAuth, (req, res) => {
+	res.render('dashboard', { title: 'Dashboard', currentYear: new Date().getFullYear() });
 });
 
 // Assignment page

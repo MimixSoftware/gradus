@@ -835,13 +835,13 @@ input:focus {
 }
 
 .ui-grid--double {
-  grid-template-columns: 2fr 1fr;
-  margin: 0 auto;
+	grid-template-columns: 2fr 1fr;
+	margin: 0 auto;
 }
 
 .ui-grid--settings {
-  grid-template-columns: 1fr 1fr;
-  margin: 0 auto;
+	grid-template-columns: 1fr 1fr;
+	margin: 0 auto;
 }
 
 .ui-card {
@@ -853,6 +853,10 @@ input:focus {
 	border: 1px solid var(--border);
 	background: var(--surface);
 	box-shadow: var(--card-shadow);
+}
+
+.ui-card--onboarding {
+	height: auto;
 }
 
 .ui-card-title {
@@ -1079,7 +1083,7 @@ input:focus {
 	margin-top: 0.15rem;
 }
 
-.assignment-name--completed {
+.assignment-name--completed, .checklist-label--completed {
 	text-decoration: line-through;
 	text-decoration-thickness: 2px;
 }
@@ -1517,4 +1521,15 @@ body.modal-open {
 	font-weight: 400;
 	color: var(--text);
 	line-height: 1.5;
+}
+
+.checklist-item {
+	opacity: 0.3;
+	transition: opacity 0.4s ease;
+	pointer-events: none;
+}
+
+.checklist-item--visible {
+	opacity: 1;
+	pointer-events: auto;
 }

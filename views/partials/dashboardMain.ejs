@@ -1,0 +1,66 @@
+<header class="ui-header">
+	<div class="ui-title">
+		<div class="ui-user">
+			<img 
+				src="/api/settings/avatar" 
+				class="ui-avatar"
+			/>
+
+			<div>
+				<h1>
+					Welcome back 
+					<span class="ui-name"><%= user.forename %></span>!
+				</h1>
+
+				<div class="ui-subline">
+					<span id="active-semester-name">-</span>
+					<a class="ui-link" href="#" data-modal-open="semester-modal">
+						Manage Semesters
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="ui-meta">
+		<div class="ui-datetime">
+			<div class="dash-date">-</div>
+			<div class="ui-time">-</div>
+		</div>
+	</div>
+</header>
+
+<section class="ui-grid">
+
+	<article class="ui-card">
+		<h2 class="ui-card-title">Your Modules</h2>
+
+		<ul class="ui-list ui-list--editable" data-list="modules"></ul>
+
+		<div class="ui-actions">
+			<button type="button" class="btn btn-small" data-modal-open="new-module-modal">New</button>
+		</div>
+	</article>
+
+	<article class="ui-card">
+		<h2 class="ui-card-title">Your Assignments</h2>
+
+		<ul class="ui-list ui-list--clickable" data-list="assignments"></ul>
+
+		<div class="ui-actions">
+			<button type="button" class="btn btn-small" data-modal-open="new-assignment-modal">New</button>
+			<button type="button" class="btn btn-small" id="toggle-completed-btn">Show Completed</button>
+		</div>
+	</article>
+
+	<article class="ui-card">
+		<h2 class="ui-card-title">Today</h2>
+
+		<ul class="ui-list ui-list--editable" data-list="today"></ul>
+
+		<div class="ui-actions">
+			<button type="button" class="btn btn-small" data-link="/schedule">My Schedule</button>
+		</div>
+	</article>
+
+</section>

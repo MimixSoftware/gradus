@@ -482,8 +482,8 @@ function initModals() {
 }
 
 // Dashboard
-async function initDashboard() {
-	if (getRouteName() !== "dashboard") return;
+async function initDashboardMain() {
+	if (getRouteName() !== "dashboard-main") return;
 
 	const dateEl = document.querySelector(".dash-date");
 	const timeEl = document.querySelector(".ui-time");
@@ -1297,6 +1297,123 @@ function initSemesterModal() {
 		modal.classList.add("is-open");
 		document.body.classList.add("modal-open");
 	}
+}
+
+async function initDashboardOnboarding() {
+	if (getRouteName() !== "dashboard-onboarding") return;
+
+	const onboardingChecklistEl = document.getElementById("onboarding-checklist");
+	const semesterRow = onboardingChecklistEl.querySelector('[data-check="semester"]');
+	const semesterCheckLabel = semesterRow.querySelector(".checklist-label");
+	const semesterCheckButton = semesterRow.querySelector("button");
+	const studySessionRow = onboardingChecklistEl.querySelector('[data-check="study-session"]');
+	const studySessionCheckLabel = studySessionRow.querySelector(".checklist-label");
+	const studySessionCheckButton = studySessionRow.querySelector("button");
+	const finalRow = onboardingChecklistEl.querySelector('[data-check="final"]');
+	const dashboardBtn = document.getElementById('dashboard-btn');
+
+	document.addEventListener("semester:created", refreshChecklist);
+	dashboardBtn.addEventListener("click", async (e) => {
+		e.preventDefault();
+
+		try {
+			await postJson("/api/settings/onboarding");
+			
+			window.location.href = "/dashboard";
+		} catch (err) {
+			showToast(err.message || "Failed to complete onboarding.", { type: "error" });
+		}
+	});
+
+	window.addEventListener("pageshow", async (e) => {
+		if (e.persisted) {
+			await loadSettings();
+			await refreshChecklist();
+		}
+	});
+
+	await refreshChecklist();
+
+	async function refreshChecklist() {
+		await loadDashboardData();
+
+		renderOnboardingChecklist();
+	}
+
+	function renderOnboardingChecklist() {
+		const hasSemesters = appState.semesters.length > 0;
+		const hasStudySessions = appState.studySessions.length > 0;
+
+		semesterRow.classList.add("checklist-item--visible");
+
+		if (hasSemesters) {
+			semesterCheckLabel.classList.add("checklist-label--completed");
+			semesterCheckButton.disabled = true;
+		} else {
+			semesterCheckLabel.classList.remove("checklist-label--completed");
+			semesterCheckButton.disabled = false;
+		}
+
+		if (hasSemesters) {
+			studySessionRow.classList.add("checklist-item--visible");
+		} else {
+			studySessionRow.classList.remove("checklist-item--visible");
+		}
+
+		if (hasStudySessions) {
+			studySessionCheckLabel.classList.add("checklist-label--completed");
+			studySessionCheckButton.disabled = true;
+		} else {
+			studySessionCheckLabel.classList.remove("checklist-label--completed");
+			studySessionCheckButton.disabled = false;
+		}
+
+		if (hasSemesters && hasStudySessions) {
+			finalRow.classList.add("checklist-item--visible");
+		} else {
+			finalRow.classList.remove("checklist-item--visible");
+		}
+	}
+}
+
+function initNewSemesterForm() {
+	const form = document.getElementById("new-semester-form");
+	if (!form) return;
+
+	const errorEl = document.getElementById("ns-error");
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+
+		const payload = {
+			name: formData.get("name"),
+			startDate: formData.get("startDate"),
+			endDate: formData.get("endDate")
+		};
+
+		try {
+			const res = await postJson("/api/semesters", payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			document.dispatchEvent(new CustomEvent("semester:created"));
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
 }
 
 function initDeleteSemesterForm() {
@@ -4906,8 +5023,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initModals();
 	initLinkButtons();
 
-	await initDashboard();
+	await initDashboardMain();
+	await initDashboardOnboarding();
 	initSemesterModal();
+	initNewSemesterForm();
 	initDeleteSemesterForm();
 	initNewModuleForm();
 	initEditModuleForm();

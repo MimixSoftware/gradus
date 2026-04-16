@@ -25,7 +25,8 @@ function mapUserWithSettings(row) {
 			forename: row.forename,
 			surname: row.surname,
 			role: row.role,
-			status: row.status
+			status: row.status,
+			onboarded: Boolean(row.onboarded)
 		},
 		settings: {
 			activeSemesterId: row.active_semester_id,
@@ -64,6 +65,7 @@ async function getUserWithSettingsById(userId) {
 			u.surname,
 			u.role,
 			u.status,
+			u.onboarded,
 			us.active_semester_id,
 			us.theme
 		FROM users u
@@ -222,21 +224,6 @@ async function deleteAvatar(userId) {
 	}
 }
 
-async function getOnboardingStatus(userId) {
-	const [rows] = await db.query(
-		`SELECT onboarded FROM users 
-		WHERE id = ?
-		LIMIT 1`,
-		[userId]
-	);
-
-	if (rows.length === 0) {
-		throw new AppError("User not found.", 404);
-	}
-
-	return Boolean(rows[0].onboarded);
-}
-
 async function completeOnboarding(userId) {
 	const [result] = await db.query(
 		`UPDATE users
@@ -248,6 +235,8 @@ async function completeOnboarding(userId) {
 	if (result.affectedRows === 0) {
 		throw new AppError("User not found.", 404);
 	}
+
+	return await getUserWithSettingsById(userId);
 }
 
-module.exports = { getByUserId, getAvatarPath, update, updateAvatar, deleteAvatar, getOnboardingStatus, completeOnboarding };
+module.exports = { getByUserId, getAvatarPath, update, updateAvatar, deleteAvatar, completeOnboarding };

@@ -1,0 +1,38 @@
+<div class="ui-grid ui-grid--settings">
+	<header class="ui-header">
+		<div class="ui-title">
+			<div class="ui-user">
+				<img 
+					src="/api/settings/avatar" 
+					class="ui-avatar"
+				/>
+
+				<div>
+					<h1>
+						Welcome to Gradus,
+						<span class="ui-name"><%= user.forename %></span>!
+					</h1>
+
+					<div class="ui-subline">
+						It looks like it’s your first time here. Let’s get you set up!
+					</div>
+				</div>
+			</div>
+		</div>
+	</header>
+	<article class="ui-card ui-card--onboarding" id="onboarding-checklist">
+		<h2 class="ui-card-title">Onboarding Checklist</h2>
+		<div class="range-row checklist-item" data-check="semester">
+			<span class="checklist-label">Create your first semester</span>
+			<button type="button" class="btn btn-small" data-modal-open="new-semester-modal">Create semester</button>
+		</div>
+		<div class="range-row checklist-item" data-check="study-session">
+			<span class="checklist-label">Create your first study session</span>
+			<button type="button" class="btn btn-small" data-link="/study-sessions">Set up study sessions</button>
+		</div>
+		<div class="range-row checklist-item" data-check="final">
+			<span class="checklist-label">You’re all set!</span>
+			<button type="button" class="btn btn-small" data-modal-open="new-module-modal" id="dashboard-btn">Go to dashboard</button>
+		</div>
+	</article>
+</section>
