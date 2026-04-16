@@ -70,7 +70,7 @@ async function sessionDateCheckScheduledTask(userId, studySessionId, sessionDate
 		throw new AppError("Session date is outside the semester date range.", 400);
 	}
 
-	const jsWeekday = new Date(sessionDate).getDay();
+	const jsWeekday = new Date(sessionDate).getUTCDay();
 	const mysqlWeekday = (jsWeekday + 6) % 7;
 
 	if (mysqlWeekday !== info.day_of_week) {
