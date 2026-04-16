@@ -225,6 +225,26 @@ async function deleteAvatar(userId) {
 }
 
 async function completeOnboarding(userId) {
+	const [semesters] = await db.query(
+		`SELECT id FROM semesters WHERE user_id = ? LIMIT 1`,
+		[userId]
+	);
+	if (semesters.length === 0) {
+		throw new AppError("You must create at least one semester before completing onboarding.", 400);
+	}
+
+	const [sessions] = await db.query(
+		`SELECT ss.id
+		FROM study_sessions ss
+		JOIN semesters s ON ss.semester_id = s.id
+		WHERE s.user_id = ?
+		LIMIT 1`,
+		[userId]
+	);
+	if (sessions.length === 0) {
+		throw new AppError("You must create at least one study session before completing onboarding.", 400);
+	}
+
 	const [result] = await db.query(
 		`UPDATE users
 		SET onboarded = TRUE
