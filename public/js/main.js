@@ -543,9 +543,9 @@ async function initDashboardMain() {
 			showCompleted: showCompletedAssignments
 		});
 
-		toggleCompletedBtnEl.textContent = showCompletedAssignments ? "Hide Completed" : "Show Completed";
+		toggleCompletedBtnEl.textContent = showCompletedAssignments ? "Hide completed" : "Show completed";
 	});
-	toggleCompletedBtnEl.textContent = showCompletedAssignments ? "Hide Completed" : "Show Completed";
+	toggleCompletedBtnEl.textContent = showCompletedAssignments ? "Hide completed" : "Show completed";
 
 	setInterval(refreshDashboardClock, 1000);
 
