@@ -2746,7 +2746,6 @@ async function initStudySessions() {
 	const newStudySessionBtnEl = document.querySelector('[data-modal-open="new-study-session-modal"]');
 	const infoBannerEl = document.getElementById("info-banner");
 	const infoBannerTextEl = document.getElementById("info-banner-text");
-	console.log(infoBannerEl, infoBannerTextEl);
 
 	document.addEventListener("activeSemester:changed", async () => {
 		await loadSettings();
