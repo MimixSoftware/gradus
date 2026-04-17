@@ -292,6 +292,29 @@ function showToast(message, { type = "success", duration = 3000 } = {}) {
 	}, duration);
 }
 
+function setBanner(bannerEl, textEl, message, linkText = "", linkHref = "#") {
+	if (!bannerEl || !textEl) return;
+
+	if (message) {
+		textEl.textContent = message;
+
+		if (linkText) {
+			textEl.append(" ");
+
+			const linkEl = document.createElement("a");
+			linkEl.href = linkHref;
+			linkEl.textContent = linkText;
+
+			textEl.appendChild(linkEl);
+		}
+
+		bannerEl.style.display = "block";
+	} else {
+		textEl.textContent = "";
+		bannerEl.style.display = "none";
+	}
+}
+
 function formatDueDate(iso) {
 	if (!iso) return "No deadline";
 
@@ -2721,6 +2744,9 @@ async function initStudySessions() {
 	const semesterNameEl = document.getElementById("active-semester-name");
 	const studySessionsListEl = document.querySelector('[data-list="studySessions"]');
 	const newStudySessionBtnEl = document.querySelector('[data-modal-open="new-study-session-modal"]');
+	const infoBannerEl = document.getElementById("info-banner");
+	const infoBannerTextEl = document.getElementById("info-banner-text");
+	console.log(infoBannerEl, infoBannerTextEl);
 
 	document.addEventListener("activeSemester:changed", async () => {
 		await loadSettings();
@@ -2765,6 +2791,7 @@ async function initStudySessions() {
 
 		renderStudySessionsList();
 		renderSemesterNameAndUpdateButton();
+		renderOnboardingBanner();
 	}
 
 	function renderStudySessionsList() {
@@ -2902,6 +2929,26 @@ async function initStudySessions() {
 
 		modal.classList.add("is-open");
 		document.body.classList.add("modal-open");
+	}
+
+	function renderOnboardingBanner() {
+		if (infoBannerEl && infoBannerTextEl) {
+			if (appState.studySessions.length > 0) {
+				setBanner(
+					infoBannerEl,
+					infoBannerTextEl,
+					"Finished setting up your study sessions?",
+					"Continue onboarding",
+					"/dashboard"
+				);
+			} else {
+				setBanner(
+					infoBannerEl,
+					infoBannerTextEl,
+					"Create your first study session to continue onboarding."
+				);
+			}
+		}
 	}
 }
 

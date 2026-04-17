@@ -27,6 +27,10 @@
 	--green-200: #c7ead6;
 	--green-600: #27ae60;
 
+	--blue-50: #f3f8ff;
+	--blue-200: #bfdbfe;
+	--blue-600: #2563eb;
+
 	/* Effects */
 	--shadow-sm: 0 4px 12px rgba(0,0,0,0.04);
 	--shadow-md: 0 10px 25px rgba(0,0,0,0.08);
@@ -64,6 +68,10 @@
 	--success-bg: var(--green-50);
 	--success-border: var(--green-200);
 	--success: var(--green-600);
+
+	--info-bg: var(--blue-50);
+	--info-border: var(--blue-200);
+	--info: var(--blue-600);
 
 	--focus-ring: #cccccc;
 
@@ -124,6 +132,10 @@
 	--success-border: rgba(199,234,214,0.30);
 	--success: #4fe08a;
 
+	--info-bg: rgba(191, 219, 254, 0.10);
+	--info-border: rgba(191, 219, 254, 0.35);
+	--info: #60a5fa;
+
 	--focus-ring: #5a5a66;
 }
 
@@ -180,6 +192,10 @@
 		--success-bg: rgba(199,234,214,0.10);
 		--success-border: rgba(199,234,214,0.30);
 		--success: #4fe08a;
+
+		--info-bg: rgba(191, 219, 254, 0.10);
+		--info-border: rgba(191, 219, 254, 0.35);
+		--info: #60a5fa;
 
 		--focus-ring: #5a5a66;
 	}
@@ -1563,4 +1579,22 @@ body.modal-open {
 	.onboarding-checklist .checklist-item[data-check="final"] {
 		margin-top: 0;
 	}
+}
+
+.info-banner {
+	background: var(--info-bg);
+	border: 1px solid var(--info-border);
+	border-radius: 10px;
+	padding: 1rem;
+}
+
+.info-banner-text {
+	color: var(--info);
+	font-weight: 500;
+}
+
+.info-banner a {
+	color: var(--text);
+	font-weight: 600;
+	text-decoration: none;
 }
