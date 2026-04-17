@@ -1711,6 +1711,9 @@ function initNewAssignmentForm() {
 
 	weightEl.addEventListener("input", syncRanges);
 	confEl.addEventListener("input", syncRanges);
+	form.addEventListener("reset", () => {
+		setTimeout(syncRanges, 0);
+	});
 
 	syncRanges();
 
