@@ -26,7 +26,8 @@ function mapUserWithSettings(row) {
 			surname: row.surname,
 			role: row.role,
 			status: row.status,
-			onboarded: Boolean(row.onboarded)
+			onboarded: Boolean(row.onboarded),
+			tutorialCompleted: Boolean(row.tutorial_completed)
 		},
 		settings: {
 			activeSemesterId: row.active_semester_id,
@@ -66,6 +67,7 @@ async function getUserWithSettingsById(userId) {
 			u.role,
 			u.status,
 			u.onboarded,
+			u.tutorial_completed,
 			us.active_semester_id,
 			us.theme
 		FROM users u
