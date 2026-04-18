@@ -296,11 +296,17 @@ function showToast(message, { type = "success", duration = 3000 } = {}) {
 	}, duration);
 }
 
-function setBanner(bannerEl, textEl, message, linkText = "", linkHref = "#") {
-	if (!bannerEl || !textEl) return;
+function setBanner(bannerEl, message, linkText = "", linkHref = "#") {
+	if (!bannerEl) return;
 
 	if (message) {
+		bannerEl.innerHTML = "";
+
+		const textEl = document.createElement("span");
+		textEl.className = "info-banner-text";
 		textEl.textContent = message;
+
+		bannerEl.appendChild(textEl);
 
 		if (linkText) {
 			textEl.append(" ");
@@ -314,7 +320,55 @@ function setBanner(bannerEl, textEl, message, linkText = "", linkHref = "#") {
 
 		bannerEl.style.display = "block";
 	} else {
-		textEl.textContent = "";
+		bannerEl.innerHTML = "";
+		bannerEl.style.display = "none";
+	}
+}
+
+function setTutorialBanner(bannerEl, title, text, buttonText = "Skip Tutorial") {
+	if (!bannerEl) return;
+
+	if (title && text) {
+		bannerEl.innerHTML = "";
+
+		const headerRow = document.createElement("div");
+		headerRow.className = "info-banner-header";
+
+		const titleEl = document.createElement("div");
+		titleEl.className = "info-banner-title";
+		titleEl.textContent = title;
+
+		const exitEl = document.createElement("a");
+		exitEl.href = "#";
+		exitEl.textContent = buttonText;
+
+		exitEl.addEventListener("click", async (e) => {
+			e.preventDefault();
+
+			try { 
+				const res = await postJson("/api/settings/tutorial-completed");
+				showToast(res.message);
+
+				document.dispatchEvent(new CustomEvent("tutorial:completed"));
+			}
+			catch (err) {
+				showToast(err.message || "Failed to complete tutorial.", { type: "error" });
+			}
+		});
+
+		headerRow.appendChild(titleEl);
+		headerRow.appendChild(exitEl);
+
+		const descEl = document.createElement("div");
+		descEl.className = "info-banner-text";
+		descEl.textContent = text;
+
+		bannerEl.appendChild(headerRow);
+		bannerEl.appendChild(descEl);
+
+		bannerEl.style.display = "block";
+	} else {
+		bannerEl.innerHTML = "";
 		bannerEl.style.display = "none";
 	}
 }
@@ -523,6 +577,8 @@ async function initDashboardMain() {
 	const moduleSelectEl = document.getElementById("na-module");
 	const toggleCompletedBtnEl = document.getElementById("toggle-completed-btn");
 	const deadlineInput = document.querySelector("#new-assignment-form #na-deadline");
+	const infoBannerEl = document.getElementById("info-banner");
+	const newAssignmentInfoBannerEl = document.getElementById("na-info-banner");
 
 	document.addEventListener("activeSemester:changed", async () => {
 		await loadSettings();
@@ -541,6 +597,11 @@ async function initDashboardMain() {
 	document.addEventListener("module:updated", refreshDashboard);
 	document.addEventListener("module:deleted", refreshDashboard);
 	document.addEventListener("assignment:created", refreshDashboard);
+
+	document.addEventListener("tutorial:completed", async () => {
+		await loadSettings();
+		await refreshDashboard();
+	});
 
 	window.addEventListener("pageshow", async (e) => {
 		if (e.persisted) {
@@ -594,6 +655,8 @@ async function initDashboardMain() {
 		
 		populateModuleSelect();
 		refreshNewAssignmentDeadlineRange();
+
+		renderTutorialBanner();
 	}
 	
 	function refreshDashboardClock() {
@@ -1034,6 +1097,56 @@ async function initDashboardMain() {
 			countsEl.textContent = `${aCount} assignment${aCount === 1 ? "" : "s"} will be deleted.`;
 		} else {
 			countsEl.textContent = "This module has no assignments.";
+		}
+	}
+
+	function renderTutorialBanner() {
+		if (appState.tutorialCompleted) {
+			setTutorialBanner(infoBannerEl, "", "");
+			return;
+		}
+
+		const activeTasksWithEtc = appState.tasks.filter(task => task.etcMinutes !== null && ["todo", "doing"].includes(task.status));
+
+		if (appState.modules.length === 0) {
+			setTutorialBanner(
+				infoBannerEl, 
+				"Step 1 of 5: Create your first module",
+				"This is your dashboard, where you manage modules and assignments, and view tasks scheduled for today. Create a module to continue."
+			);
+		} else if (appState.assignments.length === 0) {
+			setTutorialBanner(
+				infoBannerEl,
+				"Step 2 of 5: Create your first assignment",
+				"All active assignments can be seen in the list below. Create an assignment to continue."
+			);
+
+			setTutorialBanner(
+				newAssignmentInfoBannerEl,
+				"Step 2 of 5: Create your first assignment",
+				"The description is optional, but just like the weight and confidence, it helps improve AI estimation accuracy."
+			);
+		} else if (activeTasksWithEtc.length === 0 && appState.scheduledTasks.length === 0) {
+			setTutorialBanner(
+				infoBannerEl,
+				"Step 3 of 5: Break down your assignment into tasks",
+				appState.assignments.length == 1 ? "Click on the assignment to open its task board." : "Click on an assignment to open its task board."
+			);
+		} else if (appState.scheduledTasks.length === 0) {
+			setTutorialBanner(
+				infoBannerEl,
+				"Step 4 of 5: Schedule your tasks",
+				"Navigate to your schedule in the navigation bar."
+			);
+		} else if (appState.scheduledTasks.length > 0) {
+			setTutorialBanner(
+				infoBannerEl,
+				"Step 5 of 5: Move tasks through the stages",
+				appState.assignments.length == 1 ? "Go back into the assignment." : "Go back into an assignment."
+			);
+		}
+		else {
+			setTutorialBanner(infoBannerEl, "", "");
 		}
 	}
 }
@@ -1780,6 +1893,8 @@ async function initAssignment() {
 	const todoListEl = document.querySelector('[data-list="todo"]');
 	const doingListEl = document.querySelector('[data-list="doing"]');
 	const doneListEl = document.querySelector('[data-list="done"]');
+	const infoBannerEl = document.getElementById("info-banner");
+	const newTaskInfoBannerEl = document.getElementById("nt-info-banner");
 
 	document.addEventListener("assignment:updated", refreshAssignment);
 	document.addEventListener("task:created", refreshAssignment);
@@ -1787,6 +1902,11 @@ async function initAssignment() {
 	document.addEventListener("task:deleted", refreshAssignment);
 	editModal.addEventListener("modal:open", populateEditAssignmentForm);
 	main.addEventListener("click", handleAssignmentActions);
+
+	document.addEventListener("tutorial:completed", async () => {
+		await loadSettings();
+		await refreshAssignment();
+	});
 
 	window.addEventListener("pageshow", async (e) => {
 		if (e.persisted) {
@@ -1822,6 +1942,8 @@ async function initAssignment() {
 
 		renderDetailsAndUpdateButtons();
 		renderTaskBoard();
+
+		renderTutorialBanner();
 	}
 	
 
@@ -2093,6 +2215,57 @@ async function initAssignment() {
 		const taskName = t?.name || "this task";
 
 		msgEl.textContent = `Are you sure you want to delete “${taskName}”?`;
+	}
+
+	function renderTutorialBanner() {
+		if (appState.tutorialCompleted) {
+			setTutorialBanner(infoBannerEl, "", "");
+			return;
+		}
+
+		const activeTasksWithEtc = appState.tasks.filter(task => task.etcMinutes !== null && ["todo", "doing"].includes(task.status));
+
+		if (activeTasksWithEtc.length === 0) {
+			if (appState.scheduledTasks.length === 0) {
+				setTutorialBanner(
+					infoBannerEl,
+					"Step 3 of 5: Break down your assignment into tasks",
+					appState.tasks.length > 0 ? "Have at least one task with an ETC in the To Do or Doing column to continue." 
+						: "Here you fill up the assignment with tasks and keep track of their status. Create the first task to continue."
+				);
+
+				setTutorialBanner(
+					newTaskInfoBannerEl,
+					"Step 3 of 5: Break down your assignment into tasks",
+					"Use the estimate button to get an AI-generated ETC for your task based on its name and description."
+				);
+			}
+			else {
+				setTutorialBanner(
+					infoBannerEl,
+					"Step 5 of 5: Move tasks through the stages",
+					appState.tasks.length === 0 ? "Now that the only task is done, the assignment can be marked as completed by clicking the button above. That’s it!" 
+						: "Now that all tasks are done, the assignment can be marked as completed by clicking the button above. That’s it!",
+					"Finish Tutorial"
+				);
+			}
+		} else if (appState.scheduledTasks.length === 0) {
+			setTutorialBanner(
+				infoBannerEl,
+				"Step 4 of 5: Schedule your tasks",
+				"Navigate to your schedule in the navigation bar."
+			);
+		} else if (appState.scheduledTasks.length > 0) {
+			setTutorialBanner(
+				infoBannerEl,
+				"Step 5 of 5: Move tasks through the stages",
+				appState.tasks.length == 1 ? "Move tasks to the right as you work through them, either by drag and dropping or by editing them. Move the task into the Done column to continue." 
+					: "Move tasks to the right as you work through them, either by drag and dropping or by editing them. Move all tasks into the Done column to continue."
+			);
+		}
+		else {
+			setTutorialBanner(infoBannerEl, "", "");
+		}
 	}
 }
 
@@ -2752,7 +2925,6 @@ async function initStudySessions() {
 	const studySessionsListEl = document.querySelector('[data-list="studySessions"]');
 	const newStudySessionBtnEl = document.querySelector('[data-modal-open="new-study-session-modal"]');
 	const infoBannerEl = document.getElementById("info-banner");
-	const infoBannerTextEl = document.getElementById("info-banner-text");
 
 	document.addEventListener("activeSemester:changed", async () => {
 		await loadSettings();
@@ -2797,6 +2969,7 @@ async function initStudySessions() {
 
 		renderStudySessionsList();
 		renderSemesterNameAndUpdateButton();
+
 		renderOnboardingBanner();
 	}
 
@@ -2938,22 +3111,23 @@ async function initStudySessions() {
 	}
 
 	function renderOnboardingBanner() {
-		if (infoBannerEl && infoBannerTextEl) {
-			if (appState.studySessions.length > 0) {
-				setBanner(
-					infoBannerEl,
-					infoBannerTextEl,
-					"Finished setting up your study sessions?",
-					"Continue onboarding",
-					"/dashboard"
-				);
-			} else {
-				setBanner(
-					infoBannerEl,
-					infoBannerTextEl,
-					"Create your first study session to continue onboarding."
-				);
-			}
+		if (appState.onboarded) {
+			setBanner(infoBannerEl, "");
+			return
+		}
+
+		if (appState.studySessions.length > 0) {
+			setBanner(
+				infoBannerEl,
+				"Finished setting up your study sessions?",
+				"Continue onboarding",
+				"/dashboard"
+			);
+		} else {
+			setBanner(
+				infoBannerEl,
+				"Create your first study session to continue onboarding."
+			);
 		}
 	}
 }
@@ -3129,11 +3303,17 @@ async function initSchedule() {
 	const scheduleListEl = document.querySelector('[data-list="schedule"]');
 	const unscheduledTasksListEl = document.querySelector('[data-list="unscheduledTasks"]');
 	const autoScheduleBtnEl = document.querySelector('[data-modal-open="auto-schedule-modal"]');
+	const infoBannerEl = document.getElementById("info-banner");
 
 	document.addEventListener("selectedWeek:changed", refreshSchedule);
 	document.addEventListener("scheduledTask:created", refreshSchedule);
 	document.addEventListener("scheduledTask:updated", refreshSchedule);
 	document.addEventListener("scheduledTask:deleted", refreshSchedule);
+
+	document.addEventListener("tutorial:completed", async () => {
+		await loadSettings();
+		await refreshDashboard();
+	});
 
 	window.addEventListener("pageshow", async (e) => {
 		if (e.persisted) {
@@ -3158,6 +3338,8 @@ async function initSchedule() {
 		renderWeekNameAndUpdateButtons();
 		renderScheduleList();
 		renderUnscheduledTasksList();
+
+		renderTutorialBanner();
 
 		isFirstLoad = false;
 	}
@@ -3735,6 +3917,34 @@ async function initSchedule() {
 			document.dispatchEvent(new CustomEvent("scheduledTask:updated"));
 		} catch (err) {
 			showToast(err.message, { type: "error" });
+		}
+	}
+
+	function renderTutorialBanner() {
+		if (appState.tutorialCompleted) {
+			setTutorialBanner(infoBannerEl, "", "");
+			return;
+		}
+
+		const activeTasksWithEtc = appState.tasks.filter(task => task.etcMinutes !== null && ["todo", "doing"].includes(task.status));
+		console.log(activeTasksWithEtc);
+
+		if (activeTasksWithEtc.length && appState.scheduledTasks.length === 0) {
+			setTutorialBanner(
+				infoBannerEl,
+				"Step 4 of 5: Schedule your tasks",
+				"Drag and drop a task into a study session to schedule it, or use the auto-schedule feature."
+			);
+		}
+		else if (appState.scheduledTasks.length > 0) {
+			setTutorialBanner(
+				infoBannerEl,
+				"Step 5 of 5: Move tasks through the stages",
+				appState.assignments.length == 1 ? "A task has been scheduled! Now go back into the assignment." : "A task has been scheduled! Now go back into an assignment."
+			);
+		}
+		else {
+			setTutorialBanner(infoBannerEl, "", "");
 		}
 	}
 }

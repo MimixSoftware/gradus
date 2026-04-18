@@ -1586,15 +1586,27 @@ body.modal-open {
 	border: 1px solid var(--info-border);
 	border-radius: 10px;
 	padding: 1rem;
+	margin-bottom: 1.25rem;
 }
 
-.info-banner-text {
-	color: var(--info);
-	font-weight: 500;
+.info-banner-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+}
+
+.info-banner-title {
+	font-weight: 600;
 }
 
 .info-banner a {
 	color: var(--text);
 	font-weight: 600;
 	text-decoration: none;
+	white-space: nowrap;
+}
+
+.info-banner-text {
+	color: var(--info);
 }
