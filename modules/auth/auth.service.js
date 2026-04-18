@@ -68,7 +68,8 @@ async function createUserFromPending(connection, pending) {
 			surname: pending.surname,
 			role: "user",
 			status: "active",
-			onboarded: false
+			onboarded: false,
+			tutorialCompleted: false
 		}
 	};
 }
@@ -415,7 +416,8 @@ async function login({ email, password }) {
 			surname: user.surname,
 			role: user.role,
 			status: user.status,
-			onboarded: Boolean(user.onboarded)
+			onboarded: Boolean(user.onboarded),
+			tutorialCompleted: Boolean(user.tutorial_completed)
 		},
 		settings
 	};
