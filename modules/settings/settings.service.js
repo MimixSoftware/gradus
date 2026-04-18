@@ -259,4 +259,19 @@ async function completeOnboarding(userId) {
 	return await getUserWithSettingsById(userId);
 }
 
-module.exports = { getByUserId, getAvatarPath, update, updateAvatar, deleteAvatar, completeOnboarding };
+async function completeTutorial(userId) {
+	const [result] = await db.query(
+		`UPDATE users
+		SET tutorial_completed = TRUE
+		WHERE id = ?`,
+		[userId]
+	);
+
+	if (result.affectedRows === 0) {
+		throw new AppError("User not found.", 404);
+	}
+
+	return await getUserWithSettingsById(userId);
+}
+
+module.exports = { getByUserId, getAvatarPath, update, updateAvatar, deleteAvatar, completeOnboarding, completeTutorial };

@@ -45,4 +45,13 @@ async function completeOnboarding(req, res) {
 	return res.status(200).json({ message: "Onboarding completed successfully." });
 }
 
-module.exports = { getByUserId, getAvatar, update, updateAvatar, deleteAvatar, completeOnboarding };
+async function completeTutorial(req, res) {
+	const { user, settings } = await settingsService.completeTutorial(req.user.id);
+
+	req.session.user = user;
+	req.session.settings = settings;
+
+	return res.status(200).json({ message: "Tutorial completed successfully." });
+}
+
+module.exports = { getByUserId, getAvatar, update, updateAvatar, deleteAvatar, completeOnboarding, completeTutorial };

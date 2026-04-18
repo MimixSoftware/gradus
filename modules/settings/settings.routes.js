@@ -17,5 +17,6 @@ router.get("/avatar", asyncHandler(settingsController.getAvatar));
 router.patch("/avatar", avatarUpload.single("avatar"), asyncHandler(settingsController.updateAvatar));
 router.delete("/avatar", asyncHandler(settingsController.deleteAvatar));
 router.post("/onboarding", asyncHandler(settingsController.completeOnboarding));
+router.post("/tutorial-completed", asyncHandler(settingsController.completeTutorial));
 
 module.exports = router;
