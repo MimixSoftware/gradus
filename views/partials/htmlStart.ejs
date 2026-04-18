@@ -1,0 +1,5 @@
+<%
+	const themeAttr = (settings && settings.theme !== "system")
+		? `data-theme=${settings.theme}` : "";
+%>
+<html lang="en" <%= themeAttr %>>
