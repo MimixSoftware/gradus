@@ -5,6 +5,8 @@ const appState = {
 	theme: "system",
 	forename: "",
 	surname: "",
+	onboarded: true,
+	tutorialCompleted: true,
 	// Dashboard
 	semesters: [],
 	modules: [],
@@ -97,6 +99,8 @@ async function loadSettings() {
 		appState.theme = settings.theme;
 		appState.forename = settings.forename;
 		appState.surname = settings.surname;
+		appState.onboarded = settings.onboarded;
+		appState.tutorialCompleted = settings.tutorialCompleted;
 
 		applyTheme(appState.theme);
 

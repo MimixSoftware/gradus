@@ -12,6 +12,8 @@ function mapUserSettingsRow(row) {
 	return {
 		forename: row.forename,
 		surname: row.surname,
+		onboarded: Boolean(row.onboarded),
+		tutorialCompleted: Boolean(row.tutorial_completed),
 		activeSemesterId: row.active_semester_id,
 		theme: row.theme
 	};
@@ -30,6 +32,10 @@ function mapUserWithSettings(row) {
 			tutorialCompleted: Boolean(row.tutorial_completed)
 		},
 		settings: {
+			forename: row.forename,
+			surname: row.surname,
+			onboarded: Boolean(row.onboarded),
+			tutorialCompleted: Boolean(row.tutorial_completed),
 			activeSemesterId: row.active_semester_id,
 			theme: row.theme
 		}
@@ -41,6 +47,8 @@ async function getByUserId(userId) {
 		`SELECT
 			u.forename,
 			u.surname,
+			u.onboarded,
+			u.tutorial_completed,
 			us.active_semester_id,
 			us.theme
 		FROM users u
