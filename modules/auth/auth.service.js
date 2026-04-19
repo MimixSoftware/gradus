@@ -307,53 +307,6 @@ async function resendRegistrationCode({ email }) {
 	}
 }
 
-// async function register({ email, forename, surname, password }) {
-// 	const connection = await db.getConnection();
-// 	try {
-// 		await connection.beginTransaction();
-
-// 		const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-
-// 		const [userResult] = await connection.query(
-// 			`INSERT INTO users (email, forename, surname, password_hash, last_login_at)
-// 			VALUES (?, ?, ?, ?, NOW())`,
-// 			[email, forename, surname, password_hash]
-// 		);
-// 		const userId = userResult.insertId;
-
-// 		await connection.query(
-// 			`INSERT INTO user_settings (user_id, active_semester_id, theme)
-// 			VALUES (?, ?, ?)`,
-// 			[userId, null, "system"]
-// 		);
-
-// 		await connection.commit();
-
-// 		const settings = await settingsService.getByUserId(userId);
-
-// 		return {
-// 			user: {
-// 				id: userId,
-// 				email,
-// 				forename,
-// 				surname,
-// 				role: "user",
-// 				status: "active"
-// 			},
-// 			settings
-// 		};
-// 	} catch (err) {
-// 		await connection.rollback();
-
-// 		if (err.code === "ER_DUP_ENTRY") {
-// 			throw new AppError("Email already in use.", 409);
-// 		}
-// 		throw err;
-// 	} finally {
-// 		connection.release();
-// 	}
-// }
-
 async function login({ email, password }) {
 	const [rows] = await db.query(
 		`SELECT id, email, forename, surname, password_hash, role, status, onboarded, last_login_at, failed_login_attempts, last_failed_login_at
