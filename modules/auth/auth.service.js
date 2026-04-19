@@ -378,7 +378,7 @@ async function login({ email, password }) {
 
 async function changePassword(userId, { currentPassword, newPassword }) {
 	const [rows] = await db.query(
-		`SELECT id, password_hash
+		`SELECT id, email, password_hash
 		FROM users
 		WHERE id = ?
 		LIMIT 1`,
@@ -405,6 +405,8 @@ async function changePassword(userId, { currentPassword, newPassword }) {
 		WHERE id = ?`,
 		[newPasswordHash, userId]
 	);
+
+	await emailService.sendPasswordChangedNotification(user.email);
 }
 
 module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword };
