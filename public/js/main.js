@@ -4906,6 +4906,44 @@ function initSettings() {
 	});
 }
 
+function initChangePasswordForm() {
+	const form = document.getElementById("change-password-form");
+	if (!form) return;
+
+	const errorEl = document.getElementById("cp-error");
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+
+		const payload = {
+			currentPassword: formData.get("currentPassword"),
+			newPassword: formData.get("newPassword"),
+			confirmPassword: formData.get("confirmPassword")
+		};
+
+		try {
+			const res = await postJson("/api/auth/change-password", payload);
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			showToast(res.message);
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
 // Statistics
 function initStatistics() {
 	if (getRouteName() !== "statistics") return;
@@ -5315,6 +5353,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	initAutoScheduleForm();
 
 	await initSettings();
+	initChangePasswordForm();
 
 	initStatistics();
 });

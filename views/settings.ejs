@@ -87,6 +87,7 @@
 						</div>
 
 						<div class="ui-actions">
+							<button type="button" class="btn btn-small" data-modal-open="change-password-modal">Change password</button>
 							<button type="submit" class="btn btn-small btn-primary">Save</button>
 						</div>
 					</form>
@@ -126,6 +127,47 @@
 	</main>
 
 	<%- include('partials/footer') %>
+
+	<!-- Change Password Modal -->
+	<div class="modal" id="change-password-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title">Change Password</div>
+					<div class="field-hint">Update your account password.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="change-password-form">
+				<div id="cp-error" class="alert alert-error" style="display: none;"role="alert"></div>
+
+				<div class="form-row">
+					<label for="cp-current">Current Password</label>
+					<input id="cp-current" name="currentPassword" type="password" required />
+				</div>
+
+				<div class="form-row">
+					<label for="cp-new">New Password</label>
+					<input id="cp-new" name="newPassword" type="password" required />
+					<p class="field-hint">Use at least 8 characters.</p>
+				</div>
+
+				<div class="form-row">
+					<label for="cp-confirm">Confirm New Password</label>
+					<input id="cp-confirm" name="confirmPassword" type="password" required />
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-primary" form="change-password-form">Change password</button>
+			</footer>
+		</div>
+	</div>
 
 	<script src="/js/main.js?v=<%= assetVersion %>"></script>
 </body>
