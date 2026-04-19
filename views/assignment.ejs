@@ -110,7 +110,7 @@
 
 				<div class="form-row">
 					<label for="ea-name">Assignment name <span class="required">*</span></label>
-					<input id="ea-name" name="name" type="text" maxlength="100" required placeholder="e.g. Networks Report" />
+					<input id="ea-name" name="name" type="text" maxlength="100" required />
 
 					<label for="ea-deadline">Deadline</label>
 					<input id="ea-deadline" name="deadline" type="datetime-local" />
@@ -119,7 +119,7 @@
 
 				<div class="form-row">
 					<label for="ea-description">Description</label>
-					<textarea id="ea-description" name="description" maxlength="500" placeholder="Optional notes, requirements, marking scheme, etc."></textarea>
+					<textarea id="ea-description" name="description" maxlength="500" placeholder="Optional notes, word count requirements, marking scheme, etc."></textarea>
 				</div>
 
 				<div class="form-row">
@@ -199,7 +199,7 @@
 
 				<div class="form-row">
 					<label for="nt-name">Task name <span class="required">*</span></label>
-					<input id="nt-name" name="name" type="text" maxlength="100" required placeholder="e.g. Research RPC retry strategies" />
+					<input id="nt-name" name="name" type="text" maxlength="100" required placeholder="e.g. Write introduction" />
 				</div>
 
 				<div class="form-row">
@@ -210,7 +210,7 @@
 
 				<div class="form-row">
 					<label for="nt-description">Description</label>
-					<textarea id="nt-description" name="description" maxlength="500" placeholder="Optional notes or details..."></textarea>
+					<textarea id="nt-description" name="description" maxlength="500" placeholder="Optional notes, word count requirements, etc."></textarea>
 				</div>
 
 				<div class="form-row">
@@ -219,7 +219,7 @@
 						<button type="button" class="btn btn-small" id="nt-estimate-btn">Estimate</button>
 					</div>
 
-					<input id="nt-etc" name="etcMinutes" type="number" min="15" max="1440" step="15" placeholder="e.g. 90" />
+					<input id="nt-etc" name="etcMinutes" type="number" min="15" max="1440" step="15" />
 
 					<div class="field-hint">
 						How long you think this task will take. Enter manually or let Gradus estimate based on task and assignment details.
@@ -255,7 +255,7 @@
 
 				<div class="form-row">
 					<label for="et-name">Task name <span class="required">*</span></label>
-					<input id="et-name" name="name" type="text" maxlength="100" required placeholder="e.g. Research RPC retry strategies" />
+					<input id="et-name" name="name" type="text" maxlength="100" required placeholder="e.g. Write introduction" />
 				</div>
 
 				<div class="form-row">
@@ -275,7 +275,7 @@
 
 				<div class="form-row">
 					<label for="et-description">Description</label>
-					<textarea id="et-description" name="description" maxlength="500" placeholder="Optional notes or details..."></textarea>
+					<textarea id="et-description" name="description" maxlength="500" placeholder="Optional notes, word count requirements, etc."></textarea>
 				</div>
 
 				<div class="form-row">
@@ -284,7 +284,7 @@
 						<button type="button" class="btn btn-small" id="et-estimate-btn">Estimate</button>
 					</div>
 
-					<input id="et-etc" name="etcMinutes" type="number" min="15" max="1440" step="15" placeholder="e.g. 90" />
+					<input id="et-etc" name="etcMinutes" type="number" min="15" max="1440" step="15" />
 
 					<div class="field-hint">
 						How long you think this task will take. Enter manually or let Gradus estimate based on task and assignment details.
@@ -293,7 +293,7 @@
 
 				<div class="form-row" id="et-atc-row" style="display: none;">
 					<label for="et-atc">Actual Time (minutes)</label>
-					<input id="et-atc" name="atcMinutes" type="number" min="1" max="1440" step="1" placeholder="e.g. 75" />
+					<input id="et-atc" name="atcMinutes" type="number" min="1" max="1440" step="1" />
 					<div class="field-hint">
 						Optional. How long it actually took you to complete this task.
 					</div>
@@ -361,7 +361,7 @@
 
 				<div class="form-row">
 					<label for="ct-atc">Actual Time (minutes)</label>
-					<input id="ct-atc" name="atcMinutes" type="number" min="1" max="1440" step="1" placeholder="e.g. 75" />
+					<input id="ct-atc" name="atcMinutes" type="number" min="1" max="1440" step="1" />
 					<div class="field-hint">
 						Optional. How long it actually took you to complete this task.
 					</div>

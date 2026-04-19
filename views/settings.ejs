@@ -77,12 +77,12 @@
 						<div class="form-grid">
 							<div class="form-row">
 								<label for="sp-forename">Forename</label>
-								<input id="sp-forename" name="forename" type="text" required />
+								<input id="sp-forename" name="forename" type="text" value="<%= user.forename %>" required />
 							</div>
 
 							<div class="form-row">
 								<label for="sp-surname">Surname</label>
-								<input id="sp-surname" name="surname" type="text" />
+								<input id="sp-surname" name="surname" type="text" value="<%= user.surname %>" />
 							</div>
 						</div>
 
@@ -103,9 +103,9 @@
 							<label for="spf-theme">Theme</label>
 
 							<select id="spf-theme" name="theme">
-								<option value="system">System</option>
-								<option value="light">Light</option>
-								<option value="dark">Dark</option>
+								<option value="system" <%= settings.theme === "system" ? "selected" : "" %>>System</option>
+								<option value="light"  <%= settings.theme === "light" ? "selected" : "" %>>Light</option>
+								<option value="dark"   <%= settings.theme === "dark" ? "selected" : "" %>>Dark</option>
 							</select>
 
 							<div class="field-hint">
