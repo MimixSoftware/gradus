@@ -2636,8 +2636,9 @@ function initTaskDragAndDrop() {
 
 	const moveGhost = (e) => {
 		if (!drag) return;
-		drag.ghost.style.transform =
-			`translate3d(${e.clientX - drag.offsetX}px, ${e.clientY - drag.offsetY}px, 0)`;
+		
+		drag.ghost.style.left = `${e.clientX - drag.offsetX}px`;
+		drag.ghost.style.top = `${e.clientY - drag.offsetY}px`;
 	};
 
 	const cleanupPress = () => {
@@ -2677,6 +2678,8 @@ function initTaskDragAndDrop() {
 		ghost.classList.add("ui-drag-ghost");
 		ghost.style.width = `${rect.width}px`;
 		ghost.style.height = `${rect.height}px`;
+		ghost.style.top = `${rect.top}px`;
+		ghost.style.left = `${rect.left}px`;
 		document.body.appendChild(ghost);
 
 		card.classList.add("is-dragging");
@@ -3379,6 +3382,8 @@ async function initSchedule() {
 
 		const weekStart = new Date(appState.selectedWeekStart);
 
+		let hasVisibleSessions = false;
+
 		for (let day = 0; day <= 6; day++) {
 			const dayDate = new Date(weekStart);
 			dayDate.setDate(weekStart.getDate() + day);
@@ -3391,6 +3396,8 @@ async function initSchedule() {
 
 			const daySessions = groupedSessions.get(day);
 			if (!daySessions || !daySessions.length) continue;
+
+			hasVisibleSessions = true;
 
 			daySessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
@@ -3464,6 +3471,11 @@ async function initSchedule() {
 			}
 
 			board.appendChild(dayColumn);
+		}
+
+		if (!hasVisibleSessions) {
+			renderEmptyListState(scheduleListEl, "No study sessions this week.");
+			return;
 		}
 
 		scheduleListEl.appendChild(board);
@@ -4589,8 +4601,8 @@ function initScheduleTaskDragAndDrop() {
 	const moveGhost = (e) => {
 		if (!drag) return;
 
-		drag.ghost.style.transform =
-			`translate3d(${e.clientX - drag.offsetX}px, ${e.clientY - drag.offsetY}px, 0)`;
+		drag.ghost.style.left = `${e.clientX - drag.offsetX}px`;
+		drag.ghost.style.top = `${e.clientY - drag.offsetY}px`;
 	};
 
 	const cleanupPress = () => {
@@ -4628,6 +4640,8 @@ function initScheduleTaskDragAndDrop() {
 		ghost.classList.add("ui-drag-ghost");
 		ghost.style.width = `${rect.width}px`;
 		ghost.style.height = `${rect.height}px`;
+		ghost.style.top = `${rect.top}px`;
+		ghost.style.left = `${rect.left}px`;
 		document.body.appendChild(ghost);
 
 		card.classList.add("is-dragging");

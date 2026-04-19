@@ -1069,16 +1069,14 @@ input:focus {
 .ui-item.is-dragging { opacity: 0.25; }
 
 .ui-drag-ghost {
-  position: fixed;
-  top: 0; left: 0;
-  z-index: 9999;
-  pointer-events: none;
-  transform: translate3d(0,0,0);
-  width: var(--ghost-w, auto);
+	position: fixed;
+	z-index: 9999;
+	pointer-events: none;
+	width: var(--ghost-w, auto);
 }
 
 .ui-list.is-drop-target {
-  border-color: var(--brand-600);
+	border-color: var(--brand-600);
 }
 
 .ui-drag-ghost .ui-item-actions {
