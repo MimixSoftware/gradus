@@ -30,50 +30,49 @@ async function getSemester(userId, semesterId) {
 }
 
 async function getOverview(userId, semesterId) {
-	// Active Assignments Count
-	const [activeAssignmentsRows] = await db.query(
-		`SELECT COUNT(*) AS active_count
-		 FROM assignments a
-		 INNER JOIN modules m ON m.id = a.module_id
-		 WHERE m.semester_id = ? 
-		   AND a.status = 'active'
-		   AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
-
+	// Assignment overview
+	const [assignmentCountsRows] = await db.query(
+		`SELECT 
+			COUNT(CASE WHEN a.status = 'active' THEN 1 END) AS active_count,
+			COUNT(CASE WHEN a.status = 'completed' THEN 1 END) AS completed_count
+		FROM assignments a
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE m.semester_id = ?
+		AND s.user_id = ?`,
 		[semesterId, userId]
 	);
 
-	// Estimation Accuracy (for completed tasks)
-	const [estimationRows] = await db.query(
+	const activeAssignments = assignmentCountsRows[0].active_count;
+	const completedCount = assignmentCountsRows[0].completed_count;
+
+	// Task overview
+	const [taskStatsRows] = await db.query(
 		`SELECT 
-			COUNT(*) AS completed_count,
-			AVG(CASE 
-				WHEN t.etc_minutes > 0 AND t.atc_minutes > 0 
-				THEN ABS(CAST(t.atc_minutes AS SIGNED) - CAST(t.etc_minutes AS SIGNED)) / GREATEST(t.etc_minutes, t.atc_minutes)
-				ELSE 0 
-			END) AS avg_variance
+			ROUND(AVG(CASE WHEN t.etc_minutes IS NOT NULL THEN t.etc_minutes END)) AS avg_etc,
+			ROUND(AVG(CASE WHEN t.atc_minutes IS NOT NULL THEN t.atc_minutes END)) AS avg_atc,
+			ROUND(AVG(CASE 
+				WHEN t.etc_minutes IS NOT NULL AND t.atc_minutes IS NOT NULL THEN t.etc_minutes / t.atc_minutes * 100 
+			END)) AS accuracy_percent
 		FROM tasks t
 		INNER JOIN assignments a ON a.id = t.assignment_id
 		INNER JOIN modules m ON m.id = a.module_id
-		WHERE m.semester_id = ? 
-			AND t.status = 'done'
-			AND t.atc_minutes IS NOT NULL
-			AND t.etc_minutes IS NOT NULL
-			AND m.semester_id IN (SELECT s.id FROM semesters s WHERE s.user_id = ?)`,
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE s.id = ?
+		AND s.user_id = ?`,
 		[semesterId, userId]
 	);
 
-	const activeAssignments = activeAssignmentsRows[0]?.active_count || 0;
-	const completedCount = estimationRows[0]?.completed_count || 0;
-	const avgVariance = estimationRows[0]?.avg_variance || 0;
-
-	let estimationAccuracy = 100;
-	if (completedCount > 0) {
-		estimationAccuracy = Math.round(Math.max(0, 100 - (avgVariance * 100)));
-	}
+	const avgETC = taskStatsRows[0].avg_etc;
+	const avgATC = taskStatsRows[0].avg_atc;
+	const accuracyPercent = taskStatsRows[0].accuracy_percent;
 
 	return [
 		{ key: 'activeAssignments', label: 'Active Assignments', value: activeAssignments },
-		{ key: 'estimationAccuracy', label: 'Estimation Accuracy (%)', value: estimationAccuracy }
+		{ key: 'completedAssignments', label: 'Completed Assignments', value: completedCount },
+		{ key: 'avgETC', label: 'Average Task ETC (minutes)', value: avgETC },
+		{ key: 'avgATC', label: 'Average Task ATC (minutes)', value: avgATC },
+		{ key: 'accuracyPercent', label: 'Estimation Accuracy (%)', value: accuracyPercent }
 	];
 }
 

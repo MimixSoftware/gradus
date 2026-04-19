@@ -22,7 +22,7 @@
 				<div class="ui-title">
 					<h1>Statistics</h1>
 					<div class="ui-subline">
-						Your study performance at a glance.
+						The current semester at a glance.
 					</div>
 				</div>
 			</header>
@@ -31,11 +31,7 @@
 				<article class="ui-card">
 					<h2 class="ui-card-title">Overview</h2>
 
-					<ul id="statistics-overview-list" class="ui-list statistics-list">
-						<li class="ui-item">
-							<div class="ui-item-title">Loading overview...</div>
-						</li>
-					</ul>
+					<ul id="statistics-overview-list" class="ui-list ui-list--editable"></ul>
 				</article>
 
 				<article class="ui-card">
@@ -43,24 +39,19 @@
 
 					<div class="ui-field">
 						<select id="statistics-analytics-select" class="ui-input">
-							<option value="">Loading charts...</option>
+							<option value=""></option>
 						</select>
 					</div>
 
 					<div class="statistics-chart-wrap">
 						<canvas id="statistics-chart"></canvas>
-						<p id="statistics-analytics-empty" hidden>No analytics available yet.</p>
 					</div>
 				</article>
 
 				<article class="ui-card">
 					<h2 class="ui-card-title">Insights</h2>
 
-					<ul id="statistics-insights-list" class="ui-list statistics-list statistics-insights">
-						<li class="ui-item">
-							<div class="ui-item-title">Loading insights...</div>
-						</li>
-					</ul>
+					<ul id="statistics-insights-list" class="ui-list ui-list--editable"></ul>
 				</article>
 			</section>
 

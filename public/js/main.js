@@ -4965,7 +4965,6 @@ function initStatistics() {
 	const overviewList = document.getElementById("statistics-overview-list");
 	const analyticsSelect = document.getElementById("statistics-analytics-select");
 	const analyticsCanvas = document.getElementById("statistics-chart");
-	const analyticsEmpty = document.getElementById("statistics-analytics-empty");
 	const insightsList = document.getElementById("statistics-insights-list");
 
 	let chart = null;
@@ -4979,38 +4978,60 @@ function initStatistics() {
 	}
 
 	function renderOverview(overview) {
+		overviewList.innerHTML = "";
+
 		if (!overview || overview.length === 0) {
 			renderEmptyListState(overviewList, "No overview statistics available.");
 			return;
 		}
 
-		overviewList.innerHTML = overview
-			.map(
-				(item) => `
-					<li class="ui-item">
-						<div class="ui-item-title">${escapeHtml(item.label)}</div>
-						<div class="ui-item-meta">${escapeHtml(String(item.value))}</div>
-					</li>
-				`
-			)
-			.join("");
+		for (const item of overview) {
+			const li = document.createElement("li");
+			li.className = "ui-item";
+
+			const inner = document.createElement("div");
+			inner.className = "ui-item-inner";
+
+			const label = document.createElement("div");
+			label.className = "statistics-stat-label";
+			label.textContent = item.label ?? "";
+
+			const value = document.createElement("div");
+			value.className = "statistics-stat-value";
+			value.textContent = item.value != null ? String(item.value) : "—";
+
+			inner.appendChild(label);
+			inner.appendChild(value);
+			li.appendChild(inner);
+
+			overviewList.appendChild(li);
+		}
 	}
 
 	function renderInsights(insights) {
+		insightsList.innerHTML = "";
+
 		if (!insights || insights.length === 0) {
-			renderEmptyListState(insightsList, "No insights available.");
+			renderEmptyListState(insightsList, "No insights	 available.");
 			return;
 		}
 
-		insightsList.innerHTML = insights
-			.map(
-				(text) => `
-					<li class="ui-item">
-						<div class="ui-item-title">${escapeHtml(text)}</div>
-					</li>
-				`
-			)
-			.join("");
+		for (const insight of insights) {
+			const li = document.createElement("li");
+			li.className = "ui-item";
+
+			const inner = document.createElement("div");
+			inner.className = "ui-item-inner";
+
+			const insightDiv = document.createElement("div");
+			insightDiv.className = "statistics-stat-value";
+			insightDiv.textContent = insight;
+
+			inner.appendChild(insightDiv);
+			li.appendChild(inner);
+
+			insightsList.appendChild(li);
+		}
 	}
 
 	function buildChartConfig(graph) {
@@ -5040,14 +5061,12 @@ function initStatistics() {
 			analyticsSelect.innerHTML = `<option value="">No charts available</option>`;
 			analyticsSelect.disabled = true;
 			analyticsCanvas.style.display = "none";
-			analyticsEmpty.hidden = false;
 			destroyChart();
 			return;
 		}
 
 		analyticsSelect.disabled = false;
 		analyticsCanvas.style.display = "";
-		analyticsEmpty.hidden = true;
 
 		analyticsSelect.innerHTML = graphs
 			.map(
@@ -5070,12 +5089,13 @@ function initStatistics() {
 	}
 
 	async function loadStatistics() {
+		renderLoadingListState(overviewList);
+		renderLoadingListState(insightsList);
+
 		try {
 			const res = await getJson(`/api/statistics/${appState.activeSemesterId}`);
-			const statistics = res.statistics || {};
-			const overview = statistics.overview || [];
-			analytics = statistics.analytics || [];
-			const insights = statistics.insights || [];
+			const { overview, insights } = res.statistics;
+			analytics = res.statistics.analytics;
 
 			renderOverview(overview);
 			renderInsights(insights);
@@ -5086,7 +5106,7 @@ function initStatistics() {
 				renderSelectedChart(0);
 			}
 		} catch (err) {
-			showToast(err.message || "Failed to load statistics.", { type: "error" });
+			showToast("Failed to load statistics.", { type: "error" });
 
 			renderEmptyListState(overviewList, "Failed to load overview statistics.");
 			renderEmptyListState(insightsList, "Failed to load insights.");
@@ -5094,7 +5114,6 @@ function initStatistics() {
 			analyticsSelect.innerHTML = `<option value="">No charts available</option>`;
 			analyticsSelect.disabled = true;
 			analyticsCanvas.style.display = "none";
-			analyticsEmpty.hidden = false;
 			destroyChart();
 		}
 	}
