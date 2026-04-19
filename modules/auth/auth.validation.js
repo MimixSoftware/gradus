@@ -77,6 +77,10 @@ function validateChangePasswordInput({ currentPassword, newPassword, confirmPass
 		throw new AppError("New passwords do not match.", 400);
 	}
 
+	if (currentPassword === newPassword) {
+		throw new AppError("New password must be different from the current password.", 400);
+	}
+
 	return {
 		currentPassword,
 		newPassword
