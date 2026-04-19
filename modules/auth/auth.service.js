@@ -423,4 +423,35 @@ async function login({ email, password }) {
 	};
 }
 
-module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login };
+async function changePassword(userId, { currentPassword, newPassword }) {
+	const [rows] = await db.query(
+		`SELECT id, password_hash
+		FROM users
+		WHERE id = ?
+		LIMIT 1`,
+		[userId]
+	);
+
+	if (rows.length === 0) {
+		throw new AppError("User not found.", 404);
+	}
+
+	const user = rows[0];
+
+	const ok = await bcrypt.compare(currentPassword, user.password_hash);
+
+	if (!ok) {
+		throw new AppError("Current password is incorrect.", 401);
+	}
+
+	const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+	await db.query(
+		`UPDATE users
+		SET password_hash = ?
+		WHERE id = ?`,
+		[newPasswordHash, userId]
+	);
+}
+
+module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword };

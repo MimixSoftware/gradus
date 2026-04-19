@@ -43,6 +43,14 @@ async function login(req, res, next) {
 	});
 }
 
+async function changePassword(req, res) {
+	const validated = authValidation.validateChangePasswordInput(req.body);
+
+	await authService.changePassword(req.user.id, validated);
+
+	return res.status(200).json({ message: "Password changed successfully." });
+}
+
 function logout(req, res, next) {
 	req.session.destroy((err) => {
 	if (err) return next(err);
@@ -52,4 +60,4 @@ function logout(req, res, next) {
 	});
 }
 
-module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, logout };
+module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword, logout };

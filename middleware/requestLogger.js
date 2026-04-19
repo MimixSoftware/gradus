@@ -33,6 +33,8 @@ function buildRequestPayload(req) {
 		payload.body = {
 			...req.body,
 			password: req.body.password && "[redacted]",
+			currentPassword: req.body.currentPassword && "[redacted]",
+			newPassword: req.body.newPassword && "[redacted]",
 			confirmPassword: req.body.confirmPassword && "[redacted]"
 		};
 	}

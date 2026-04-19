@@ -70,4 +70,17 @@ function validateLoginInput({ email, password } = {}) {
 	};
 }
 
-module.exports = { validateStartRegistrationInput, validateCompleteRegistrationInput, validateResendRegistrationCodeInput, validateLoginInput };
+function validateChangePasswordInput({ currentPassword, newPassword, confirmPassword } = {}) {
+	newPassword = v.validateRequiredString(newPassword, "New Password", { trim: false, min: 8, max: 72 });
+
+	if (newPassword !== confirmPassword) {
+		throw new AppError("New passwords do not match.", 400);
+	}
+
+	return {
+		currentPassword,
+		newPassword
+	};
+}
+
+module.exports = { validateStartRegistrationInput, validateCompleteRegistrationInput, validateResendRegistrationCodeInput, validateLoginInput, validateChangePasswordInput };
