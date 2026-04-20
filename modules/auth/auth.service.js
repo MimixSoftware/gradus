@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 const db = require("../../database/db");
 const AppError = require('../../utils/AppError');
@@ -8,6 +9,7 @@ const emailService = require("../../utils/emailService");
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS);
 const VERIFICATION_CODE_EXPIRATION_MINUTES = Number(process.env.VERIFICATION_CODE_EXPIRATION_MINUTES);
+const RESET_TOKEN_EXPIRATION_MINUTES = Number(process.env.RESET_TOKEN_EXPIRATION_MINUTES);
 const MAX_VERIFICATION_ATTEMPTS = Number(process.env.MAX_VERIFICATION_ATTEMPTS);
 const RESEND_COOLDOWN_SECONDS = Number(process.env.RESEND_COOLDOWN_SECONDS);
 const MAX_RESEND_COUNT = Number(process.env.MAX_RESEND_COUNT);
@@ -17,6 +19,10 @@ const LOGIN_COOLDOWN_SECONDS = Number(process.env.LOGIN_COOLDOWN_SECONDS);
 
 function generateVerificationCode() {
 	return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function generateResetToken() {
+	return crypto.randomBytes(32).toString("hex");
 }
 
 async function findPendingRegistrationByEmail(connection, email) {
@@ -84,7 +90,7 @@ function enforceCooldown(lastSentAt) {
 	}
 }
 
-async function enforceResendLimit(connection, pending) {
+async function enforcePendingRegistrationResendLimit(connection, pending) {
 	const now = new Date();
 
 	if (pending.resend_count >= MAX_RESEND_COUNT) {
@@ -106,6 +112,40 @@ async function enforceResendLimit(connection, pending) {
 	}
 }
 
+async function enforcePasswordResetResendLimit(connection, existingReset) {
+	const now = new Date();
+
+	if (existingReset.resend_count >= MAX_RESEND_COUNT) {
+		const lastSent = new Date(existingReset.last_token_sent_at);
+		const hoursSinceLastSend = (now - lastSent) / (1000 * 60 * 60);
+
+		if (hoursSinceLastSend < RESEND_LOCK_HOURS) {
+			throw new AppError("Too many resend attempts. Please try again later.", 429);
+		} else {
+			await connection.query(
+				`UPDATE password_resets
+				SET resend_count = 0
+				WHERE id = ?`,
+				[pending.id]
+			);
+
+			existingReset.resend_count = 0;
+		}
+	}
+}
+
+async function findPasswordResetByUserId(connection, userId) {
+	const [rows] = await connection.query(
+		`SELECT user_id, reset_token_hash, token_expires_at, resend_count, last_token_sent_at, created_at, updated_at
+		FROM password_resets
+		WHERE user_id = ?
+		LIMIT 1`,
+		[userId]
+	);
+
+	return rows[0] ?? null;
+}
+
 async function startRegistration({ email, forename, surname, password }) {
 	const connection = await db.getConnection();
 
@@ -119,7 +159,7 @@ async function startRegistration({ email, forename, surname, password }) {
 		if (existingPending) {
 			enforceCooldown(existingPending.last_code_sent_at);
 
-			await enforceResendLimit(connection, existingPending);
+			await enforcePendingRegistrationResendLimit(connection, existingPending);
 		}
 
 		const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -275,7 +315,7 @@ async function resendRegistrationCode({ email }) {
 
 		enforceCooldown(pending.last_code_sent_at);
 
-		await enforceResendLimit(connection, pending);
+		await enforcePendingRegistrationResendLimit(connection, pending);
 
 		const verificationCode = generateVerificationCode();
 		const verificationCodeHash = await bcrypt.hash(verificationCode, SALT_ROUNDS);
@@ -409,4 +449,150 @@ async function changePassword(userId, { currentPassword, newPassword }) {
 	await emailService.sendPasswordChangedNotification(user.email);
 }
 
-module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword };
+async function startPasswordReset({ email }) {
+	const connection = await db.getConnection();
+
+	try {
+		await connection.beginTransaction();
+
+		const [rows] = await connection.query(
+			`SELECT id
+			FROM users
+			WHERE email = ?
+			LIMIT 1`,
+			[email]
+		);
+
+		if (rows.length === 0) {
+			return;
+		}
+
+		const user = rows[0];
+
+		const existingReset = await findPasswordResetByUserId(connection, user.id);
+
+		if (existingReset) {
+			enforceCooldown(existingReset.last_token_sent_at);
+
+			await enforcePasswordResetResendLimit(connection, existingReset);
+		}
+
+		const resetToken = generateResetToken();
+		const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+		if (existingReset) {
+			await connection.query(
+				`UPDATE password_resets
+				 SET reset_token_hash = ?,
+					token_expires_at = DATE_ADD(NOW(), INTERVAL ? MINUTE),
+					resend_count = resend_count + 1,
+					last_token_sent_at = NOW()
+				 WHERE user_id = ?`,
+				[
+					resetTokenHash,
+					RESET_TOKEN_EXPIRATION_MINUTES,
+					existingReset.user_id
+				]
+			);
+		} else {
+			await connection.query(
+				`INSERT INTO password_resets (
+					user_id,
+					reset_token_hash,
+					token_expires_at,
+					resend_count,
+					last_token_sent_at
+				)
+				VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), ?, NOW())`,
+				[
+					user.id,
+					resetTokenHash,
+					RESET_TOKEN_EXPIRATION_MINUTES,
+					0
+				]
+			);
+		}
+
+		await connection.commit();
+
+		// await emailService.sendResetToken(email, resetToken, RESET_TOKEN_EXPIRATION_MINUTES);
+
+		return {
+			expiresInMinutes: RESET_TOKEN_EXPIRATION_MINUTES
+		};
+	} catch (err) {
+		await connection.rollback();
+
+		throw err;
+	} finally {
+		connection.release();
+	}
+}
+
+async function isValidPasswordResetToken(resetToken) {
+	const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+	const [rows] = await connection.query(
+		`SELECT 1
+		FROM password_resets
+		WHERE reset_token_hash = ?
+			AND token_expires_at > NOW()
+		LIMIT 1`,
+		[resetTokenHash]
+	);
+
+	return rows.length > 0;
+}
+
+async function completePasswordReset({ resetToken, newPassword }) {
+	const connection = await db.getConnection();
+
+	try {
+		await connection.beginTransaction();
+
+		const tokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+		const [rows] = await connection.query(
+			`SELECT user_id, token_expires_at
+			FROM password_resets
+			WHERE reset_token_hash = ?
+			LIMIT 1`,
+			[tokenHash]
+		);
+
+		const reset = rows[0];
+
+		if (!reset) {
+			throw new AppError("Invalid or expired password reset token.", 400);
+		}
+
+		if (new Date(reset.token_expires_at) < new Date()) {
+			throw new AppError("Invalid or expired password reset token.", 400);
+		}
+
+		const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+		await connection.query(
+			`UPDATE users
+			SET password_hash = ?
+			WHERE id = ?`,
+			[passwordHash, reset.user_id]
+		);
+
+		await connection.query(
+			`DELETE FROM password_resets
+			WHERE user_id = ?`,
+			[reset.user_id]
+		);
+
+		await connection.commit();
+	} catch (err) {
+		await connection.rollback();
+
+		throw err;
+	} finally {
+		connection.release();
+	}
+}
+
+module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword, startPasswordReset, isValidPasswordResetToken, completePasswordReset };

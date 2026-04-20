@@ -16,6 +16,11 @@ router.get('/login', redirectIfAuth, (req, res) => {
 	res.render('login', { title: 'Login', currentYear: new Date().getFullYear() });
 });
 
+// Forgot Password page
+router.get('/forgot-password', redirectIfAuth, (req, res) => {
+	res.render('forgotPassword', { title: 'Forgot Password', currentYear: new Date().getFullYear() });
+});
+
 // Registration page
 router.get('/register', redirectIfAuth, (req, res) => {
 	res.render('register', { title: 'Register', currentYear: new Date().getFullYear() });

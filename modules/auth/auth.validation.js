@@ -87,4 +87,29 @@ function validateChangePasswordInput({ currentPassword, newPassword, confirmPass
 	};
 }
 
-module.exports = { validateStartRegistrationInput, validateCompleteRegistrationInput, validateResendRegistrationCodeInput, validateLoginInput, validateChangePasswordInput };
+function validateStartPasswordResetInput({ email } = {}) {
+	email = v.validateRequiredString(email, "Email", {
+		toLowerCase: true,
+		max: 255,
+		pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+		patternMessage: "Invalid email format."
+	});
+	return {
+		email
+	};
+}
+
+function validateCompletePasswordResetInput({ resetToken, newPassword, confirmPassword } = {}) {
+	newPassword = v.validateRequiredString(newPassword, "New Password", { trim: false, min: 8, max: 72 });
+
+	if (newPassword !== confirmPassword) {
+		throw new AppError("New passwords do not match.", 400);
+	}
+
+	return {
+		resetToken,
+		newPassword
+	};
+}
+
+module.exports = { validateStartRegistrationInput, validateCompleteRegistrationInput, validateResendRegistrationCodeInput, validateLoginInput, validateChangePasswordInput, validateStartPasswordResetInput, validateCompletePasswordResetInput };

@@ -1,3 +1,5 @@
+const { validateRequiredString } = require("../../utils/validationUtils");
+
 const authService = require("./auth.service");
 const authValidation = require("./auth.validation");
 
@@ -51,6 +53,22 @@ async function changePassword(req, res) {
 	return res.status(200).json({ message: "Password changed successfully." });
 }
 
+async function startPasswordReset(req, res) {
+	const validated = authValidation.validateStartPasswordResetInput(req.body);
+
+	await authService.startPasswordReset(validated);
+
+	return res.status(200).json({ message: "If the email is valid, a reset link was sent." });
+}
+
+async function completePasswordReset(req, res) {
+	const validated = authValidation.validateCompletePasswordResetInput(req.body);
+
+	await authService.completePasswordReset(validated);
+
+	return res.status(200).json({ message: "Password reset successfully." });
+}
+
 function logout(req, res, next) {
 	req.session.destroy((err) => {
 	if (err) return next(err);
@@ -60,4 +78,4 @@ function logout(req, res, next) {
 	});
 }
 
-module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword, logout };
+module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword, startPasswordReset, completePasswordReset, logout };

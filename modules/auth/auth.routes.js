@@ -10,6 +10,8 @@ router.post("/register/complete", authRateLimiter, asyncHandler(authController.c
 router.post("/register/resend", authRateLimiter, asyncHandler(authController.resendRegistrationCode));
 router.post("/login", authRateLimiter, asyncHandler(authController.login));
 router.post("/change-password", authRateLimiter, asyncHandler(authController.changePassword));
+router.post("/password-reset/start", authRateLimiter, asyncHandler(authController.startPasswordReset));
+router.post("/password-reset/complete", authRateLimiter, asyncHandler(authController.completePasswordReset));
 router.post("/logout", authController.logout);
 
 module.exports = router;

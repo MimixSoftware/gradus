@@ -95,6 +95,10 @@ function validateEnv() {
 	assertInt("MAX_VERIFICATION_ATTEMPTS", maxVerificationAttempts);
 	process.env.MAX_VERIFICATION_ATTEMPTS = maxVerificationAttempts;
 
+	const resetTokenExpirationMinutes = required("RESET_TOKEN_EXPIRATION_MINUTES");
+	assertInt("RESET_TOKEN_EXPIRATION_MINUTES", resetTokenExpirationMinutes);
+	process.env.RESET_TOKEN_EXPIRATION_MINUTES = resetTokenExpirationMinutes;
+
 	const resendCooldownSeconds = required("RESEND_COOLDOWN_SECONDS");
 	assertInt("RESEND_COOLDOWN_SECONDS", resendCooldownSeconds);
 	process.env.RESEND_COOLDOWN_SECONDS = resendCooldownSeconds;
