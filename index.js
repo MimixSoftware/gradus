@@ -17,7 +17,7 @@ const PORT = process.env.PORT;
 
 const app = express();
 
-app.locals.assetVersion = "190420263";
+app.locals.assetVersion = "200420261";
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
