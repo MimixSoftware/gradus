@@ -527,8 +527,8 @@ async function startPasswordReset({ email }) {
 
 async function isValidPasswordResetToken(resetToken) {
 	const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
-
-	const [rows] = await connection.query(
+	
+	const [rows] = await db.query(
 		`SELECT 1
 		FROM password_resets
 		WHERE reset_token_hash = ?

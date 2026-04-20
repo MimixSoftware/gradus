@@ -43,6 +43,8 @@ function validateEnv() {
 	assertBool("PRODUCTION", production);
 	process.env.PRODUCTION = production.toLowerCase();
 
+	required("URL");
+
 	const level = optional("LOG_LEVEL", "INFO").toUpperCase();
 	if (!VALID_LOG_LEVELS.includes(level)) {
 		throw new Error(

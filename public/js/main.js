@@ -5281,6 +5281,36 @@ function initAuthForms() {
 			}
 		});
 	}
+
+	const resetPasswordForm = document.getElementById("reset-password-form");
+	if (resetPasswordForm) {
+		const alertEl = document.getElementById("auth-alert");
+
+		resetPasswordForm.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			setAlert(alertEl, "");
+
+			const params = new URLSearchParams(window.location.search);
+			const resetToken = params.get("token");
+
+			const formData = new FormData(resetPasswordForm);
+			const newPassword = formData.get("newPassword");
+			const confirmPassword = formData.get("confirmPassword");
+
+			try {
+				const res = await postJson("/api/auth/password-reset/complete", { resetToken, newPassword, confirmPassword });
+				setAlert(alertEl, res.message, { type: "info" });
+
+				resetPasswordForm.reset();
+
+				resetPasswordForm.querySelectorAll("input, button").forEach(el => {
+					el.disabled = true;
+				});
+			} catch (err) {
+				setAlert(alertEl, err.message);
+			}
+		});
+	}
 }
 
 function initMobileNav() {

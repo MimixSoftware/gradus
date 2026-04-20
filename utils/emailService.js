@@ -169,7 +169,7 @@ async function sendPasswordChangedNotification(to) {
 }
 
 async function sendResetToken(to, resetToken, expiresInMinutes) {
-	const resetUrl = `https://gradus.tools/reset-password?token=${encodeURIComponent(resetToken)}`;
+	const resetUrl = `${process.env.URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
 
 	const subject = "Reset your Gradus password";
 

@@ -2,9 +2,10 @@ const express = require("express");
 const router = express.Router();
 
 const { requireAuth, redirectIfAuth } = require("../middleware/authGuards");
-
-const assignmentService = require("../modules/assignments/assignment.service");
 const { validateRequiredInt } = require("../utils/validationUtils");
+
+const authService = require("../modules/auth/auth.service");
+const assignmentService = require("../modules/assignments/assignment.service");
 
 // Landing page
 router.get('/', redirectIfAuth, (req, res) => {
@@ -19,6 +20,18 @@ router.get('/login', redirectIfAuth, (req, res) => {
 // Forgot Password page
 router.get('/forgot-password', redirectIfAuth, (req, res) => {
 	res.render('forgotPassword', { title: 'Forgot Password', currentYear: new Date().getFullYear() });
+});
+
+// Reset Password page
+router.get('/reset-password', redirectIfAuth, async (req, res) => {
+	const { token } = req.query;
+
+	let tokenValid = false;
+	if (token) {
+		tokenValid = await authService.isValidPasswordResetToken(token);
+	}
+
+	res.render('resetPassword', { title: 'Reset Password', currentYear: new Date().getFullYear(), tokenValid });
 });
 
 // Registration page
