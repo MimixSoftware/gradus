@@ -168,8 +168,74 @@ async function sendPasswordChangedNotification(to) {
 	return sendMail({ to, subject, text, html });
 }
 
+async function sendResetToken(to, resetToken, expiresInMinutes) {
+	const resetUrl = `https://gradus.tools/reset-password?token=${encodeURIComponent(resetToken)}`;
+
+	const subject = "Reset your Gradus password";
+
+	const text = [
+		"We received a request to reset your Gradus password.",
+		"",
+		`Reset your password using this link: ${resetUrl}`,
+		"",
+		`This link expires in ${expiresInMinutes} minutes.`,
+		"If you did not request this, you can ignore this email."
+	].join("\n");
+
+	const html = renderEmailLayout({
+		title: "Reset your Gradus password",
+		previewText: "Reset your Gradus password.",
+		content: `
+			<h1 style="margin:0 0 12px 0; font-size:28px; line-height:1.2; color:#111827;">
+				Reset your password
+			</h1>
+
+			<p style="margin:0 0 24px 0; font-size:16px; line-height:1.6; color:#6b7280;">
+				We received a request to reset your Gradus password.
+			</p>
+
+			<p style="margin:0 0 24px 0; font-size:15px; line-height:1.6; color:#374151;">
+				Click the button below to choose a new password.
+			</p>
+
+			<div style="margin:0 0 24px 0;">
+				<a
+					href="${resetUrl}"
+					style="
+						display:inline-block;
+						padding:12px 20px;
+						border-radius:10px;
+						background:#111827;
+						color:#ffffff;
+						text-decoration:none;
+						font-size:15px;
+						font-weight:600;
+					"
+				>
+					Reset Password
+				</a>
+			</div>
+
+			<p style="margin:0 0 12px 0; font-size:15px; line-height:1.6; color:#374151;">
+				This link expires in <strong>${expiresInMinutes} minutes</strong>.
+			</p>
+
+			<p style="margin:0 0 12px 0; font-size:15px; line-height:1.6; color:#374151;">
+				If you did not request a password reset, you can safely ignore this email.
+			</p>
+
+			<p style="margin:0; font-size:14px; line-height:1.6; color:#6b7280;">
+				For security, this link can only be used once.
+			</p>
+		`
+	});
+
+	return sendMail({ to, subject, text, html });
+}
+
 module.exports = {
 	sendMail,
 	sendVerificationCode,
-	sendPasswordChangedNotification
+	sendPasswordChangedNotification,
+	sendResetToken
 };

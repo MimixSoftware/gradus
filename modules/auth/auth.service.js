@@ -515,11 +515,7 @@ async function startPasswordReset({ email }) {
 
 		await connection.commit();
 
-		// await emailService.sendResetToken(email, resetToken, RESET_TOKEN_EXPIRATION_MINUTES);
-
-		return {
-			expiresInMinutes: RESET_TOKEN_EXPIRATION_MINUTES
-		};
+		await emailService.sendResetToken(email, resetToken, RESET_TOKEN_EXPIRATION_MINUTES);
 	} catch (err) {
 		await connection.rollback();
 
