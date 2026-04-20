@@ -264,10 +264,13 @@ async function loadScheduleData() {
 }
 
 // Global Helpers
-function setAlert(alertEl, message) {
+function setAlert(alertEl, message, { type = "error" } = {}) {
+	alertEl.classList.remove("alert-error", "alert-info");
+
 	if (message) {
 		alertEl.textContent = message;
 		alertEl.style.display = "block";
+		alertEl.classList.add(`alert-${type}`);
 	} else {
 		alertEl.textContent = "";
 		alertEl.style.display = "none";
@@ -5139,6 +5142,7 @@ function initAuthForms() {
 	const loginForm = document.getElementById("login-form");
 	if (loginForm) {
 		const errorEl = document.getElementById("auth-error");
+		const passwordInput = loginForm.querySelector('input[name="password"]')
 
 		loginForm.addEventListener("submit", async (e) => {
 			e.preventDefault();
@@ -5153,6 +5157,8 @@ function initAuthForms() {
 				window.location.href = "/dashboard";
 			} catch (err) {
 				setAlert(errorEl, err.message);
+
+				passwordInput.value = "";
 			}
 		});
 	}
@@ -5250,6 +5256,28 @@ function initAuthForms() {
 				showToast("A new verification code has been sent.");
 			} catch (err) {
 				setAlert(verifyErrorEl, err.message);
+			}
+		});
+	}
+
+	const forgotPasswordForm = document.getElementById("forgot-password-form");
+	if (forgotPasswordForm) {
+		const alertEl = document.getElementById("auth-alert");
+
+		forgotPasswordForm.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			setAlert(alertEl, "");
+
+			const formData = new FormData(forgotPasswordForm);
+			const email = formData.get("email");
+
+			try {
+				const res = await postJson("/api/auth/password-reset/start", { email });
+				setAlert(alertEl, res.message, { type: "info" });
+
+				forgotPasswordForm.reset();
+			} catch (err) {
+				setAlert(alertEl, err.message);
 			}
 		});
 	}

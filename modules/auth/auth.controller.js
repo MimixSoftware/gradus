@@ -58,7 +58,7 @@ async function startPasswordReset(req, res) {
 
 	await authService.startPasswordReset(validated);
 
-	return res.status(200).json({ message: "If the email is valid, a reset link was sent." });
+	return res.status(200).json({ message: "If an account with that email exists, a reset link has been sent." });
 }
 
 async function completePasswordReset(req, res) {
