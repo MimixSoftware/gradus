@@ -549,9 +549,10 @@ async function completePasswordReset({ resetToken, newPassword }) {
 		const tokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
 
 		const [rows] = await connection.query(
-			`SELECT user_id, token_expires_at
-			FROM password_resets
-			WHERE reset_token_hash = ?
+			`SELECT u.id AS user_id, u.email, pr.token_expires_at
+			FROM password_resets pr
+			JOIN users u ON pr.user_id = u.id
+			WHERE pr.reset_token_hash = ?
 			LIMIT 1`,
 			[tokenHash]
 		);
@@ -582,6 +583,8 @@ async function completePasswordReset({ resetToken, newPassword }) {
 		);
 
 		await connection.commit();
+
+		await emailService.sendPasswordChangedNotification(reset.email);
 	} catch (err) {
 		await connection.rollback();
 
