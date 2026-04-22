@@ -21,7 +21,7 @@ function validateUpdateInput({ name, description, status, deadline, etcMinutes, 
 	const hasAtcMinutes = atcMinutes !== undefined;
 
 	
-	if (!hasName && !hasDescription && !hasStatus && !hasWeight && !hasConfidence && !hasDeadline && !hasEtcMinutes && !hasAtcMinutes) {
+	if (!hasName && !hasDescription && !hasStatus && !hasDeadline && !hasEtcMinutes && !hasAtcMinutes) {
 		throw new AppError("At least one field is required.", 400);
 	}
 

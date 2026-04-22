@@ -6,11 +6,12 @@ function validateCreateInSemesterInput({ dayOfWeek, startTime, durationMinutes }
 	startTime = v.validateRequiredTime(startTime, "Start Time");
 	durationMinutes = v.validateRequiredInt(durationMinutes, "Duration", { min: 15, max: 240, step: 15 });
 
-	const date = new Date(startTime);
-	const startMinutes = date.getUTCHours() * 60 + date.getUTCMinutes();
-	if (startMinutes + durationMinutes > 1440) {
-		throw new AppError("Study session cannot extend past midnight.", 400);
-	}
+	const [hours, minutes] = startTime.split(":").map(Number);
+    const startMinutes = hours * 60 + minutes;
+
+    if (startMinutes + durationMinutes > 1440) {
+        throw new AppError("Study session cannot spill into the next day.", 400);
+    }
 
 	return { dayOfWeek, startTime, durationMinutes };
 }
@@ -38,10 +39,12 @@ function validateUpdateInput({ dayOfWeek, startTime, durationMinutes } = {}) {
 	}
 
 	if (hasStartTime && hasDurationMinutes) {
-		const date = new Date(updates.startTime);
-		const startMinutes = date.getUTCHours() * 60 + date.getUTCMinutes();
+		const [hours, minutes] = updates.startTime.split(":").map(Number);
+
+		const startMinutes = hours * 60 + minutes;
+
 		if (startMinutes + updates.durationMinutes > 1440) {
-			throw new AppError("Study session cannot extend past midnight.", 400);
+			throw new AppError("Study session cannot spill into the next day.", 400);
 		}
 	}
 
