@@ -1,5 +1,5 @@
-const taskValidation = require('../../../../modules/tasks/task.validation');
-const AppError = require('../../../../utils/AppError');
+const taskValidation = require('../../../modules/tasks/task.validation');
+const AppError = require('../../../utils/AppError');
 
 describe('task.validation', () => {
 	describe('validateCreateInAssignmentInput', () => {

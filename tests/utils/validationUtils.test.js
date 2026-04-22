@@ -1,5 +1,5 @@
-const v = require('../../../utils/validationUtils');
-const AppError = require('../../../utils/AppError');
+const v = require('../../utils/validationUtils');
+const AppError = require('../../utils/AppError');
 
 describe('validationUtils', () => {
 	describe('validateRequiredString', () => {

@@ -1,5 +1,5 @@
-const semesterValidation = require('../../../../modules/semesters/semester.validation');
-const AppError = require('../../../../utils/AppError');
+const semesterValidation = require('../../../modules/semesters/semester.validation');
+const AppError = require('../../../utils/AppError');
 
 describe('semester.validation', () => {
 	describe('validateCreateInput', () => {

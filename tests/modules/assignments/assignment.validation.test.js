@@ -1,5 +1,5 @@
-const assignmentValidation = require('../../../../modules/assignments/assignment.validation');
-const AppError = require('../../../../utils/AppError');
+const assignmentValidation = require('../../../modules/assignments/assignment.validation');
+const AppError = require('../../../utils/AppError');
 
 describe('assignment.validation', () => {
 	describe('validateCreateInModuleInput', () => {

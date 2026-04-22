@@ -1,5 +1,5 @@
-const scheduledTasksValidation = require('../../../../modules/scheduledTasks/scheduledTask.validation');
-const AppError = require('../../../../utils/AppError');
+const scheduledTasksValidation = require('../../../modules/scheduledTasks/scheduledTask.validation');
+const AppError = require('../../../utils/AppError');
 
 describe('scheduledTask.validation', () => {
 	describe('validateCreateInStudySessionInput', () => {

@@ -1,4 +1,4 @@
-const studySessionValidation = require('../../../../modules/studySessions/studySession.validation');
+const studySessionValidation = require('../../../modules/studySessions/studySession.validation');
 
 describe('studySession.validation', () => {
 	describe('validateCreateInSemesterInput', () => {

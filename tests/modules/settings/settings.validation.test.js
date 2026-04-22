@@ -1,4 +1,4 @@
-const settingsValidation = require('../../../../modules/settings/settings.validation');
+const settingsValidation = require('../../../modules/settings/settings.validation');
 
 describe('settings.validation', () => {
 	describe('validateUpdateInput', () => {

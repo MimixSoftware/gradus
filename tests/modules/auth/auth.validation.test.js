@@ -1,4 +1,4 @@
-const authValidation = require('../../../../modules/auth/auth.validation');
+const authValidation = require('../../../modules/auth/auth.validation');
 
 describe('auth.validation', () => {
 	describe('validateStartRegistrationInput', () => {
