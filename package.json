@@ -4,9 +4,9 @@
   "description": "Gradus is a student-focused task and time-management system that helps plan, prioritise, and schedule academic work step by step.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
-  "author": "Daniel Klimchuk",
+  "author": "Mimix Software",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -21,5 +21,8 @@
     "nodemailer": "^8.0.4",
     "openai": "^6.32.0",
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
   }
 }
