@@ -140,11 +140,11 @@
 }
 
 :root[data-theme="dark"] .logo-icon {
-	display: inline;
+	display: none;
 }
 
 :root[data-theme="dark"] .logo-white {
-	display: block;
+	display: inline;
 }
 
 /* Dark Mode */
