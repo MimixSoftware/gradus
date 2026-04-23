@@ -72,7 +72,7 @@ function renderEmailLayout({ title, previewText, content }) {
 								<tr>
 									<td style="padding:0 32px 32px 32px; text-align:center;">
 										<p style="margin:0; font-size:12px; line-height:1.5; color:#9ca3af;">
-											Gradus - Student Planning System
+											Gradus - Student Planner
 										</p>
 									</td>
 								</tr>

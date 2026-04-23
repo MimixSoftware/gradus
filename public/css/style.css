@@ -81,10 +81,10 @@
 }
 
 .logo-icon {
-	display: block;
+	display: inline;
 }
 
-.logo-dark {
+.logo-white {
 	display: none;
 }
 
@@ -140,10 +140,10 @@
 }
 
 :root[data-theme="dark"] .logo-icon {
-	display: none;
+	display: inline;
 }
 
-:root[data-theme="dark"] .logo-dark {
+:root[data-theme="dark"] .logo-white {
 	display: block;
 }
 
@@ -204,8 +204,8 @@
 		display: none;
 	}
 
-	:root:not([data-theme]) .logo-dark {
-		display: block;
+	:root:not([data-theme]) .logo-white {
+		display: inline;
 	}
 }
 
