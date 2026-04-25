@@ -13,5 +13,6 @@ router.post("/change-password", authRateLimiter, asyncHandler(authController.cha
 router.post("/password-reset/start", authRateLimiter, asyncHandler(authController.startPasswordReset));
 router.post("/password-reset/complete", authRateLimiter, asyncHandler(authController.completePasswordReset));
 router.post("/logout", authController.logout);
+router.post("/delete-account", authRateLimiter, asyncHandler(authController.deleteAccount));
 
 module.exports = router;

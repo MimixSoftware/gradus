@@ -233,9 +233,49 @@ async function sendResetToken(to, resetToken, expiresInMinutes) {
 	return sendMail({ to, subject, text, html });
 }
 
+async function sendAccountDeletedNotification(to) {
+	const subject = "Your Gradus account has been deleted";
+
+	const text = [
+		"Your Gradus account has been deleted.",
+		"",
+		"All your data, including semesters, modules, assignments, tasks, and schedules, has been permanently removed.",
+		"If you did not request this, please contact support immediately."
+	].join("\n");
+
+	const html = renderEmailLayout({
+		title: "Your Gradus account has been deleted",
+		previewText: "Your Gradus account has been deleted.",
+		content: `
+			<h1 style="margin:0 0 12px 0; font-size:28px; line-height:1.2; color:#111827;">
+				Account deleted
+			</h1>
+
+			<p style="margin:0 0 24px 0; font-size:16px; line-height:1.6; color:#6b7280;">
+				Your Gradus account has been deleted successfully.
+			</p>
+
+			<p style="margin:0 0 12px 0; font-size:15px; line-height:1.6; color:#374151;">
+				All your data, including semesters, modules, assignments, tasks, and schedules, has been permanently removed.
+			</p>
+
+			<p style="margin:0 0 12px 0; font-size:15px; line-height:1.6; color:#374151;">
+				If you did not request this, please contact support immediately.
+			</p>
+
+			<p style="margin:0; font-size:14px; line-height:1.6; color:#6b7280;">
+				This email was sent for your account security.
+			</p>
+		`
+	});
+
+	return sendMail({ to, subject, text, html });
+}
+
 module.exports = {
 	sendMail,
 	sendVerificationCode,
 	sendPasswordChangedNotification,
-	sendResetToken
+	sendResetToken,
+	sendAccountDeletedNotification
 };

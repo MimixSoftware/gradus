@@ -71,6 +71,7 @@ function validateLoginInput({ email, password } = {}) {
 }
 
 function validateChangePasswordInput({ currentPassword, newPassword, confirmPassword } = {}) {
+	currentPassword = v.validateRequiredString(currentPassword, "Current Password", { trim: false, max: 72 });
 	newPassword = v.validateRequiredString(newPassword, "New Password", { trim: false, min: 8, max: 72 });
 
 	if (newPassword !== confirmPassword) {
@@ -112,4 +113,12 @@ function validateCompletePasswordResetInput({ resetToken, newPassword, confirmPa
 	};
 }
 
-module.exports = { validateStartRegistrationInput, validateCompleteRegistrationInput, validateResendRegistrationCodeInput, validateLoginInput, validateChangePasswordInput, validateStartPasswordResetInput, validateCompletePasswordResetInput };
+function validateDeleteAccountInput({ password } = {}) {
+	password = v.validateRequiredString(password, "Password", { trim: false, max: 72 });
+
+	return {
+		password
+	};
+}
+
+module.exports = { validateStartRegistrationInput, validateCompleteRegistrationInput, validateResendRegistrationCodeInput, validateLoginInput, validateChangePasswordInput, validateStartPasswordResetInput, validateCompletePasswordResetInput, validateDeleteAccountInput };

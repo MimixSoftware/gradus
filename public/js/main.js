@@ -4961,6 +4961,38 @@ function initChangePasswordForm() {
 	});
 }
 
+function initDeleteAccountForm() {
+	const form = document.getElementById("delete-account-form");
+	if (!form) return;
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const errorEl = document.getElementById("da-error");
+		setAlert(errorEl, "");
+
+		const formData = new FormData(form);
+		const password = formData.get("password");
+
+		try {
+			await postJson("/api/auth/delete-account", { password });
+
+			const modal = form.closest(".modal");
+			modal.classList.remove("is-open");
+			document.body.classList.remove("modal-open");
+
+			form.reset();
+
+			window.location.href = "/";
+		} catch (err) {
+			setAlert(errorEl, err.message);
+			const dialog = form.closest(".modal-dialog");
+			dialog.classList.add("is-invalid");
+			setTimeout(() => dialog.classList.remove("is-invalid"), 200);
+		}
+	});
+}
+
 // Statistics
 function initStatistics() {
 	if (getRouteName() !== "statistics") return;
@@ -5445,6 +5477,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	await initSettings();
 	initChangePasswordForm();
+	initDeleteAccountForm();
 
 	initStatistics();
 });
