@@ -4809,11 +4809,11 @@ function initSettings() {
 
 	const profileForm = document.getElementById("settings-profile-form");
 	const prefsForm = document.getElementById("settings-preferences-form");
-	const avatarImg = document.getElementById("sp-avatar-preview");
-	const avatarInput = document.getElementById("sp-avatar");
-	const deleteAvatarBtn = document.getElementById("sp-avatar-delete");
-	const forenameInput = document.getElementById("sp-forename");
-	const surnameInput = document.getElementById("sp-surname");
+	const avatarImg = document.getElementById("ac-avatar-preview");
+	const avatarInput = document.getElementById("ac-avatar");
+	const deleteAvatarBtn = document.getElementById("ac-avatar-delete");
+	const forenameInput = document.getElementById("ac-forename");
+	const surnameInput = document.getElementById("ac-surname");
 	const themeSelect = document.getElementById("spf-theme");
 	const profileSaveBtn = document.querySelector('#settings-profile-form button[type="submit"]');
 	const prefsSaveBtn = document.querySelector('#settings-preferences-form button[type="submit"]');

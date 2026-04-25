@@ -30,16 +30,16 @@
 
 			<section class="ui-grid ui-grid--settings">
 				<article class="ui-card">
-					<h2 class="ui-card-title">Profile</h2>
+					<h2 class="ui-card-title">Account</h2>
 
 					<form class="form" id="settings-profile-form">
 						
-						<div id="sp-error" class="alert" style="display:none;" role="alert"></div>
+						<div id="ac-error" class="alert" style="display:none;" role="alert"></div>
 
 						<div class="form-row">
-							<label for="sp-email">Email</label>
+							<label for="ac-email">Email</label>
 							<input 
-								id="sp-email" 
+								id="ac-email" 
 								name="email" 
 								type="email" 
 								value="<%= user.email %>"
@@ -55,12 +55,12 @@
 								<img 
 									src="/api/settings/avatar" 
 									class="ui-avatar"
-									id="sp-avatar-preview"
+									id="ac-avatar-preview"
 								/>
 
 								<input 
 									type="file" 
-									id="sp-avatar" 
+									id="ac-avatar" 
 									name="avatar" 
 									accept="image/*"
 								/>
@@ -68,7 +68,7 @@
 								<button 
 									type="button" 
 									class="btn btn-small btn-danger" 
-									id="sp-avatar-delete"
+									id="ac-avatar-delete"
 								>
 									Remove
 								</button>
@@ -77,13 +77,13 @@
 
 						<div class="form-grid">
 							<div class="form-row">
-								<label for="sp-forename">Forename</label>
-								<input id="sp-forename" name="forename" type="text" value="<%= user.forename %>" required />
+								<label for="ac-forename">Forename</label>
+								<input id="ac-forename" name="forename" type="text" value="<%= user.forename %>" required />
 							</div>
 
 							<div class="form-row">
-								<label for="sp-surname">Surname</label>
-								<input id="sp-surname" name="surname" type="text" value="<%= user.surname %>" />
+								<label for="ac-surname">Surname</label>
+								<input id="ac-surname" name="surname" type="text" value="<%= user.surname %>" />
 							</div>
 						</div>
 
