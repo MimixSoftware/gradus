@@ -1,7 +1,7 @@
 {
   "name": "gradus",
   "version": "1.0.0",
-  "description": "Gradus is a student-focused task and time-management system that helps plan, prioritise, and schedule academic work step by step.",
+  "description": "Gradus is a student planner that helps you capture, plan, and schedule academic work step by step.",
   "main": "index.js",
   "scripts": {
     "test": "jest"

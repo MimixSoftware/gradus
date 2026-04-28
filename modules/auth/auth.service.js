@@ -594,4 +594,34 @@ async function completePasswordReset({ resetToken, newPassword }) {
 	}
 }
 
-module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword, startPasswordReset, isValidPasswordResetToken, completePasswordReset };
+async function deleteAccount(userId, { password }) {
+	const [rows] = await db.query(
+		`SELECT id, email, password_hash
+		FROM users
+		WHERE id = ?
+		LIMIT 1`,
+		[userId]
+	);
+
+	if (rows.length === 0) {
+		throw new AppError("User not found.", 404);
+	}
+
+	const user = rows[0];
+
+	const ok = await bcrypt.compare(password, user.password_hash);
+
+	if (!ok) {
+		throw new AppError("Password is incorrect.", 401);
+	}
+
+	await db.query(
+		`DELETE FROM users
+		WHERE id = ?`,
+		[userId]
+	);
+
+	await emailService.sendAccountDeletedNotification(user.email);
+}
+
+module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword, startPasswordReset, isValidPasswordResetToken, completePasswordReset, deleteAccount };

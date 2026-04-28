@@ -9,6 +9,7 @@
 	<meta name="robots" content="noindex, nofollow">
 
 	<link rel="icon" href="/images/favicon.ico">
+	<link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="/css/style.css?v=<%= assetVersion %>">
 </head>
 <body>
@@ -29,16 +30,16 @@
 
 			<section class="ui-grid ui-grid--settings">
 				<article class="ui-card">
-					<h2 class="ui-card-title">Profile</h2>
+					<h2 class="ui-card-title">Account</h2>
 
 					<form class="form" id="settings-profile-form">
 						
-						<div id="sp-error" class="alert" style="display:none;" role="alert"></div>
+						<div id="ac-error" class="alert" style="display:none;" role="alert"></div>
 
 						<div class="form-row">
-							<label for="sp-email">Email</label>
+							<label for="ac-email">Email</label>
 							<input 
-								id="sp-email" 
+								id="ac-email" 
 								name="email" 
 								type="email" 
 								value="<%= user.email %>"
@@ -54,12 +55,12 @@
 								<img 
 									src="/api/settings/avatar" 
 									class="ui-avatar"
-									id="sp-avatar-preview"
+									id="ac-avatar-preview"
 								/>
 
 								<input 
 									type="file" 
-									id="sp-avatar" 
+									id="ac-avatar" 
 									name="avatar" 
 									accept="image/*"
 								/>
@@ -67,7 +68,7 @@
 								<button 
 									type="button" 
 									class="btn btn-small btn-danger" 
-									id="sp-avatar-delete"
+									id="ac-avatar-delete"
 								>
 									Remove
 								</button>
@@ -76,17 +77,18 @@
 
 						<div class="form-grid">
 							<div class="form-row">
-								<label for="sp-forename">Forename</label>
-								<input id="sp-forename" name="forename" type="text" value="<%= user.forename %>" required />
+								<label for="ac-forename">Forename</label>
+								<input id="ac-forename" name="forename" type="text" value="<%= user.forename %>" required />
 							</div>
 
 							<div class="form-row">
-								<label for="sp-surname">Surname</label>
-								<input id="sp-surname" name="surname" type="text" value="<%= user.surname %>" />
+								<label for="ac-surname">Surname</label>
+								<input id="ac-surname" name="surname" type="text" value="<%= user.surname %>" />
 							</div>
 						</div>
 
 						<div class="ui-actions">
+							<button type="button" class="btn btn-small btn-danger" data-modal-open="delete-account-modal">Delete account</button>
 							<button type="button" class="btn btn-small" data-modal-open="change-password-modal">Change password</button>
 							<button type="submit" class="btn btn-small btn-primary">Save</button>
 						</div>
@@ -147,7 +149,7 @@
 
 				<div class="form-row">
 					<label for="cp-current">Current Password</label>
-					<input id="cp-current" name="currentPassword" type="password" required />
+					<input id="cp-current" name="currentPassword" type="password" autocomplete="current-password" required />
 				</div>
 
 				<div class="form-row">
@@ -165,6 +167,42 @@
 			<footer class="modal-footer">
 				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
 				<button type="submit" class="btn btn-small btn-primary" form="change-password-form">Change password</button>
+			</footer>
+		</div>
+	</div>
+
+	<!-- Delete Account Modal -->
+	<div class="modal" id="delete-account-modal">
+		<div class="modal-overlay" data-modal-close></div>
+
+		<div class="modal-dialog" role="dialog">
+			<header class="modal-header">
+				<div>
+					<div class="modal-title" id="delete-account-title">Delete Account</div>
+					<div class="field-hint">This action cannot be undone.</div>
+				</div>
+
+				<button type="button" class="modal-close" data-modal-close>✕</button>
+			</header>
+
+			<form class="modal-body form" id="delete-account-form">
+				<div id="da-error" class="alert" style="display:none;" role="alert"></div>
+
+				<div class="modal-warning form-row">
+					<div id="da-message" class="modal-warning-text">
+						All your data will be permanently deleted. This action cannot be undone.
+					</div>
+				</div>
+
+				<div class="form-row">
+					<label for="da-password">Confirm Password</label>
+					<input id="da-password" name="password" type="password" autocomplete="current-password" required />
+				</div>
+			</form>
+
+			<footer class="modal-footer">
+				<button type="button" class="btn btn-small" data-modal-close>Cancel</button>
+				<button type="submit" class="btn btn-small btn-danger" form="delete-account-form">Delete</button>
 			</footer>
 		</div>
 	</div>

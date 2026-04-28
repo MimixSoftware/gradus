@@ -71,11 +71,24 @@ async function completePasswordReset(req, res) {
 
 function logout(req, res, next) {
 	req.session.destroy((err) => {
-	if (err) return next(err);
+		if (err) return next(err);
 
 		res.clearCookie("gradus.sid");
 		return res.status(200).json({ message: "Logged out successfully." });
 	});
 }
 
-module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword, startPasswordReset, completePasswordReset, logout };
+async function deleteAccount(req, res) {
+	const validated = authValidation.validateDeleteAccountInput(req.body);
+
+	await authService.deleteAccount(req.user.id, validated);
+
+	req.session.destroy((err) => {
+		if (err) return next(err);
+
+		res.clearCookie("gradus.sid");
+		return res.status(204).json();
+	});
+}
+
+module.exports = { startRegistration, completeRegistration, resendRegistrationCode, login, changePassword, startPasswordReset, completePasswordReset, logout, deleteAccount };

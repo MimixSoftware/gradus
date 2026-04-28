@@ -81,10 +81,10 @@
 }
 
 .logo-icon {
-	display: block;
+	display: inline;
 }
 
-.logo-dark {
+.logo-white {
 	display: none;
 }
 
@@ -143,8 +143,8 @@
 	display: none;
 }
 
-:root[data-theme="dark"] .logo-dark {
-	display: block;
+:root[data-theme="dark"] .logo-white {
+	display: inline;
 }
 
 /* Dark Mode */
@@ -204,9 +204,50 @@
 		display: none;
 	}
 
-	:root:not([data-theme]) .logo-dark {
-		display: block;
+	:root:not([data-theme]) .logo-white {
+		display: inline;
 	}
+}
+
+/* Font */
+@font-face {
+	font-family: "Fira Sans";
+	src: url("/fonts/FiraSans-Regular.woff2") format("woff2");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Fira Sans";
+	src: url("/fonts/FiraSans-Medium.woff2") format("woff2");
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Fira Sans";
+	src: url("/fonts/FiraSans-SemiBold.woff2") format("woff2");
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Fira Sans";
+	src: url("/fonts/FiraSans-Bold.woff2") format("woff2");
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Fira Sans";
+	src: url("/fonts/FiraSans-ExtraBold.woff2") format("woff2");
+	font-weight: 800;
+	font-style: normal;
+	font-display: swap;
 }
 
 /* Base */
@@ -217,7 +258,7 @@
 }
 
 body {
-	font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	font-family: "Fira Sans", system-ui, sans-serif;
 	background: var(--bg);
 	color: var(--text);
 	min-height: 100vh;
@@ -1310,7 +1351,6 @@ textarea {
 	background: var(--surface);
 	color: var(--text);
 	outline: none;
-	font-family: inherit;
 }
 
 textarea {
@@ -1321,6 +1361,13 @@ textarea {
 select:focus,
 textarea:focus {
 	border-color: var(--focus-ring);
+}
+
+input,
+textarea,
+select,
+button {
+	font-family: inherit;
 }
 
 /* Slider rows */
