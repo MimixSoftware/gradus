@@ -3,7 +3,6 @@ const AppError = require('../../../utils/AppError');
 
 describe('assignment.validation', () => {
 	describe('validateCreateInModuleInput', () => {
-
 		test('valid input returns normalised object', () => {
 			const result = assignmentValidation.validateCreateInModuleInput({
 				name: 'Test Assignment',
@@ -36,11 +35,9 @@ describe('assignment.validation', () => {
 			expect(result.confidence).toBeNull();
 			expect(result.deadline).toBeNull();
 		});
-
 	});
 
 	describe('validateUpdateInput', () => {
-
 		test('throws if no fields provided', () => {
 			expect(() =>
 				assignmentValidation.validateUpdateInput({})
@@ -90,6 +87,5 @@ describe('assignment.validation', () => {
 
 			expect(result.description).toBe('Updated description');
 		});
-
 	});
 });

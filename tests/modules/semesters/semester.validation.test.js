@@ -3,7 +3,6 @@ const AppError = require('../../../utils/AppError');
 
 describe('semester.validation', () => {
 	describe('validateCreateInput', () => {
-
 		test('valid input returns normalised object', () => {
 			const result = semesterValidation.validateCreateInput({
 				name: 'Semester 1',
@@ -34,11 +33,9 @@ describe('semester.validation', () => {
 				})
 			).toThrow(AppError);
 		});
-
 	});
 
 	describe('validateUpdateInput', () => {
-
 		test('throws if no fields provided', () => {
 			expect(() =>
 				semesterValidation.validateUpdateInput({})
@@ -70,6 +67,5 @@ describe('semester.validation', () => {
 			expect(result.startDate).toBe('2024-01-01');
 			expect(result.endDate).toBe('2024-06-01');
 		});
-
 	});
 });

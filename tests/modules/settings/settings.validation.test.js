@@ -2,7 +2,6 @@ const settingsValidation = require('../../../modules/settings/settings.validatio
 
 describe('settings.validation', () => {
 	describe('validateUpdateInput', () => {
-
 		test('throws if no fields provided', () => {
 			expect(() =>
 				settingsValidation.validateUpdateInput({})
@@ -62,6 +61,5 @@ describe('settings.validation', () => {
 			expect(result.theme).toBe('system');
 			expect(result.forename).toBe('Jane');
 		});
-
 	});
 });

@@ -3,7 +3,6 @@ const AppError = require('../../../utils/AppError');
 
 describe('task.validation', () => {
 	describe('validateCreateInAssignmentInput', () => {
-
 		test('valid input returns normalised object', () => {
 			const result = taskValidation.validateCreateInAssignmentInput({
 				name: 'Task 1',
@@ -36,11 +35,9 @@ describe('task.validation', () => {
 			})
 			).toThrow('in increments of 15');
 		});
-
 	});
 
 	describe('validateUpdateInput', () => {
-
 		test('throws if no fields provided', () => {
 			expect(() =>
 				taskValidation.validateUpdateInput({})
@@ -102,11 +99,9 @@ describe('task.validation', () => {
 			expect(result.name).toBe('Task');
 			expect(result.status).toBe('todo');
 		});
-
 	});
 
 	describe('validateEstimateInput', () => {
-
 		test('valid estimate input passes', () => {
 			const result = taskValidation.validateEstimateInput({
 				assignmentId: '1',
@@ -135,6 +130,5 @@ describe('task.validation', () => {
 				})
 			).toThrow(AppError);
 		});
-
 	});
 });

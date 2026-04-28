@@ -2,7 +2,6 @@ const studySessionValidation = require('../../../modules/studySessions/studySess
 
 describe('studySession.validation', () => {
 	describe('validateCreateInSemesterInput', () => {
-
 		test('valid input returns normalised object', () => {
 			const result = studySessionValidation.validateCreateInSemesterInput({
 				dayOfWeek: '2',
@@ -44,11 +43,9 @@ describe('studySession.validation', () => {
 				})
 			).toThrow('cannot spill into the next day');
 		});
-
 	});
 
 	describe('validateUpdateInput', () => {
-
 		test('throws if no fields provided', () => {
 			expect(() =>
 				studySessionValidation.validateUpdateInput({})
@@ -103,6 +100,5 @@ describe('studySession.validation', () => {
 				})
 			).toThrow('cannot spill into the next day');
 		});
-
 	});
 });

@@ -94,12 +94,12 @@ async function etcOverflowCheckScheduledTask(userId, taskId, durationMinutes, { 
 
 	const [[taskRow]] = await db.query(
 		`SELECT t.etc_minutes
-		 FROM tasks t
-		 INNER JOIN assignments a ON a.id = t.assignment_id
-		 INNER JOIN modules m ON m.id = a.module_id
-		 INNER JOIN semesters s ON s.id = m.semester_id
-		 WHERE t.id = ? AND s.user_id = ?
-		 LIMIT 1`,
+		FROM tasks t
+		INNER JOIN assignments a ON a.id = t.assignment_id
+		INNER JOIN modules m ON m.id = a.module_id
+		INNER JOIN semesters s ON s.id = m.semester_id
+		WHERE t.id = ? AND s.user_id = ?
+		LIMIT 1`,
 		[taskId, userId]
 	);
 
@@ -524,6 +524,8 @@ async function remove(userId, scheduledTaskId) {
 	} catch (err) {
 		await connection.rollback();
 		throw err;
+	} finally {
+		connection.release();
 	}
 }
 

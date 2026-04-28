@@ -3,7 +3,6 @@ const AppError = require('../../../utils/AppError');
 
 describe('module.validation', () => {
 	describe('validateCreateInSemesterInput', () => {
-
 		test('valid input returns normalised object', () => {
 			const result = moduleValidation.validateCreateInSemesterInput({
 				name: 'Module Name',
@@ -43,11 +42,9 @@ describe('module.validation', () => {
 			})
 			).toThrow(AppError);
 		});
-
 	});
 
 	describe('validateUpdateInput', () => {
-
 		test('throws if no fields provided', () => {
 			expect(() =>
 				moduleValidation.validateUpdateInput({})
@@ -89,7 +86,5 @@ describe('module.validation', () => {
 			expect(result.credits).toBe(15);
 			expect(result.colour).toBe('#123456'.toUpperCase());
 		});
-
 	});
-
 });

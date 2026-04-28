@@ -3,7 +3,6 @@ const AppError = require('../../../utils/AppError');
 
 describe('scheduledTask.validation', () => {
 	describe('validateCreateInStudySessionInput', () => {
-
 		test('valid input returns normalised object', () => {
 			const result = scheduledTasksValidation.validateCreateInStudySessionInput({
 				taskId: '1',
@@ -36,11 +35,9 @@ describe('scheduledTask.validation', () => {
 				})
 			).toThrow(AppError);
 		});
-
 	});
 
 	describe('validateUpdateInput', () => {
-
 		test('throws if no fields provided', () => {
 			expect(() =>
 				scheduledTasksValidation.validateUpdateInput({})
@@ -70,11 +67,9 @@ describe('scheduledTask.validation', () => {
 				})
 			).toThrow('in increments of 15');
 		});
-
 	});
 
 	describe('validateCreateManyInput', () => {
-
 		test('valid batch input returns normalised allocations', () => {
 			const result = scheduledTasksValidation.validateCreateManyInput({
 			allocations: [
@@ -129,6 +124,5 @@ describe('scheduledTask.validation', () => {
 				})
 			).toThrow(AppError);
 		});
-
 	});
 });

@@ -3,7 +3,6 @@ const AppError = require('../../utils/AppError');
 
 describe('validationUtils', () => {
 	describe('validateRequiredString', () => {
-
 		test('returns trimmed string', () => {
 			const result = v.validateRequiredString('  hello  ', 'Name');
 			expect(result).toBe('hello');
@@ -46,11 +45,9 @@ describe('validationUtils', () => {
 				})
 			).toThrow('Only letters allowed');
 		});
-
 	});
 
 	describe('validateOptionalString', () => {
-
 		test('returns undefined if undefined', () => {
 			expect(v.validateOptionalString(undefined, 'Name')).toBeUndefined();
 		});
@@ -63,11 +60,9 @@ describe('validationUtils', () => {
 			const result = v.validateOptionalString('  hello ', 'Name');
 			expect(result).toBe('hello');
 		});
-
 	});
 
 	describe('validateRequiredInt', () => {
-
 		test('parses valid int', () => {
 			expect(v.validateRequiredInt('10', 'Age')).toBe(10);
 		});
@@ -101,11 +96,9 @@ describe('validationUtils', () => {
 				v.validateRequiredInt('7', 'Age', { step: 5 })
 			).toThrow('increments of');
 		});
-
 	});
 
 	describe('validateOptionalInt', () => {
-
 		test('returns undefined if undefined', () => {
 			expect(v.validateOptionalInt(undefined, 'Age')).toBeUndefined();
 		});
@@ -118,11 +111,9 @@ describe('validationUtils', () => {
 			const result = v.validateOptionalInt(5, 'Age');
 			expect(result).toBe(5);
 		});
-
 	});
 
 	describe('validateRequiredEnum', () => {
-
 		test('accepts valid enum', () => {
 			expect(
 				v.validateRequiredEnum('a', 'Type', ['a', 'b'])
@@ -134,11 +125,9 @@ describe('validationUtils', () => {
 				v.validateRequiredEnum('c', 'Type', ['a', 'b'])
 			).toThrow('must be one of');
 		});
-
 	});
 
 	describe('validateRequiredDate', () => {
-
 		test('accepts valid date', () => {
 			expect(
 				v.validateRequiredDate('2024-01-10', 'Start Date')
@@ -156,11 +145,9 @@ describe('validationUtils', () => {
 				v.validateRequiredDate('2024-02-30', 'Start Date')
 			).toThrow('must be a valid date');
 		});
-
 	});
 
 	describe('validateRequiredUtcDatetime', () => {
-
 		test('converts valid UTC datetime', () => {
 			const result = v.validateRequiredUtcDatetime(
 				'2024-01-10T10:00:00Z',
@@ -175,11 +162,9 @@ describe('validationUtils', () => {
 				v.validateRequiredUtcDatetime('2024-01-10T10:00:00', 'Date')
 			).toThrow("must be in UTC");
 		});
-
 	});
 
 	describe('validateOptionalUtcDatetime', () => {
-
 		test('returns undefined if undefined', () => {
 			expect(v.validateOptionalUtcDatetime(undefined, 'Date')).toBeUndefined();
 		});
@@ -192,11 +177,9 @@ describe('validationUtils', () => {
 			const result = v.validateOptionalUtcDatetime('2024-01-10T10:00:00Z', 'Age');
 			expect(result).toBe('2024-01-10 10:00:00');
 		});
-
 	});
 
 	describe('validateRequiredTime', () => {
-
 		test('accepts valid time', () => {
 			expect(
 				v.validateRequiredTime('14:30', 'Time')
@@ -214,6 +197,5 @@ describe('validationUtils', () => {
 				v.validateRequiredTime('14:35', 'Time', { stepMinutes: 15 })
 			).toThrow('15-minute increments');
 		});
-
 	});
 });

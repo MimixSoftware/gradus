@@ -2,7 +2,6 @@ const authValidation = require('../../../modules/auth/auth.validation');
 
 describe('auth.validation', () => {
 	describe('validateStartRegistrationInput', () => {
-
 		test('valid input returns normalised object', () => {
 			const result = authValidation.validateStartRegistrationInput({
 				email: 'TEST@Email.com',
@@ -38,11 +37,9 @@ describe('auth.validation', () => {
 
 			expect(result.surname).toBeNull();
 		});
-
 	});
 
 	describe('validateCompleteRegistrationInput', () => {
-
 		test('valid input passes', () => {
 			const result = authValidation.validateCompleteRegistrationInput({
 				email: 'test@email.com',
@@ -61,11 +58,9 @@ describe('auth.validation', () => {
 				})
 			).toThrow('Invalid or expired verification code');
 		});
-
 	});
 
 	describe('validateLoginInput', () => {
-
 		test('valid login input passes', () => {
 			const result = authValidation.validateLoginInput({
 				email: 'Test@Email.com',
@@ -84,11 +79,9 @@ describe('auth.validation', () => {
 				})
 			).toThrow('Invalid email format');
 		});
-
 	});
 
 	describe('validateChangePasswordInput', () => {
-
 		test('valid change password input passes', () => {
 			const result = authValidation.validateChangePasswordInput({
 				currentPassword: 'oldpass',
@@ -118,11 +111,9 @@ describe('auth.validation', () => {
 				})
 			).toThrow('must be different from the current password');
 		});
-
 	});
 
 	describe('validateStartPasswordResetInput', () => {
-
 		test('valid email passes', () => {
 			const result = authValidation.validateStartPasswordResetInput({
 				email: 'TEST@Email.com'
@@ -130,11 +121,9 @@ describe('auth.validation', () => {
 
 			expect(result.email).toBe('test@email.com');
 		});
-
 	});
 
 	describe('validateCompletePasswordResetInput', () => {
-
 		test('valid input passes', () => {
 			const result = authValidation.validateCompletePasswordResetInput({
 				resetToken: 'abc123',
@@ -155,6 +144,5 @@ describe('auth.validation', () => {
 				})
 			).toThrow('Passwords do not match');
 		});
-
 	});
 });
