@@ -2405,7 +2405,7 @@ function initNewTaskForm() {
 
 			showToast(res.message);
 		} catch (err) {
-			showToast(err.message || "Failed to estimate task time.", { type: "error" });
+			showToast("Failed to estimate task ETC.", { type: "error" });
 		} finally {
 			estimateBtn.disabled = false;
 			estimateBtn.textContent = originalBtnText;
@@ -2491,7 +2491,7 @@ function initEditTaskForm() {
 
 			showToast(res.message);
 		} catch (err) {
-			showToast(err.message || "Failed to estimate task time.", "error");
+			showToast("Failed to estimate task ETC.", { type: "error" });
 		} finally {
 			estimateBtn.disabled = false;
 			estimateBtn.textContent = originalBtnText;
