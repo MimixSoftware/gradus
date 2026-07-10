@@ -116,8 +116,6 @@ The goal of the project is to reduce academic stress, improve time management, a
 
 ## Screenshots
 
-> Add screenshots here
-
 | Dashboard | Assignment View | AI Estimation | Auto-Scheduling |
 |-----------|----------|----------|----------|
 | ![](public/images/screenshot1.png) | ![](public/images/screenshot2.png) | ![](public/images/screenshot3.png) | ![](public/images/screenshot4.png) |
